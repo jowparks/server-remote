@@ -1,0 +1,1 @@
+arch -x86_64 open /Applications/Xcode.app/Contents/Developer/Applications/Simulator.app

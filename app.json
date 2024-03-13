@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "server-remote",
+    "scheme": "server-remote",
     "slug": "server-remote",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,7 +16,8 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jowparks.serverremote"
     },
     "android": {
       "adaptiveIcon": {
