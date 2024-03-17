@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
+import { DarkTheme, ThemeProvider } from '@react-navigation/native'
 import { SplashScreen, Stack } from 'expo-router'
 import { useColorScheme } from 'react-native'
 import { TamaguiProvider } from 'tamagui'
@@ -8,7 +8,8 @@ import '../tamagui-web.css'
 import config from '../tamagui.config'
 import { useFonts } from 'expo-font'
 import { useEffect } from 'react'
-import SSHClient from '@jowparks/react-native-ssh-sftp'
+import { ToastProvider, ToastViewport } from '@tamagui/toast'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -24,16 +25,6 @@ export {
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-    useEffect(() => {
-        console.log('connecting')
-        SSHClient.connectWithPassword(
-          "192.168.1.51",
-          22,
-          "root",
-          "<enterpassword>"
-        ).then(client => {client.execute('docker ps', console.log)}).catch(console.error);
-        console.log('finished')
-      }, []);
   const [interLoaded, interError] = useFonts({
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
@@ -55,16 +46,19 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme()
-
+  const { left, top, right } = useSafeAreaInsets()
   return (
     <TamaguiProvider config={config} defaultTheme={colorScheme as any}>
       {/* <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}> */}
       <ThemeProvider value={DarkTheme}>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </Stack>
+        <ToastProvider>
+            <ToastViewport flexDirection="column-reverse" top={top} left={left} right={right} />
+            <Stack>
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+            </Stack>
+        </ToastProvider>
       </ThemeProvider>
     </TamaguiProvider>
   )
