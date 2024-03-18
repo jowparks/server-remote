@@ -16,6 +16,5 @@ export async function getItem<K extends keyof StorageItems>(key: K): Promise<Sto
     if (item) {
         return JSON.parse(item) as StorageItems[K];
     }
-
     return null;
 }

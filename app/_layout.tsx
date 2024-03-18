@@ -10,6 +10,8 @@ import { useFonts } from 'expo-font'
 import { useEffect } from 'react'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Server } from '@tamagui/lucide-icons'
+import { ServerConnectionProvider } from './contexts/ServerConnection'
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -51,14 +53,16 @@ function RootLayoutNav() {
     <TamaguiProvider config={config} defaultTheme={colorScheme as any}>
       {/* <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}> */}
       <ThemeProvider value={DarkTheme}>
-        <ToastProvider>
-            <ToastViewport flexDirection="column-reverse" top={top} left={left} right={right} />
-            <Stack>
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-            </Stack>
-        </ToastProvider>
+        <ServerConnectionProvider>
+            <ToastProvider>
+                <ToastViewport flexDirection="column-reverse" top={top} left={left} right={right} />
+                <Stack>
+                    <Stack.Screen name="index" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+                </Stack>
+            </ToastProvider>
+        </ServerConnectionProvider>
       </ThemeProvider>
     </TamaguiProvider>
   )

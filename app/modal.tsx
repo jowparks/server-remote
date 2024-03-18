@@ -1,25 +1,33 @@
-import React, { useState } from 'react';
-import { useToastController } from '@tamagui/toast'
-import { Button, Input, Sheet, TextArea, XStack } from 'tamagui';
+import React, { useEffect, useState } from 'react';
+import { Button, Input, Sheet, TextArea, XStack, Text, View } from 'tamagui';
 import { Server } from './types';
 import SSHClient from '@jowparks/react-native-ssh-sftp'
 import LabeledInput from './components/labeled-input';
 
 
-type AddServerModalProps = {
+type ServerModalProps = {
   open: boolean;
+  server?: Server;
   onOpenChange: (open: boolean) => void;
-  onAddServer: (server: Server) => void; 
+  onSaveServer: (server: Server) => void; 
 };
 
-export default function AddServerModal({ onAddServer, open, onOpenChange }: AddServerModalProps) {
+export default function ServerModal({ onSaveServer, server, open, onOpenChange }: ServerModalProps) {
 
   const [position, setPosition] = useState(0)
-  const [serverDetails, setServerDetails] = useState<Server>({ host: '', port: 22, user: '' });
+  const [serverDetails, setServerDetails] = useState<Server>(server ?? { host: '', port: 22, user: '' });
+  const [testResult, setTestResult] = useState('');
+
+  useEffect(() => {
+    if (server) {
+      setServerDetails(server);
+    }
+  }, [server]);
 
   const handleAddServer = () => {
     console.log('Adding server', serverDetails);
-    onAddServer(serverDetails);
+    setTestResult('');
+    onSaveServer(serverDetails);
     onOpenChange(false);
   };
 
@@ -27,6 +35,7 @@ export default function AddServerModal({ onAddServer, open, onOpenChange }: AddS
   const handleTestConnection = async () => {
     console.log('Testing connection', serverDetails);
     if (!serverDetails.password && !serverDetails.key) {
+      // TODO handle validation errors in fields
       console.log('No password or key');
       return;
     }
@@ -38,7 +47,11 @@ export default function AddServerModal({ onAddServer, open, onOpenChange }: AddS
         serverDetails.user,
         serverDetails.password,
         (err, _) => {
-          err ? console.log(err) : console.log('success')
+          if (err) {
+            setTestResult('Fail: '+err.message);
+          } else {
+            setTestResult('Success');
+          }
         }
       )
     }
@@ -50,7 +63,11 @@ export default function AddServerModal({ onAddServer, open, onOpenChange }: AddS
         serverDetails.key, 
         serverDetails.keyPassphrase,
         (err, _) => {
-          err ? console.log(err) : console.log('success')
+          if (err) {
+            setTestResult('Fail: '+err.message);
+          } else {
+            setTestResult('Success');
+          }
         }
       )
     }
@@ -76,17 +93,20 @@ export default function AddServerModal({ onAddServer, open, onOpenChange }: AddS
         exitStyle={{ opacity: 0 }}
       />
       <Sheet.Handle />
-      <Sheet.Frame padding="$4" justifyContent="center" alignItems="center" space="$5">
-        <LabeledInput label='Name' autoCapitalize='none' placeholder="home server" size="$4" style={{ marginTop: 20, width: '90%' }} value={serverDetails.name} onChange={(e) => setServerDetails({ ...serverDetails, name: e.nativeEvent.text})} />
-        <LabeledInput label='Host' autoCapitalize='none' placeholder="192.168.1.11" size="$4" style={{  width: '90%' }} value={serverDetails.host} onChange={(e) => setServerDetails({ ...serverDetails, host: e.nativeEvent.text })} />
-        <LabeledInput label='Port' autoCapitalize='none' placeholder="22" size="$4" style={{   width: '90%' }} value={serverDetails.port.toString()} onChange={(e) => setServerDetails({ ...serverDetails, port: Number(e.nativeEvent.text.replace(/[^0-9]/g, '')) })} />
-        <LabeledInput label='User' autoCapitalize='none' placeholder="root" size="$4" style={{   width: '90%' }} value={serverDetails.user} onChange={(e) => setServerDetails({ ...serverDetails, user: e.nativeEvent.text })} />
-        <LabeledInput label='Password' autoCapitalize='none' placeholder="password" size="$4" style={{ width: '90%' }} value={serverDetails.password} onChange={(e) => setServerDetails({ ...serverDetails, password: e.nativeEvent.text })} />
-        <TextArea autoCapitalize='none' placeholder="Key (-----BEGIN RSA...) " size="$4" style={{ width: '90%' }} value={serverDetails.key} onChange={(e) => setServerDetails({ ...serverDetails, key: e.nativeEvent.text })} />
-        <LabeledInput label='Key Passphrase' autoCapitalize='none' placeholder="password" size="$4" style={{ width: '90%' }} value={serverDetails.keyPassphrase} onChange={(e) => setServerDetails({ ...serverDetails, keyPassphrase: e.nativeEvent.text })} />
-        <XStack >
-          <Button onPress={() => handleAddServer()} size="$4">Submit</Button>
+      <Sheet.Frame  >
+        <View justifyContent="center"padding="$4" space="$5" alignItems="center">
+          <LabeledInput label='Name' autoCapitalize='none' placeholder="home server" size="$4" style={{ marginTop: 20, width: '90%' }} value={serverDetails.name} onChange={(e) => setServerDetails({ ...serverDetails, name: e.nativeEvent.text})} />
+          <LabeledInput label='Host' autoCapitalize='none' placeholder="192.168.1.11" size="$4" style={{  width: '90%' }} value={serverDetails.host} onChange={(e) => setServerDetails({ ...serverDetails, host: e.nativeEvent.text })} />
+          <LabeledInput label='Port' autoCapitalize='none' placeholder="22" size="$4" style={{   width: '90%' }} value={serverDetails.port.toString()} onChange={(e) => setServerDetails({ ...serverDetails, port: Number(e.nativeEvent.text.replace(/[^0-9]/g, '')) })} />
+          <LabeledInput label='User' autoCapitalize='none' placeholder="root" size="$4" style={{   width: '90%' }} value={serverDetails.user} onChange={(e) => setServerDetails({ ...serverDetails, user: e.nativeEvent.text })} />
+          <LabeledInput label='Password' autoCapitalize='none' placeholder="password" size="$4" style={{ width: '90%' }} value={serverDetails.password} onChange={(e) => setServerDetails({ ...serverDetails, password: e.nativeEvent.text })} />
+          <TextArea autoCapitalize='none' placeholder="Key (-----BEGIN RSA...) " size="$4" style={{ width: '90%' }} value={serverDetails.key} onChange={(e) => setServerDetails({ ...serverDetails, key: e.nativeEvent.text })} />
+          <LabeledInput label='Key Passphrase' autoCapitalize='none' placeholder="password" size="$4" style={{ width: '90%' }} value={serverDetails.keyPassphrase} onChange={(e) => setServerDetails({ ...serverDetails, keyPassphrase: e.nativeEvent.text })} />
+        </View>
+        <XStack alignItems='center' justifyContent='flex-end' gap="$2">
+          {!!testResult && <Text style={{ color: testResult == 'Success' ? 'green' : 'red' }}>{testResult}</Text>} 
           <Button onPress={async () => handleTestConnection()} size="$4">Test</Button>
+          <Button onPress={() => handleAddServer()} size="$4">Submit</Button>
         </XStack>
       </Sheet.Frame>
     </Sheet>
