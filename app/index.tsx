@@ -5,10 +5,14 @@ import ServerModal from './modal';
 import { Server } from './types';
 import { getItem, setItem } from './storage/secure';
 import ServerCard from './components/server-card';
+import { router } from 'expo-router';
+import { useSshServerConnection } from './contexts/ServerConnection';
 
 
 
 export default function ServerSelectScreen() {
+    const {setSshServer} = useSshServerConnection()
+
     const [servers, setServers] = useState<Server[]>([]);
     const [serverModalOpen, setServerModalOpen] = useState(false);
     const [currentServer, setCurrentServer] = useState<Server | undefined>(undefined);
@@ -40,19 +44,28 @@ export default function ServerSelectScreen() {
         setServers(newServers);
     }
 
+    const handleServerPress = (server: Server) => {
+        setSshServer(server)
+        router.replace('/(tabs)');
+    }
+
+    const handleServerEdit = (server: Server) => {
+        setCurrentServer(server);
+        setServerModalOpen(true);
+    }
+
+    const handleAddPress = () => {
+        setServerModalOpen(true)
+        setCurrentServer(undefined)
+    }
+
     return (
         <View flex={1} alignItems="center" style={{ padding: 20 }}>
             <Spacer size="10%" />
                 {servers.map((server, index) => (
-                    <ServerCard server={server} onEdit={() => {
-                        setCurrentServer(server);
-                        setServerModalOpen(true);
-                    }} onDelete={(server) => removeServer(server)}/>
+                    <ServerCard server={server} onEdit={(server) => handleServerEdit(server)} onDelete={(server) => removeServer(server)} onPress={(server) => handleServerPress(server)}/>
                 ))}
-            <Button hoverTheme pressTheme onPress={() => {
-                setServerModalOpen(true)
-                setCurrentServer(undefined)
-            }} style={{ marginTop: 20, width: '90%' }} >
+            <Button hoverTheme pressTheme onPress={() => handleAddPress()} style={{ marginTop: 20, width: '90%' }} >
                 <Plus />
             </Button>
             <ServerModal open={serverModalOpen} server={currentServer} onOpenChange={setServerModalOpen} onSaveServer={(server) => currentServer ? updateServer(server) : addServer(server)} />

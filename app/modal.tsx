@@ -25,7 +25,6 @@ export default function ServerModal({ onSaveServer, server, open, onOpenChange }
   }, [server]);
 
   const handleAddServer = () => {
-    console.log('Adding server', serverDetails);
     setTestResult('');
     onSaveServer(serverDetails);
     onOpenChange(false);
@@ -39,7 +38,6 @@ export default function ServerModal({ onSaveServer, server, open, onOpenChange }
       console.log('No password or key');
       return;
     }
-    let connection
     if (serverDetails.password) {
       const client = await SSHClient.connectWithPassword(
         serverDetails.host,
@@ -48,7 +46,8 @@ export default function ServerModal({ onSaveServer, server, open, onOpenChange }
         serverDetails.password,
         (err, _) => {
           if (err) {
-            setTestResult('Fail: '+err.message);
+            //TODO better handling/display of error
+            setTestResult('Fail: '+err);
           } else {
             setTestResult('Success');
           }
@@ -64,7 +63,7 @@ export default function ServerModal({ onSaveServer, server, open, onOpenChange }
         serverDetails.keyPassphrase,
         (err, _) => {
           if (err) {
-            setTestResult('Fail: '+err.message);
+            setTestResult('Fail: '+err);
           } else {
             setTestResult('Success');
           }

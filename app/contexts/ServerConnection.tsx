@@ -5,19 +5,19 @@ import { Server } from '../types';
 
 // Create the context
 interface ServerContextValue {
-    server: Server | null;
-    setServer: React.Dispatch<React.SetStateAction<Server | null>>;
+    sshServer: Server | null;
+    setSshServer: React.Dispatch<React.SetStateAction<Server | null>>;
     sshClient: SSHClient | null;
 }
-const ServerConnectionContext = createContext<ServerContextValue>({
-    server: null,
-    setServer: () => {}, 
+const SshServerConnectionContext = createContext<ServerContextValue>({
+    sshServer: null,
+    setSshServer: () => {}, 
     sshClient: null
 });
 
 // Create the provider component
 export function ServerConnectionProvider({ children }: { children: ReactNode }) {
-  const [server, setServer] = useState<Server | null>(null);
+  const [server, setSshServer] = useState<Server | null>(null);
   const [sshClient, setSSHClient] = useState<SSHClient | null>(null);
 
 
@@ -25,7 +25,7 @@ export function ServerConnectionProvider({ children }: { children: ReactNode }) 
     let client: SSHClient | null = null;
     const connectToServer = async () => {
         if (server && server.password) {
-            const client = await SSHClient.connectWithPassword(
+          client = await SSHClient.connectWithPassword(
                 server.host,
                 server.port,
                 server.user,
@@ -40,7 +40,7 @@ export function ServerConnectionProvider({ children }: { children: ReactNode }) 
             )
         }
         if (server && server.key) {
-            const client = await SSHClient.connectWithKey(
+            client = await SSHClient.connectWithKey(
             server.host, 
             server.port, 
             server.user, 
@@ -62,15 +62,15 @@ export function ServerConnectionProvider({ children }: { children: ReactNode }) 
   }, [server]);
 
   return (
-    <ServerConnectionContext.Provider value={{ server, setServer, sshClient }}>
+    <SshServerConnectionContext.Provider value={{ sshServer: server, setSshServer, sshClient }}>
       {children}
-    </ServerConnectionContext.Provider>
+    </SshServerConnectionContext.Provider>
   );
 }
 
 // Create a custom hook to use the server connection context
-export function useServerConnection() {
-  const context = useContext(ServerConnectionContext);
+export function useSshServerConnection() {
+  const context = useContext(SshServerConnectionContext);
   if (context === undefined) {
     throw new Error('useServerConnection must be used within a ServerConnectionProvider');
   }

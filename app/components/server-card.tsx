@@ -8,10 +8,11 @@ export type ServerCardProps = {
   server: Server;
   onEdit: (server: Server) => void;
   onDelete: (server: Server) => void;
+  onPress: (server: Server) => void;
 };
 
 export default function ServerCard(props: ServerCardProps) {
-  const { server, onEdit, onDelete } = props;
+  const { server, onEdit, onDelete, onPress } = props;
   const [isCardScaled, setIsCardScaled] = useState(false);
 
   const scaleValue = useState(new Animated.Value(1))[0];
@@ -53,6 +54,7 @@ export default function ServerCard(props: ServerCardProps) {
                 bordered
                 borderRadius={15}
                 key={server.user + server.host + server.port}
+                onPress={() => onPress(server)}
             >
                 <Card.Header padded style={{ padding: 10 }}>
                 <H4>{server.name}</H4>
