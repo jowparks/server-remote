@@ -3,10 +3,13 @@ import { ListItem, Separator, YGroup } from 'tamagui'
 import { useSshServerConnection } from '../../contexts/ServerConnection'
 import { useEffect, useState } from 'react'
 import { parseDockerContainerPs } from './util'
+import DockerCard from './card'
 
 export default function DockerList() {
   const {sshClient} = useSshServerConnection()
   const [containers, setContainers] = useState<DockerContainer[]>([]);
+  const [trigger, setTrigger] = useState(false);
+
 
   useEffect(() => {
     const fetchContainers = () => {
@@ -15,13 +18,13 @@ export default function DockerList() {
         const lines = response?.split('\n');
         const parsedContainers: DockerContainer[] = lines?.map(line => {
           try {
+            // TODO there is an error here on the first line
             return parseDockerContainerPs(JSON.parse(line));
           } catch (error) {
-            console.error('Error parsing line:', line, error);
+            console.log('Error parsing line:', line, error);
             return null;
           }
         }).filter(Boolean) as DockerContainer[];
-        console.log(parsedContainers)
         setContainers(parsedContainers);
       }).catch((error) => console.log(error));
     }
@@ -33,18 +36,54 @@ export default function DockerList() {
   
     // Clear the interval when the component is unmounted or sshClient changes
     return () => clearInterval(intervalId);
-  }, [sshClient]);
+  }, [sshClient, trigger]);
+
+  const stopContainer = (container: DockerContainer) => {
+    setTrigger(prev => !prev);
+    sshClient?.execute(`docker stop ${container.ID}`).then((response) => {
+      console.log(response);
+      setTrigger(prev => !prev);
+    }).catch((error) => console.log(error));
+  }
+
+  const startContainer = (container: DockerContainer) => {
+    setTrigger(prev => !prev);
+    sshClient?.execute(`docker start ${container.ID}`).then((response) => {
+      console.log(response);
+      setTrigger(prev => !prev);
+    }).catch((error) => console.log(error));
+  }
+
+  const restartContainer = (container: DockerContainer) => {
+    setTrigger(prev => !prev);
+    sshClient?.execute(`docker restart ${container.ID}`).then((response) => {
+      console.log(response);
+      setTrigger(prev => !prev);
+    }).catch((error) => console.log(error));
+  }
+
+  const pauseContainer = (container: DockerContainer) => {
+    setTrigger(prev => !prev);
+    sshClient?.execute(`docker pause ${container.ID}`).then((response) => {
+      console.log(response);
+      setTrigger(prev => !prev);
+    }).catch((error) => console.log(error));
+  }
+
+  const unpauseContainer = (container: DockerContainer) => {
+    setTrigger(prev => !prev);
+    sshClient?.execute(`docker unpause ${container.ID}`).then((response) => {
+      console.log(response);
+      setTrigger(prev => !prev);
+    }).catch((error) => console.log(error));
+  }
 
   return (
-    <YGroup alignSelf="center" bordered width={240} size="$5" separator={<Separator />}>
+    <YGroup alignSelf="center" bordered width={'90%'} size="$5" separator={<Separator />}>
       <YGroup.Item>
-        <ListItem
-          hoverTheme
-          pressTheme
-          title="Star"
-          subTitle="Subtitle"
-          iconAfter={ChevronRight}
-        />
+        {containers.map(container => (
+          <DockerCard key={container.ID} container={container} onStart={() => container.State == 'paused' ? unpauseContainer(container) : startContainer(container)} onPause={() => pauseContainer(container)} onRestart={() => restartContainer(container)} onStop={() => stopContainer(container)}/>
+        ))}
       </YGroup.Item>
     </YGroup>
   )
