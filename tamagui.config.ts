@@ -22,7 +22,7 @@ const animations = createAnimations({
     damping: 20,
     mass: 1.2,
     stiffness: 250,
-  }
+  },
 });
 const headingFont = createInterFont();
 const bodyFont = createInterFont();
@@ -53,7 +53,7 @@ const config = createTamagui({
     tall: { minHeight: 820 },
     hoverNone: { hover: 'none' },
     pointerCoarse: { pointer: 'coarse' },
-  })
+  }),
 });
 
 export type AppConfig = typeof config;

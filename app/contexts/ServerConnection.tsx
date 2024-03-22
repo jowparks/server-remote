@@ -1,68 +1,78 @@
 import SSHClient from '@jowparks/react-native-ssh-sftp';
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  ReactNode,
+} from 'react';
 import { Server } from '../types';
-
 
 // Create the context
 interface ServerContextValue {
-    sshServer: Server | null;
-    setSshServer: React.Dispatch<React.SetStateAction<Server | null>>;
-    sshClient: SSHClient | null;
+  sshServer: Server | null;
+  setSshServer: React.Dispatch<React.SetStateAction<Server | null>>;
+  sshClient: SSHClient | null;
 }
 const SshServerConnectionContext = createContext<ServerContextValue>({
-    sshServer: null,
-    setSshServer: () => {}, 
-    sshClient: null
+  sshServer: null,
+  setSshServer: () => {},
+  sshClient: null,
 });
 
 // Create the provider component
-export function ServerConnectionProvider({ children }: { children: ReactNode }) {
+export function ServerConnectionProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [server, setSshServer] = useState<Server | null>(null);
   const [sshClient, setSSHClient] = useState<SSHClient | null>(null);
-
 
   useEffect(() => {
     let client: SSHClient | null = null;
     const connectToServer = async () => {
-        if (server && server.password) {
-          client = await SSHClient.connectWithPassword(
-                server.host,
-                server.port,
-                server.user,
-                server.password,
-                (err, _) => {
-                    if (err) {
-                        console.log('Fail: '+err.message);
-                    } else {
-                        console.log('Success');
-                    }
-                }
-            )
-        }
-        if (server && server.key) {
-            client = await SSHClient.connectWithKey(
-            server.host, 
-            server.port, 
-            server.user, 
-            server.key, 
-            server.keyPassphrase,
-            (err, _) => {
-                if (err) {
-                console.log('Fail: '+err.message);
-                } else {
-                console.log('Success');
-                }
+      if (server && server.password) {
+        client = await SSHClient.connectWithPassword(
+          server.host,
+          server.port,
+          server.user,
+          server.password,
+          (err, _) => {
+            if (err) {
+              console.log('Fail: ' + err.message);
+            } else {
+              console.log('Success');
             }
-            )
-        }
-        setSSHClient(client);
-    }
+          },
+        );
+      }
+      if (server && server.key) {
+        client = await SSHClient.connectWithKey(
+          server.host,
+          server.port,
+          server.user,
+          server.key,
+          server.keyPassphrase,
+          (err, _) => {
+            if (err) {
+              console.log('Fail: ' + err.message);
+            } else {
+              console.log('Success');
+            }
+          },
+        );
+      }
+      setSSHClient(client);
+    };
 
     connectToServer();
   }, [server]);
 
   return (
-    <SshServerConnectionContext.Provider value={{ sshServer: server, setSshServer, sshClient }}>
+    <SshServerConnectionContext.Provider
+      value={{ sshServer: server, setSshServer, sshClient }}
+    >
       {children}
     </SshServerConnectionContext.Provider>
   );
@@ -72,7 +82,9 @@ export function ServerConnectionProvider({ children }: { children: ReactNode }) 
 export function useSshServerConnection() {
   const context = useContext(SshServerConnectionContext);
   if (context === undefined) {
-    throw new Error('useServerConnection must be used within a ServerConnectionProvider');
+    throw new Error(
+      'useServerConnection must be used within a ServerConnectionProvider',
+    );
   }
   return context;
 }

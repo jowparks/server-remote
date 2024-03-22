@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Card, H4, Paragraph } from "tamagui";
-import { Server } from "../types";
+import { Card, H4, Paragraph } from 'tamagui';
+import { Server } from '../types';
 import ContextMenuView from 'react-native-context-menu-view';
 import { Animated } from 'react-native';
 
@@ -37,33 +37,35 @@ export default function ServerCard(props: ServerCardProps) {
   return (
     // TODO handle context menu closes, item scales to zero rather than normal size, which creates odd animation
     <Animated.View
-        style={{
-          marginBottom: 20,
-          width: '90%',
-          transform: [{ scale: scaleValue }],
+      style={{
+        marginBottom: 20,
+        width: '90%',
+        transform: [{ scale: scaleValue }],
+      }}
+    >
+      <ContextMenuView
+        actions={[{ title: 'Edit' }, { title: 'Delete' }]}
+        onPress={(event) => {
+          event.nativeEvent.index == 0 ? handleEdit() : handleDelete();
         }}
+        previewBackgroundColor="transparent"
       >
-        <ContextMenuView 
-            actions={[{title: 'Edit' }, {title: 'Delete'}]}
-            onPress={(event) => {event.nativeEvent.index == 0 ? handleEdit() : handleDelete()}}
-            previewBackgroundColor="transparent"
+        <Card
+          elevate
+          size="$4"
+          bordered
+          borderRadius={15}
+          key={server.user + server.host + server.port}
+          onPress={() => onPress(server)}
         >
-            <Card
-                elevate
-                size="$4"
-                bordered
-                borderRadius={15}
-                key={server.user + server.host + server.port}
-                onPress={() => onPress(server)}
-            >
-                <Card.Header padded style={{ padding: 10 }}>
-                <H4>{server.name}</H4>
-                <Paragraph theme="alt2">
-                    {server.user}@{server.host}:{server.port}
-                </Paragraph>
-                </Card.Header>
-            </Card>
-        </ContextMenuView>
+          <Card.Header padded style={{ padding: 10 }}>
+            <H4>{server.name}</H4>
+            <Paragraph theme="alt2">
+              {server.user}@{server.host}:{server.port}
+            </Paragraph>
+          </Card.Header>
+        </Card>
+      </ContextMenuView>
     </Animated.View>
   );
 }
