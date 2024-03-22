@@ -2,7 +2,7 @@ import { ChevronRight } from '@tamagui/lucide-icons';
 import { ListItem, Separator, YGroup } from 'tamagui';
 import { useSshServerConnection } from '../../contexts/ServerConnection';
 import { useEffect, useState } from 'react';
-import { parseDockerContainerPs } from './util';
+import { parseDockerContainerPs } from '../../(tabs)/docker/util';
 import DockerCard from './card';
 
 export default function DockerList() {

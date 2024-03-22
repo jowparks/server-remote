@@ -1,5 +1,5 @@
 import { Text, View } from 'tamagui';
-import DockerList from './docker/list';
+import DockerList from '../components/docker/list';
 
 export default function DockerScreen() {
   return (

@@ -25,8 +25,6 @@ export default function DockerCard(props: DockerCardProps) {
           transform: 'translateY(-50%)',
         }}
       >
-        {/* TODO make buttons disabled properly when container is in certain states */}
-        {/* TODO add formatter to project */}
         <Button
           transparent
           style={{ padding: 1 }}

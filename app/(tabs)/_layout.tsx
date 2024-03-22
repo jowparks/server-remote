@@ -10,7 +10,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="docker"
         options={{
           title: 'Docker',
           tabBarIcon: ({ color }) => <Text>Hello!</Text>,
@@ -24,9 +24,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="vm"
         options={{
-          title: 'Tab Two',
+          title: 'VMs',
           tabBarIcon: ({ color }) => <Text>Hello!</Text>,
         }}
       />
