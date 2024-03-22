@@ -1,0 +1,10 @@
+{
+    "extends": "airbnb-base",
+    "env": {
+      "browser": true,
+      "node": true
+    },
+    "rules": {
+      // Add your own custom rules here
+    }
+  }

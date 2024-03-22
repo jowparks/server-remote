@@ -23,9 +23,11 @@ export default function DockerCard(props: DockerCardProps) {
             </Paragraph>
         </YStack>
         <XStack style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>
-            <Button transparent style={{ padding: 1 }} onPress={() => onStart()}><Play maxWidth={16}/></Button>
-            <Button transparent style={{ padding: 1 }} onPress={() => onPause()}><Pause maxWidth={16}/></Button>
-            <Button transparent style={{ padding: 1 }} onPress={() => onStop()}><Square maxWidth={16}/></Button>
+            {/* TODO make buttons disabled properly when container is in certain states */}
+            {/* TODO add formatter to project */}
+            <Button transparent style={{ padding: 1 }} onPress={() => onStart()} disabled={container.State === 'running'}><Play maxWidth={16} opacity={container.State === 'running' ? 0.5 : 1}/></Button>
+            <Button transparent style={{ padding: 1 }} onPress={() => onPause()} disabled={container.State === 'paused'}><Pause maxWidth={16} opacity={container.State === 'paused' ? 0.5 : 1}/></Button>
+            <Button transparent style={{ padding: 1 }} onPress={() => onStop()} disabled={container.State === 'exited'}><Square maxWidth={16} opacity={container.State === 'exited' ? 0.5 : 1}/></Button>
             <Button transparent style={{ padding: 1 }} onPress={() => onRestart()}><RefreshCcw maxWidth={16}/></Button>
         </XStack>
     </ListItem>

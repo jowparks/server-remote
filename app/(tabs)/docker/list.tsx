@@ -13,7 +13,6 @@ export default function DockerList() {
 
   useEffect(() => {
     const fetchContainers = () => {
-      console.log('Fetching containers', sshClient)
       sshClient?.execute('docker ps -a --no-trunc --format "{{json . }}"').then((response) => {
         const lines = response?.split('\n');
         const parsedContainers: DockerContainer[] = lines?.map(line => {
@@ -21,7 +20,6 @@ export default function DockerList() {
             // TODO there is an error here on the first line
             return parseDockerContainerPs(JSON.parse(line));
           } catch (error) {
-            console.log('Error parsing line:', line, error);
             return null;
           }
         }).filter(Boolean) as DockerContainer[];
