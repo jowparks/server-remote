@@ -1,21 +1,36 @@
 import { Pause, Play, RefreshCcw, Square } from '@tamagui/lucide-icons';
+import React from 'react';
 import { Button, H5, ListItem, Paragraph, XStack, YStack } from 'tamagui';
 
-type DockerCardProps = {
-  container: DockerContainer;
+type ContainerCardProps = {
+  name: string;
+  subheading: string;
+  running: boolean;
+  paused: boolean;
+  stopped: boolean;
   onStart: () => void;
   onStop: () => void;
   onRestart: () => void;
   onPause: () => void;
 };
 
-export default function DockerCard(props: DockerCardProps) {
-  const { container, onStart, onStop, onRestart, onPause } = props;
+export default function ContainerCard(props: ContainerCardProps) {
+  const {
+    name,
+    subheading,
+    running,
+    paused,
+    stopped,
+    onStart,
+    onStop,
+    onRestart,
+    onPause,
+  } = props;
   return (
     <ListItem elevate size="$4" bordered>
       <YStack>
-        <H5>{container.Image?.split('/').pop()}</H5>
-        <Paragraph theme="alt2">{container.State}</Paragraph>
+        <H5>{name}</H5>
+        <Paragraph theme="alt2">{subheading}</Paragraph>
       </YStack>
       <XStack
         style={{
@@ -29,34 +44,25 @@ export default function DockerCard(props: DockerCardProps) {
           transparent
           style={{ padding: 1 }}
           onPress={() => onStart()}
-          disabled={container.State === 'running'}
+          disabled={running}
         >
-          <Play
-            maxWidth={16}
-            opacity={container.State === 'running' ? 0.5 : 1}
-          />
+          <Play maxWidth={16} opacity={running ? 0.5 : 1} />
         </Button>
         <Button
           transparent
           style={{ padding: 1 }}
           onPress={() => onPause()}
-          disabled={container.State === 'paused'}
+          disabled={paused}
         >
-          <Pause
-            maxWidth={16}
-            opacity={container.State === 'paused' ? 0.5 : 1}
-          />
+          <Pause maxWidth={16} opacity={paused ? 0.5 : 1} />
         </Button>
         <Button
           transparent
           style={{ padding: 1 }}
           onPress={() => onStop()}
-          disabled={container.State === 'exited'}
+          disabled={stopped}
         >
-          <Square
-            maxWidth={16}
-            opacity={container.State === 'exited' ? 0.5 : 1}
-          />
+          <Square maxWidth={16} opacity={stopped ? 0.5 : 1} />
         </Button>
         <Button transparent style={{ padding: 1 }} onPress={() => onRestart()}>
           <RefreshCcw maxWidth={16} />

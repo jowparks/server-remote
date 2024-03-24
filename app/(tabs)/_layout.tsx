@@ -1,4 +1,5 @@
 import { Link, Tabs } from 'expo-router';
+import React from 'react';
 import { Pressable } from 'react-native';
 import { Text } from 'tamagui';
 
@@ -8,12 +9,12 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: 'red',
       }}
+      initialRouteName="docker"
     >
       <Tabs.Screen
         name="docker"
         options={{
           title: 'Docker',
-          tabBarIcon: ({ color }) => <Text>Hello!</Text>,
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable>

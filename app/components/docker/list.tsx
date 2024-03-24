@@ -1,9 +1,8 @@
-import { ChevronRight } from '@tamagui/lucide-icons';
-import { ListItem, Separator, YGroup } from 'tamagui';
+import { Separator, YGroup } from 'tamagui';
 import { useSshServerConnection } from '../../contexts/ServerConnection';
 import { useEffect, useState } from 'react';
-import { parseDockerContainerPs } from '../../(tabs)/docker/util';
-import DockerCard from './card';
+import { parseDockerContainerPs } from '../../util/docker/util';
+import ContainerCard from '../cards/containerCard';
 
 export default function DockerList() {
   const { sshClient } = useSshServerConnection();
@@ -105,9 +104,13 @@ export default function DockerList() {
     >
       <YGroup.Item>
         {containers.map((container) => (
-          <DockerCard
+          <ContainerCard
             key={container.ID}
-            container={container}
+            name={container.Image?.split('/').pop() || 'N/A'}
+            subheading={container.Status || 'N/A'}
+            running={container.State === 'running'}
+            paused={container.State === 'paused'}
+            stopped={container.State === 'exited'}
             onStart={() =>
               container.State == 'paused'
                 ? unpauseContainer(container)

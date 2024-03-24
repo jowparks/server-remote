@@ -1,9 +1,11 @@
-import { Text, View } from 'tamagui';
+import { View } from 'tamagui';
+import React from 'react';
+import VirshList from '../components/vm/list';
 
-export default function TabTwoScreen() {
+export default function DockerScreen() {
   return (
     <View flex={1} alignItems="center">
-      <Text fontSize={20}>Tab Two</Text>
+      <VirshList />
     </View>
   );
 }

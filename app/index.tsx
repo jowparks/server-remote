@@ -46,7 +46,7 @@ export default function ServerSelectScreen() {
 
   const handleServerPress = (server: Server) => {
     setSshServer(server);
-    router.replace('/(tabs)');
+    router.replace('/(tabs)/docker');
   };
 
   const handleServerEdit = (server: Server) => {
