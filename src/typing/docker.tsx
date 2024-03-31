@@ -1,4 +1,4 @@
-interface DockerContainer {
+export interface DockerContainer {
   Command?: string;
   CreatedAt?: Date;
   ID?: string;

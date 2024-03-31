@@ -3,15 +3,15 @@ import { SplashScreen, Stack } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { TamaguiProvider } from 'tamagui';
 
-import '../tamagui-web.css';
+import '../../tamagui-web.css';
 
-import config from '../tamagui.config';
+import config from '../../tamagui.config';
 import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
 import { ToastProvider, ToastViewport } from '@tamagui/toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Server } from '@tamagui/lucide-icons';
-import { ServerConnectionProvider } from './contexts/ServerConnection';
+import { ServerConnectionProvider } from '../contexts/ServerConnection';
+import React from 'react';
 
 export {
   // Catch any errors thrown by the Layout component.

@@ -8,6 +8,7 @@ type ContainerCardProps = {
   running: boolean;
   paused: boolean;
   stopped: boolean;
+  onCardPress: () => void;
   onStart: () => void;
   onStop: () => void;
   onRestart: () => void;
@@ -21,13 +22,14 @@ export default function ContainerCard(props: ContainerCardProps) {
     running,
     paused,
     stopped,
+    onCardPress,
     onStart,
     onStop,
     onRestart,
     onPause,
   } = props;
   return (
-    <ListItem elevate size="$4" bordered>
+    <ListItem elevate size="$4" bordered onPress={onCardPress}>
       <YStack>
         <H5>{name}</H5>
         <Paragraph theme="alt2">{subheading}</Paragraph>

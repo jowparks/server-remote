@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Plus } from '@tamagui/lucide-icons';
 import { Button, Spacer, View } from 'tamagui';
 import ServerModal from './modal';
-import { Server } from './types';
-import { getItem, setItem } from './storage/secure';
-import ServerCard from './components/server-card';
+import { Server } from '../typing/types';
+import { getItem, setItem } from '../storage/secure';
+import ServerCard from '../components/server-card';
 import { router } from 'expo-router';
-import { useSshServerConnection } from './contexts/ServerConnection';
+import { useSshServerConnection } from '../contexts/ServerConnection';
 
 export default function ServerSelectScreen() {
   const { setSshServer } = useSshServerConnection();
@@ -46,7 +46,7 @@ export default function ServerSelectScreen() {
 
   const handleServerPress = (server: Server) => {
     setSshServer(server);
-    router.replace('/(tabs)/docker');
+    router.push('/(tabs)/docker');
   };
 
   const handleServerEdit = (server: Server) => {

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Input, Sheet, TextArea, XStack, Text, View } from 'tamagui';
-import { Server } from './types';
+import { Button, Sheet, TextArea, XStack, Text, View } from 'tamagui';
 import SSHClient from '@jowparks/react-native-ssh-sftp';
-import LabeledInput from './components/labeled-input';
+import LabeledInput from '../components/labeled-input';
+import { Server } from '../typing/server';
 
 type ServerModalProps = {
   open: boolean;
@@ -35,6 +35,7 @@ export default function ServerModal({
     onOpenChange(false);
   };
 
+  // TODO better handling of making keyboard disappear
   const handleTestConnection = async () => {
     console.log('Testing connection', serverDetails);
     if (!serverDetails.password && !serverDetails.key) {

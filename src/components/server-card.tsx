@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, H4, Paragraph } from 'tamagui';
-import { Server } from '../types';
+import { Server } from '../typing/types';
 import ContextMenuView from 'react-native-context-menu-view';
 import { Animated } from 'react-native';
 
@@ -43,8 +43,12 @@ export default function ServerCard(props: ServerCardProps) {
         transform: [{ scale: scaleValue }],
       }}
     >
+      {/* TODO handle verify delete */}
       <ContextMenuView
-        actions={[{ title: 'Edit' }, { title: 'Delete' }]}
+        actions={[
+          { title: 'Edit', systemIcon: 'pencil' },
+          { title: 'Delete', systemIcon: 'trash', destructive: true },
+        ]}
         onPress={(event) => {
           event.nativeEvent.index == 0 ? handleEdit() : handleDelete();
         }}

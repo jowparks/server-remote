@@ -1,33 +1,52 @@
-import { Separator, YGroup } from 'tamagui';
-import { useSshServerConnection } from '../../contexts/ServerConnection';
-import { useEffect, useState } from 'react';
-import { parseDockerContainerPs } from '../../util/docker/util';
-import ContainerCard from '../cards/containerCard';
+import { View } from 'tamagui';
+import React from 'react';
 
-export default function DockerList() {
+import { Separator, Spinner, YGroup } from 'tamagui';
+import { useSshServerConnection } from '../../../contexts/ServerConnection';
+import { useEffect, useState } from 'react';
+import { parseDockerContainerPs } from '../../../util/docker/util';
+import { DockerContainer } from '../../../typing/docker';
+import { useRouter } from 'expo-router';
+import ContainerCard from '../../../components/generic/containerCard';
+import { useDockerContainers } from '../../../contexts/DockerContainer';
+
+export default function DockerScreen() {
+  return (
+    <View flex={1} alignItems="center">
+      <DockerList />
+    </View>
+  );
+}
+
+function DockerList() {
   const { sshClient } = useSshServerConnection();
-  const [containers, setContainers] = useState<DockerContainer[]>([]);
+  const { dockerContainers, setDockerContainers, setCurrentContainerId } =
+    useDockerContainers();
+  const [loaded, setLoaded] = useState(false);
   const [trigger, setTrigger] = useState(false);
 
+  const router = useRouter();
+
+  // TODO use better spinner
   useEffect(() => {
-    const fetchContainers = () => {
-      sshClient
-        ?.execute('docker ps -a --no-trunc --format "{{json . }}"')
-        .then((response) => {
-          const lines = response?.split('\n');
-          const parsedContainers: DockerContainer[] = lines
-            ?.map((line) => {
-              try {
-                // TODO there is an error here on the first line
-                return parseDockerContainerPs(JSON.parse(line));
-              } catch (error) {
-                return null;
-              }
-            })
-            .filter(Boolean) as DockerContainer[];
-          setContainers(parsedContainers);
+    const fetchContainers = async () => {
+      if (!sshClient) return;
+      const response = await sshClient.execute(
+        'docker ps -a --no-trunc --format "{{json . }}"',
+      );
+      const lines = response?.split('\n');
+      const parsedContainers: DockerContainer[] = lines
+        ?.map((line) => {
+          try {
+            // TODO there is an error here on the first line
+            return parseDockerContainerPs(JSON.parse(line));
+          } catch (error) {
+            return null;
+          }
         })
-        .catch((error) => console.log(error));
+        .filter(Boolean) as DockerContainer[];
+      setDockerContainers(parsedContainers);
+      setLoaded(true);
     };
     // Call fetchContainers immediately
     fetchContainers();
@@ -94,7 +113,9 @@ export default function DockerList() {
       .catch((error) => console.log(error));
   };
 
-  return (
+  return !loaded ? (
+    <Spinner size="large" />
+  ) : (
     <YGroup
       alignSelf="center"
       bordered
@@ -103,7 +124,7 @@ export default function DockerList() {
       separator={<Separator />}
     >
       <YGroup.Item>
-        {containers.map((container) => (
+        {dockerContainers.map((container) => (
           <ContainerCard
             key={container.ID}
             name={container.Image?.split('/').pop() || 'N/A'}
@@ -111,6 +132,10 @@ export default function DockerList() {
             running={container.State === 'running'}
             paused={container.State === 'paused'}
             stopped={container.State === 'exited'}
+            onCardPress={() => {
+              setCurrentContainerId(container.ID || null);
+              router.navigate('(tabs)/docker/menu');
+            }}
             onStart={() =>
               container.State == 'paused'
                 ? unpauseContainer(container)

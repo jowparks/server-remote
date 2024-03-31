@@ -1,16 +1,24 @@
-import { Separator, YGroup } from 'tamagui';
-import { useSshServerConnection } from '../../contexts/ServerConnection';
-import { useEffect, useState } from 'react';
-import { parseVirshDumpXML } from '../../util/virsh/util';
-import { VirshVM } from '../../util/virsh/types';
-import ContainerCard from '../cards/containerCard';
-import React from 'react';
+import { Separator, Spinner, View, YGroup } from 'tamagui';
+import React, { useEffect, useState } from 'react';
+import { useSshServerConnection } from '../../../contexts/ServerConnection';
+import { VirshVM } from '../../../typing/virsh';
+import { parseVirshDumpXML } from '../../../util/vm/util';
+import ContainerCard from '../../../components/generic/containerCard';
 
-export default function VirshList() {
+export default function VmList() {
+  return (
+    <View flex={1} alignItems="center">
+      <VmListScreen />
+    </View>
+  );
+}
+
+function VmListScreen() {
   const { sshClient } = useSshServerConnection();
   const [vms, setVms] = useState<VirshVM[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [trigger, setTrigger] = useState(false);
-
+  // TODO handle button clicks creating a visual feedback for intermittent state, do same for docker
   useEffect(() => {
     const fetchVms = async () => {
       if (!sshClient) return;
@@ -43,12 +51,14 @@ export default function VirshList() {
         return { ...vm, state: stateObj?.state || '' };
       });
       setVms(vms);
+      setLoaded(true);
     };
     fetchVms();
     const intervalId = setInterval(fetchVms, 5000);
     return () => clearInterval(intervalId);
   }, [sshClient, trigger]);
 
+  // TODO handle force stop
   const stopVm = (vm: VirshVM) => {
     setTrigger((prev) => !prev);
     sshClient
@@ -106,7 +116,9 @@ export default function VirshList() {
       .catch((error) => console.log(error));
   };
 
-  return (
+  return !loaded ? (
+    <Spinner size="large" />
+  ) : (
     <YGroup
       alignSelf="center"
       bordered
@@ -128,6 +140,7 @@ export default function VirshList() {
               vm.state === 'in shutdown' ||
               vm.state === 'dying'
             }
+            onCardPress={() => console.log('fooba')}
             onStart={() => (vm.state == 'paused' ? restoreVm(vm) : startVm(vm))}
             onPause={() => saveVm(vm)}
             onRestart={() => restartVm(vm)}

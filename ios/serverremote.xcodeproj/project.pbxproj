@@ -325,7 +325,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = serverremote/serverremote.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = V48Q379LMP;
+				DEVELOPMENT_TEAM = R2LLBBC9X9;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -344,7 +344,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.jowparks.serverremote;
+				PRODUCT_BUNDLE_IDENTIFIER = app.reflect.serverremote;
 				PRODUCT_NAME = serverremote;
 				SWIFT_OBJC_BRIDGING_HEADER = "serverremote/serverremote-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -362,7 +362,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = serverremote/serverremote.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = V48Q379LMP;
+				DEVELOPMENT_TEAM = R2LLBBC9X9;
 				INFOPLIST_FILE = serverremote/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -376,7 +376,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.jowparks.serverremote;
+				PRODUCT_BUNDLE_IDENTIFIER = app.reflect.serverremote;
 				PRODUCT_NAME = serverremote;
 				SWIFT_OBJC_BRIDGING_HEADER = "serverremote/serverremote-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

@@ -6,7 +6,7 @@ import React, {
   useContext,
   ReactNode,
 } from 'react';
-import { Server } from '../types';
+import { Server } from '../typing/server';
 
 // Create the context
 interface ServerContextValue {
