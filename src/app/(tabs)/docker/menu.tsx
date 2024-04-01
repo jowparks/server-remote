@@ -20,6 +20,11 @@ export default function MenuScreen() {
               Details
             </ListItem>
           </Link>
+          <Link href="/(tabs)/docker/logs">
+            <ListItem elevate size="$4" bordered>
+              Logs
+            </ListItem>
+          </Link>
         </YGroup.Item>
       </YGroup>
     </View>

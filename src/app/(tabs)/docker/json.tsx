@@ -1,11 +1,9 @@
-import React, { useLayoutEffect } from 'react';
-import JSONTree from 'react-native-json-tree';
+import React from 'react';
 import { ScrollView, View } from 'tamagui';
 import { useDockerContainers } from '../../../contexts/DockerContainer';
 import JsonTree from '../../../components/generic/json-tree';
-import { useRouter } from 'expo-router';
 
-export default function JsonScreen({ navigation }) {
+export default function JsonScreen() {
   const { currentContainerId, dockerContainers } = useDockerContainers();
   let container = dockerContainers.find((c) => c.ID === currentContainerId);
 

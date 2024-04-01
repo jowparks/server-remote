@@ -21,6 +21,7 @@ function DockerLayoutNav() {
         />
         <Stack.Screen name="menu" options={{ headerShown: true }} />
         <Stack.Screen name="json" options={{ headerShown: true }} />
+        <Stack.Screen name="logs" options={{ headerShown: true }} />
       </Stack>
     </DockerContainerProvider>
   );
