@@ -19,7 +19,13 @@ export default function ServerModal({
 }: ServerModalProps) {
   const [position, setPosition] = useState(0);
   const [serverDetails, setServerDetails] = useState<Server>(
-    server ?? { host: '', port: 22, user: '' },
+    server ?? {
+      host: '',
+      port: 22,
+      user: '',
+      publicKey:
+        'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCpxgEgsJTBaaGIcTAzcTssRi89x1uYGG85M0B4fDDyKa+pm1H+twWS6Te1rQmsjU+WKmrVoFQmCPbEyHPsr4aKT/7U28HvxGJZCsyNN74oUH2q29UlVEGYqHNZtKH+O4lwdC1+idre6k/37YScNzbplpgAKJdsc/TtkL7lVEcAmykBS6OtsF+zusMoPmOhqfFp30HAEMOqXAR7rVZnbgJ7fzQ+jrEWrQPaOQq5uNQWGgvZA1HNkc4m+sOtLkqvTuGaRZqMfzFfG3deQ3l0RHLwxgS8Rq/ncyfiLqCxIsyLrjS0/nNdJoa4M26kUGN4cAhbaYFgsMAWGAlyq4Vo0Fsk2v54U0Ro5xAvdd5p7BZtNw3TZ0T+UuIuKecCaBaUMx85rfl16cC7wuy47P4cdWalD9EQqOY/t4DvVqKjn6y6RTsFLRWSFNDIg1DHRmFbtHx0rLOCOF1mpmmNxByH1q4NZNeCD6l2pJUzWE7Ae2+oH91tXcK66KEyBo4NqLVXpn0= joe@Iron-Fish-MBP.local',
+    },
   );
   const [testResult, setTestResult] = useState('');
 
@@ -65,6 +71,7 @@ export default function ServerModal({
         serverDetails.port,
         serverDetails.user,
         serverDetails.key,
+        serverDetails.publicKey,
         serverDetails.keyPassphrase,
         (err, _) => {
           if (err) {

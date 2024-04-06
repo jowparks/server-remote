@@ -4,6 +4,6 @@
     "strict": true
   },
   "include": [ 
-    "typing/react-native-xml2js.d.ts"
+    "src/typing/react-native-xml2js.d.ts"
   ]
 }

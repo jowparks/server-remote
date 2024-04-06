@@ -6895,7 +6895,8 @@
               "tag": "p",
               "userSelect": "auto",
               "color": "$color",
-              "size": "$true"
+              "size": "$true",
+              "whiteSpace": "normal"
             },
             "inlineWhenUnflattened": {},
             "variants": {
@@ -7862,6 +7863,7 @@
               "userSelect": "auto",
               "color": "$color",
               "size": "$9",
+              "whiteSpace": "normal",
               "accessibilityRole": "header",
               "margin": 0
             },
@@ -20559,7 +20561,8 @@
               "tag": "p",
               "userSelect": "auto",
               "color": "$color",
-              "size": "$true"
+              "size": "$true",
+              "whiteSpace": "normal"
             },
             "inlineWhenUnflattened": {},
             "variants": {
@@ -20762,6 +20765,7 @@
               "userSelect": "auto",
               "color": "$color",
               "size": "$10",
+              "whiteSpace": "normal",
               "accessibilityRole": "header",
               "margin": 0
             },
@@ -20966,6 +20970,7 @@
               "userSelect": "auto",
               "color": "$color",
               "size": "$9",
+              "whiteSpace": "normal",
               "accessibilityRole": "header",
               "margin": 0
             },
@@ -21170,6 +21175,7 @@
               "userSelect": "auto",
               "color": "$color",
               "size": "$8",
+              "whiteSpace": "normal",
               "accessibilityRole": "header",
               "margin": 0
             },
@@ -21374,6 +21380,7 @@
               "userSelect": "auto",
               "color": "$color",
               "size": "$7",
+              "whiteSpace": "normal",
               "accessibilityRole": "header",
               "margin": 0
             },
@@ -21578,6 +21585,7 @@
               "userSelect": "auto",
               "color": "$color",
               "size": "$6",
+              "whiteSpace": "normal",
               "accessibilityRole": "header",
               "margin": 0
             },
@@ -21782,6 +21790,7 @@
               "userSelect": "auto",
               "color": "$color",
               "size": "$5",
+              "whiteSpace": "normal",
               "accessibilityRole": "header",
               "margin": 0
             },
@@ -21986,6 +21995,7 @@
               "userSelect": "auto",
               "color": "$color",
               "size": "$8",
+              "whiteSpace": "normal",
               "accessibilityRole": "header",
               "margin": 0
             },

@@ -7,8 +7,8 @@ import { useEffect, useState } from 'react';
 import { parseDockerContainerPs } from '../../../util/docker/util';
 import { DockerContainer } from '../../../typing/docker';
 import { useRouter } from 'expo-router';
-import ContainerCard from '../../../components/generic/containerCard';
 import { useDockerContainers } from '../../../contexts/DockerContainer';
+import ContainerCard from '../../../components/container-card';
 
 export default function DockerScreen() {
   return (

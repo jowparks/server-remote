@@ -1,6 +1,8 @@
 import { Stack } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DockerContainerProvider } from '../../../contexts/DockerContainer';
+import { useSshServerConnection } from '../../../contexts/ServerConnection';
+import { PtyType } from '@jowparks/react-native-ssh-sftp';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -12,6 +14,27 @@ export default function DockerLayout() {
 }
 
 function DockerLayoutNav() {
+  const { sshClient } = useSshServerConnection();
+
+  // TODO use better spinner
+  useEffect(() => {
+    if (!sshClient) return;
+    const fetchContainers = async () => {
+      await sshClient.startShell(PtyType.VANILLA);
+      sshClient.on('Shell', (event) => {
+        console.warn('Shell: ', event);
+      });
+      const str = 'ls -l /\n';
+      sshClient.writeToShell(str).then((str) => {
+        console.log('write resp: ', str);
+      });
+    };
+    // Call fetchContainers immediately
+    fetchContainers();
+
+    // Clear the interval when the component is unmounted or sshClient changes
+    return () => sshClient?.closeShell();
+  }, []);
   return (
     <DockerContainerProvider>
       <Stack>

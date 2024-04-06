@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useSshServerConnection } from '../../../contexts/ServerConnection';
 import { VirshVM } from '../../../typing/virsh';
 import { parseVirshDumpXML } from '../../../util/vm/util';
-import ContainerCard from '../../../components/generic/containerCard';
+import ContainerCard from '../../../components/container-card';
 
 export default function VmList() {
   return (
