@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useSshServerConnection } from '../contexts/ServerConnection';
+import { useSshServerConnection } from '../contexts/ssh-client';
 import { View, Text } from 'tamagui';
 import { ScrollView } from 'react-native';
 
 export type LogsProps = {
-  initialCommand: string;
-  refreshCommand: string;
+  command: string;
+  refreshCommand?: string;
 };
 
-export default function Logs({ initialCommand, refreshCommand }: LogsProps) {
+export default function Logs({ command, refreshCommand }: LogsProps) {
   const { sshClient } = useSshServerConnection();
   const [logs, setLogs] = useState<string>('');
   const scrollViewRef = useRef<ScrollView>(null);
@@ -17,7 +17,7 @@ export default function Logs({ initialCommand, refreshCommand }: LogsProps) {
   useEffect(() => {
     async function fetchLogs() {
       if (!sshClient) return;
-      const response = await sshClient.execute(initialCommand);
+      const response = await sshClient.execute(command);
       setLogs(response);
       console.log(response);
     }
@@ -28,8 +28,13 @@ export default function Logs({ initialCommand, refreshCommand }: LogsProps) {
   useEffect(() => {
     const fetchLogs = async () => {
       if (!sshClient) return;
-      const response = await sshClient.execute(refreshCommand);
-      setLogs((prevLogs) => prevLogs + response);
+      if (refreshCommand) {
+        const response = await sshClient.execute(refreshCommand);
+        setLogs((prevLogs) => prevLogs + response);
+      } else {
+        const response = await sshClient.execute(command);
+        setLogs(response);
+      }
     };
 
     const intervalId = setInterval(fetchLogs, 2000);

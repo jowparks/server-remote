@@ -15,7 +15,7 @@ export default function MenuScreen() {
         separator={<Separator />}
       >
         <YGroup.Item>
-          <Link href="/(tabs)/docker/json">
+          <Link href="/(tabs)/docker/details">
             <ListItem elevate size="$4" bordered>
               Details
             </ListItem>

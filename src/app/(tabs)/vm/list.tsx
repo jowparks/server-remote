@@ -1,9 +1,11 @@
 import { Separator, Spinner, View, YGroup } from 'tamagui';
 import React, { useEffect, useState } from 'react';
-import { useSshServerConnection } from '../../../contexts/ServerConnection';
-import { VirshVM } from '../../../typing/virsh';
+import { useSshServerConnection } from '../../../contexts/ssh-client';
 import { parseVirshDumpXML } from '../../../util/vm/util';
 import ContainerCard from '../../../components/container-card';
+import { useVirshVms } from '../../../contexts/virtual-machines';
+import { VirshVm } from '../../../typing/virsh';
+import { useRouter } from 'expo-router';
 
 export default function VmList() {
   return (
@@ -15,10 +17,11 @@ export default function VmList() {
 
 function VmListScreen() {
   const { sshClient } = useSshServerConnection();
-  const [vms, setVms] = useState<VirshVM[]>([]);
+  const { virshVms, setVirshVms, setCurrentVmName } = useVirshVms();
   const [loaded, setLoaded] = useState(false);
   const [trigger, setTrigger] = useState(false);
-  // TODO handle button clicks creating a visual feedback for intermittent state, do same for docker
+  const router = useRouter();
+
   useEffect(() => {
     const fetchVms = async () => {
       if (!sshClient) return;
@@ -44,13 +47,13 @@ function VmListScreen() {
           };
         }),
       );
-      const vms: VirshVM[] = vmXMLs.map((vm) => {
+      const vms: VirshVm[] = vmXMLs.map((vm) => {
         const stateObj = states.find(
           (state) => state.name === vm.domain.name[0],
         );
         return { ...vm, state: stateObj?.state || '' };
       });
-      setVms(vms);
+      setVirshVms(vms);
       setLoaded(true);
     };
     fetchVms();
@@ -59,7 +62,7 @@ function VmListScreen() {
   }, [sshClient, trigger]);
 
   // TODO handle force stop
-  const stopVm = (vm: VirshVM) => {
+  const stopVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
       ?.execute(`virsh shutdown "${vm.domain.name[0]}"`)
@@ -70,7 +73,7 @@ function VmListScreen() {
       .catch((error) => console.log(error));
   };
 
-  const startVm = (vm: VirshVM) => {
+  const startVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
       ?.execute(`virsh start "${vm.domain.name[0]}"`)
@@ -81,7 +84,7 @@ function VmListScreen() {
       .catch((error) => console.log(error));
   };
 
-  const restartVm = (vm: VirshVM) => {
+  const restartVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
       ?.execute(`virsh reboot "${vm.domain.name[0]}"`)
@@ -92,7 +95,7 @@ function VmListScreen() {
       .catch((error) => console.log(error));
   };
 
-  const saveVm = (vm: VirshVM) => {
+  const saveVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
       ?.execute(
@@ -105,7 +108,7 @@ function VmListScreen() {
       .catch((error) => console.log(error));
   };
 
-  const restoreVm = (vm: VirshVM) => {
+  const restoreVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
       ?.execute(`virsh restore "${vm.domain.name[0]}.state"`)
@@ -127,7 +130,7 @@ function VmListScreen() {
       separator={<Separator />}
     >
       <YGroup.Item>
-        {vms.map((vm) => (
+        {virshVms.map((vm) => (
           <ContainerCard
             key={vm.domain.name[0]}
             name={vm.domain.name[0]}
@@ -140,7 +143,10 @@ function VmListScreen() {
               vm.state === 'in shutdown' ||
               vm.state === 'dying'
             }
-            onCardPress={() => console.log('fooba')}
+            onCardPress={() => {
+              setCurrentVmName(vm.domain.name[0]);
+              router.navigate('(tabs)/vm/menu');
+            }}
             onStart={() => (vm.state == 'paused' ? restoreVm(vm) : startVm(vm))}
             onPause={() => saveVm(vm)}
             onRestart={() => restartVm(vm)}

@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import React from 'react';
 import { ListItem, Separator, View, YGroup } from 'tamagui';
 
@@ -12,14 +13,18 @@ export default function MenuScreen() {
         separator={<Separator />}
       >
         <YGroup.Item>
-          <ListItem
-            elevate
-            size="$4"
-            bordered
-            onPress={() => console.log('details')}
-          >
-            Details
-          </ListItem>
+          <Link href="/(tabs)/vm/details">
+            <ListItem elevate size="$4" bordered>
+              Details
+            </ListItem>
+          </Link>
+        </YGroup.Item>
+        <YGroup.Item>
+          <Link href="/(tabs)/vm/logs">
+            <ListItem elevate size="$4" bordered>
+              Logs
+            </ListItem>
+          </Link>
         </YGroup.Item>
       </YGroup>
     </View>

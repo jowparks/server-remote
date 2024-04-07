@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Plus } from '@tamagui/lucide-icons';
 import { Button, Spacer, View } from 'tamagui';
 import ServerModal from './modal';
-import { Server } from '../typing/types';
 import { getItem, setItem } from '../storage/secure';
 import ServerCard from '../components/server-card';
 import { router } from 'expo-router';
-import { useSshServerConnection } from '../contexts/ServerConnection';
+import { useSshServerConnection } from '../contexts/ssh-client';
+import { Server } from '../typing/server';
 
 export default function ServerSelectScreen() {
   const { setSshServer } = useSshServerConnection();

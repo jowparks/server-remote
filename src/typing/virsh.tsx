@@ -1,6 +1,6 @@
-export type VirshVM = { state: string } & VirshVMDumpXML;
+export type VirshVm = { state: string } & VirshVmDumpXML;
 
-export type VirshVMDumpXML = {
+export type VirshVmDumpXML = {
   domain: {
     $: {
       type: string;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, View } from 'tamagui';
-import { useDockerContainers } from '../../../contexts/DockerContainer';
+import { useDockerContainers } from '../../../contexts/docker-container';
 import JsonTree from '../../../components/json-tree';
 
 export default function JsonScreen() {

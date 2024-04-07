@@ -10,7 +10,7 @@ import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
 import { ToastProvider, ToastViewport } from '@tamagui/toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ServerConnectionProvider } from '../contexts/ServerConnection';
+import { ServerConnectionProvider } from '../contexts/ssh-client';
 import React from 'react';
 
 export {

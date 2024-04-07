@@ -170,7 +170,8 @@ export default function ServerModal({
                 })
               }
             />
-            <TextArea
+            {/* disabled for now, since we private key is not working */}
+            {/* <TextArea
               autoCapitalize="none"
               placeholder="Key (-----BEGIN RSA...) "
               size="$4"
@@ -193,7 +194,7 @@ export default function ServerModal({
                   keyPassphrase: e.nativeEvent.text,
                 })
               }
-            />
+            /> */}
           </View>
           <XStack alignItems="center" justifyContent="flex-end" gap="$2">
             {!!testResult && (

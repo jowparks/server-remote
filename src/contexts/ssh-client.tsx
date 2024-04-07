@@ -53,6 +53,7 @@ export function ServerConnectionProvider({
           server.port,
           server.user,
           server.key,
+          server.publicKey,
           server.keyPassphrase,
           (err, _) => {
             if (err) {

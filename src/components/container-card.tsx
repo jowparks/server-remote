@@ -2,6 +2,7 @@ import { Pause, Play, RefreshCcw, Square } from '@tamagui/lucide-icons';
 import React from 'react';
 import { Button, H5, ListItem, Paragraph, XStack, YStack } from 'tamagui';
 
+// TODO add icon props for container (either image or url)
 type ContainerCardProps = {
   name: string;
   subheading: string;

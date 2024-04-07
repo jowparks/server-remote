@@ -2,12 +2,12 @@ import { View } from 'tamagui';
 import React from 'react';
 
 import { Separator, Spinner, YGroup } from 'tamagui';
-import { useSshServerConnection } from '../../../contexts/ServerConnection';
+import { useSshServerConnection } from '../../../contexts/ssh-client';
 import { useEffect, useState } from 'react';
 import { parseDockerContainerPs } from '../../../util/docker/util';
 import { DockerContainer } from '../../../typing/docker';
 import { useRouter } from 'expo-router';
-import { useDockerContainers } from '../../../contexts/DockerContainer';
+import { useDockerContainers } from '../../../contexts/docker-container';
 import ContainerCard from '../../../components/container-card';
 
 export default function DockerScreen() {
