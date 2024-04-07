@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, View } from 'tamagui';
 import { useDockerContainers } from '../../../contexts/docker-container';
 import JsonTree from '../../../components/json-tree';
+import JsonViewer from '../../../components/json';
 
 export default function JsonScreen() {
   const { currentContainerId, dockerContainers } = useDockerContainers();
@@ -18,7 +19,7 @@ export default function JsonScreen() {
   return (
     <View flex={1} alignItems="center">
       <ScrollView>
-        <JsonTree data={container as Record<string, unknown>} />
+        <JsonViewer data={container as Record<string, unknown>} />
       </ScrollView>
     </View>
   );
