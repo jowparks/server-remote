@@ -26,7 +26,8 @@ const JsonNode: React.FC<JsonNodeProps> = ({
 
   const WrapperComponent = isObject || isArray ? TouchableOpacity : View;
   const wrapperProps = isObject || isArray ? { onPress: handlePress } : {};
-
+  // TODO make text selectable
+  // TODO make default rendering look nicer
   return (
     <View>
       <WrapperComponent
@@ -84,7 +85,9 @@ const Content: React.FC<ContentProps> = ({ content, renderer }) => {
   return renderer ? (
     renderer(content)
   ) : (
-    <Text style={{ color: 'white' }}>{content}</Text>
+    <Text style={{ color: 'white' }} selectable>
+      {content}
+    </Text>
   );
 };
 

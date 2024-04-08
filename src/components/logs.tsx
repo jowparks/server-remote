@@ -54,7 +54,7 @@ export default function Logs({ command, refreshCommand }: LogsProps) {
       layoutMeasurement.height + contentOffset.y >= contentSize.height;
     setIsAtEnd(isAtEnd);
   };
-
+  // TODO make text selectable
   return (
     <View flex={1}>
       <ScrollView

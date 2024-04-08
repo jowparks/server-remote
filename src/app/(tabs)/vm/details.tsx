@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, View } from 'tamagui';
-import JsonTree from '../../../components/json-tree';
 import { useVirshVms } from '../../../contexts/virtual-machines';
+import JsonViewer from '../../../components/json';
 
 export default function JsonScreen() {
   const { currentVmName, virshVms } = useVirshVms();
@@ -10,7 +10,7 @@ export default function JsonScreen() {
   return (
     <View flex={1} alignItems="center">
       <ScrollView>
-        <JsonTree data={vm as Record<string, unknown>} />
+        <JsonViewer data={vm as Record<string, unknown>} />
       </ScrollView>
     </View>
   );

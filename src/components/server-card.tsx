@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Card, H4, Paragraph } from 'tamagui';
-import { Server } from '../typing/types';
 import ContextMenuView from 'react-native-context-menu-view';
 import { Animated } from 'react-native';
+import { Server } from '../typing/server';
 
 export type ServerCardProps = {
   server: Server;

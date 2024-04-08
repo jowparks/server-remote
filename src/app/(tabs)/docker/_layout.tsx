@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { DockerContainerProvider } from '../../../contexts/docker-container';
 import { useSshServerConnection } from '../../../contexts/ssh-client';
 import { PtyType } from '@jowparks/react-native-ssh-sftp';
+import root from '../../../components/root-button';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -40,19 +41,27 @@ function DockerLayoutNav() {
       <Stack>
         <Stack.Screen
           name="list"
-          options={{ headerShown: true, title: 'Docker' }}
+          options={{
+            headerShown: true,
+            title: 'Docker',
+            headerRight: root,
+          }}
         />
         <Stack.Screen
           name="menu"
-          options={{ headerShown: true, title: 'Menu' }}
+          options={{ headerShown: true, title: 'Menu', headerRight: root }}
         />
         <Stack.Screen
           name="details"
-          options={{ headerShown: true, title: 'Details' }}
+          options={{
+            headerShown: true,
+            title: 'Details',
+            headerRight: root,
+          }}
         />
         <Stack.Screen
           name="logs"
-          options={{ headerShown: true, title: 'Logs' }}
+          options={{ headerShown: true, title: 'Logs', headerRight: root }}
         />
       </Stack>
     </DockerContainerProvider>
