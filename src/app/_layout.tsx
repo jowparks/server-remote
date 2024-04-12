@@ -12,6 +12,8 @@ import { ToastProvider, ToastViewport } from '@tamagui/toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ServerConnectionProvider } from '../contexts/ssh-client';
 import React from 'react';
+import { DockerContainerProvider } from '../contexts/docker-container';
+import { VirshVmProvider } from '../contexts/virtual-machines';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -54,19 +56,29 @@ function RootLayoutNav() {
       {/* <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}> */}
       <ThemeProvider value={DarkTheme}>
         <ServerConnectionProvider>
-          <ToastProvider>
-            <ToastViewport
-              flexDirection="column-reverse"
-              top={top}
-              left={left}
-              right={right}
-            />
-            <Stack>
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-            </Stack>
-          </ToastProvider>
+          <VirshVmProvider>
+            <DockerContainerProvider>
+              <ToastProvider>
+                <ToastViewport
+                  flexDirection="column-reverse"
+                  top={top}
+                  left={left}
+                  right={right}
+                />
+                <Stack>
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="modal"
+                    options={{ presentation: 'modal' }}
+                  />
+                </Stack>
+              </ToastProvider>
+            </DockerContainerProvider>
+          </VirshVmProvider>
         </ServerConnectionProvider>
       </ThemeProvider>
     </TamaguiProvider>

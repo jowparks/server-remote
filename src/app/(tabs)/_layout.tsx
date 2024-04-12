@@ -22,12 +22,6 @@ export default function TabLayout() {
           headerShown: false,
         }}
       />
-      <Tabs.Screen
-        name="wiregaurd"
-        options={{
-          headerShown: false,
-        }}
-      />
     </Tabs>
   );
 }

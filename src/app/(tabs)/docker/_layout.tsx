@@ -1,8 +1,6 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import { DockerContainerProvider } from '../../../contexts/docker-container';
 import { useSshServerConnection } from '../../../contexts/ssh-client';
-import { PtyType } from '@jowparks/react-native-ssh-sftp';
 import root from '../../../components/root-button';
 
 export {
@@ -37,33 +35,31 @@ function DockerLayoutNav() {
   //   return () => sshClient?.closeShell();
   // }, []);
   return (
-    <DockerContainerProvider>
-      <Stack>
-        <Stack.Screen
-          name="list"
-          options={{
-            headerShown: true,
-            title: 'Docker',
-            headerRight: root,
-          }}
-        />
-        <Stack.Screen
-          name="menu"
-          options={{ headerShown: true, title: 'Menu', headerRight: root }}
-        />
-        <Stack.Screen
-          name="details"
-          options={{
-            headerShown: true,
-            title: 'Details',
-            headerRight: root,
-          }}
-        />
-        <Stack.Screen
-          name="logs"
-          options={{ headerShown: true, title: 'Logs', headerRight: root }}
-        />
-      </Stack>
-    </DockerContainerProvider>
+    <Stack>
+      <Stack.Screen
+        name="list"
+        options={{
+          headerShown: true,
+          title: 'Docker',
+          headerRight: root,
+        }}
+      />
+      <Stack.Screen
+        name="menu"
+        options={{ headerShown: true, title: 'Menu', headerRight: root }}
+      />
+      <Stack.Screen
+        name="details"
+        options={{
+          headerShown: true,
+          title: 'Details',
+          headerRight: root,
+        }}
+      />
+      <Stack.Screen
+        name="logs"
+        options={{ headerShown: true, title: 'Logs', headerRight: root }}
+      />
+    </Stack>
   );
 }

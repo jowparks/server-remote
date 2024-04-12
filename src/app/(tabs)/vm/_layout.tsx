@@ -1,6 +1,5 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import { VirshVmProvider } from '../../../contexts/virtual-machines';
 import root from '../../../components/root-button';
 
 export {
@@ -14,29 +13,27 @@ export default function VmLayout() {
 
 function VmLayoutNav() {
   return (
-    <VirshVmProvider>
-      <Stack>
-        <Stack.Screen
-          name="list"
-          options={{ headerShown: true, title: 'VMs', headerRight: root }}
-        />
-        <Stack.Screen
-          name="menu"
-          options={{ headerShown: true, title: 'Menu', headerRight: root }}
-        />
-        <Stack.Screen
-          name="details"
-          options={{
-            headerShown: true,
-            title: 'Details',
-            headerRight: root,
-          }}
-        />
-        <Stack.Screen
-          name="logs"
-          options={{ headerShown: true, title: 'Logs', headerRight: root }}
-        />
-      </Stack>
-    </VirshVmProvider>
+    <Stack>
+      <Stack.Screen
+        name="list"
+        options={{ headerShown: true, title: 'VMs', headerRight: root }}
+      />
+      <Stack.Screen
+        name="menu"
+        options={{ headerShown: true, title: 'Menu', headerRight: root }}
+      />
+      <Stack.Screen
+        name="details"
+        options={{
+          headerShown: true,
+          title: 'Details',
+          headerRight: root,
+        }}
+      />
+      <Stack.Screen
+        name="logs"
+        options={{ headerShown: true, title: 'Logs', headerRight: root }}
+      />
+    </Stack>
   );
 }
