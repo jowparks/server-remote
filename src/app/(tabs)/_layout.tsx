@@ -22,6 +22,12 @@ export default function TabLayout() {
           headerShown: false,
         }}
       />
+      <Tabs.Screen
+        name="files"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 }

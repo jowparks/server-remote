@@ -1,6 +1,5 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import { useSshServerConnection } from '../../../contexts/ssh-client';
 import root from '../../../components/root-button';
 
 export {
@@ -13,8 +12,6 @@ export default function DockerLayout() {
 }
 
 function DockerLayoutNav() {
-  const { sshClient } = useSshServerConnection();
-
   // TODO use better spinner
   // useEffect(() => {
   //   if (!sshClient) return;
