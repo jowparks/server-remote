@@ -8,6 +8,7 @@ import {
   Spinner,
 } from 'tamagui';
 import { useSshServerConnection } from '../../../contexts/ssh-client';
+import ContextMenuView from 'react-native-context-menu-view';
 import { LsResult } from '@jowparks/react-native-ssh-sftp';
 import { ChevronRight } from '@tamagui/lucide-icons';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -69,14 +70,32 @@ const DirectoryBrowser = () => {
         >
           {contents?.map((item) => (
             <YGroup.Item>
-              <ListItem
-                hoverTheme
-                pressTheme
-                title={item.filename}
-                onPress={() => handlePress(item)}
-                subTitle="Subtitle"
-                iconAfter={item.isDirectory ? ChevronRight : undefined}
-              />
+              <ContextMenuView
+                actions={[
+                  { title: 'Get Info', systemIcon: 'info.circle' },
+                  { title: 'Copy', systemIcon: 'doc.on.doc' },
+                  { title: 'Move', systemIcon: 'folder' },
+                  { title: 'Rename', systemIcon: 'pencil' },
+                  { title: 'Compress', systemIcon: 'arrowshape.turn.up.right' },
+                  { title: 'Duplicate', systemIcon: 'plus.square.on.square' },
+                  { title: 'Compress', systemIcon: 'archivebox' },
+                  { title: 'Share', systemIcon: 'square.and.arrow.up' },
+                  { title: 'Delete', systemIcon: 'trash', destructive: true },
+                ]}
+                onPress={(event) => {
+                  event.nativeEvent.index == 0 ? () => {} : () => {};
+                }}
+                previewBackgroundColor="transparent"
+              >
+                <ListItem
+                  hoverTheme
+                  pressTheme
+                  title={item.filename}
+                  onPress={() => handlePress(item)}
+                  subTitle="Subtitle"
+                  iconAfter={item.isDirectory ? ChevronRight : undefined}
+                />
+              </ContextMenuView>
             </YGroup.Item>
           ))}
         </YGroup>
