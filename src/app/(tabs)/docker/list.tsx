@@ -2,12 +2,12 @@ import { View } from 'tamagui';
 import React from 'react';
 
 import { Separator, Spinner, YGroup } from 'tamagui';
-import { useSshServerConnection } from '../../../contexts/ssh-client';
+import { useSsh } from '../../../contexts/ssh';
 import { useEffect, useState } from 'react';
 import { parseDockerContainerPs } from '../../../util/docker/util';
 import { DockerContainer } from '../../../typing/docker';
 import { useRouter } from 'expo-router';
-import { useDockerContainers } from '../../../contexts/docker-container';
+import { useDocker } from '../../../contexts/docker';
 import ContainerCard from '../../../components/container-card';
 
 export default function DockerScreen() {
@@ -19,9 +19,8 @@ export default function DockerScreen() {
 }
 
 function DockerList() {
-  const { sshClient } = useSshServerConnection();
-  const { dockerContainers, setDockerContainers, setCurrentContainerId } =
-    useDockerContainers();
+  const { sshClient } = useSsh();
+  const { containers, setContainers, setCurrentContainerId } = useDocker();
   const [loaded, setLoaded] = useState(false);
   const [trigger, setTrigger] = useState(false);
 
@@ -45,7 +44,7 @@ function DockerList() {
           }
         })
         .filter(Boolean) as DockerContainer[];
-      setDockerContainers(parsedContainers);
+      setContainers(parsedContainers);
       setLoaded(true);
     };
     // Call fetchContainers immediately
@@ -124,7 +123,7 @@ function DockerList() {
       separator={<Separator />}
     >
       <YGroup.Item>
-        {dockerContainers.map((container) => (
+        {containers.map((container) => (
           <ContainerCard
             key={container.ID}
             name={container.Image?.split('/').pop() || 'N/A'}

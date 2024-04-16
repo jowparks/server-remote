@@ -5,11 +5,11 @@ import ServerModal from './modal';
 import { getItem, setItem } from '../storage/secure';
 import ServerCard from '../components/server-card';
 import { router } from 'expo-router';
-import { useSshServerConnection } from '../contexts/ssh-client';
+import { useSsh } from '../contexts/ssh';
 import { Server } from '../typing/server';
 
 export default function ServerSelectScreen() {
-  const { setSshServer } = useSshServerConnection();
+  const { setSshServer } = useSsh();
 
   const [servers, setServers] = useState<Server[]>([]);
   const [serverModalOpen, setServerModalOpen] = useState(false);

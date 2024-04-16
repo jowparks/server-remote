@@ -10,10 +10,10 @@ import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
 import { ToastProvider, ToastViewport } from '@tamagui/toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ServerConnectionProvider } from '../contexts/ssh-client';
+import { SshProvider } from '../contexts/ssh';
 import React from 'react';
-import { DockerContainerProvider } from '../contexts/docker-container';
-import { VirshVmProvider } from '../contexts/virtual-machines';
+import { DockerProvider } from '../contexts/docker';
+import { VmProvider } from '../contexts/vm';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -55,9 +55,9 @@ function RootLayoutNav() {
     <TamaguiProvider config={config} defaultTheme={colorScheme as any}>
       {/* <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}> */}
       <ThemeProvider value={DarkTheme}>
-        <ServerConnectionProvider>
-          <VirshVmProvider>
-            <DockerContainerProvider>
+        <SshProvider>
+          <VmProvider>
+            <DockerProvider>
               <ToastProvider>
                 <ToastViewport
                   flexDirection="column-reverse"
@@ -77,9 +77,9 @@ function RootLayoutNav() {
                   />
                 </Stack>
               </ToastProvider>
-            </DockerContainerProvider>
-          </VirshVmProvider>
-        </ServerConnectionProvider>
+            </DockerProvider>
+          </VmProvider>
+        </SshProvider>
       </ThemeProvider>
     </TamaguiProvider>
   );

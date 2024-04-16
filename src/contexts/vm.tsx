@@ -2,43 +2,43 @@ import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { VirshVm } from '../typing/virsh';
 
 // Create the context
-interface VirshVmContextValue {
-  virshVms: VirshVm[];
-  setVirshVms: React.Dispatch<React.SetStateAction<VirshVm[]>>;
+interface VmContextValue {
+  vms: VirshVm[];
+  setVms: React.Dispatch<React.SetStateAction<VirshVm[]>>;
   currentVmName: string | null;
   setCurrentVmName: React.Dispatch<React.SetStateAction<string | null>>;
 }
-const VirshVmContext = createContext<VirshVmContextValue>({
-  virshVms: [],
-  setVirshVms: () => {},
+const VmContext = createContext<VmContextValue>({
+  vms: [],
+  setVms: () => {},
   currentVmName: null,
   setCurrentVmName: () => {},
 });
 
 // Create the provider component
-export function VirshVmProvider({ children }: { children: ReactNode }) {
-  const [virshVms, setVirshVms] = useState<VirshVm[]>([]);
+export function VmProvider({ children }: { children: ReactNode }) {
+  const [vms, setVms] = useState<VirshVm[]>([]);
   const [currentVmName, setCurrentVmName] = useState<string | null>(null);
 
   return (
-    <VirshVmContext.Provider
+    <VmContext.Provider
       value={{
-        virshVms,
-        setVirshVms,
+        vms,
+        setVms,
         currentVmName,
         setCurrentVmName,
       }}
     >
       {children}
-    </VirshVmContext.Provider>
+    </VmContext.Provider>
   );
 }
 
 // Create a custom hook to use the VirshVm context
-export function useVirshVms() {
-  const context = useContext(VirshVmContext);
+export function useVms() {
+  const context = useContext(VmContext);
   if (context === undefined) {
-    throw new Error('useVirshVms must be used within a VirshVmProvider');
+    throw new Error('useVms must be used within a VmProvider');
   }
   return context;
 }

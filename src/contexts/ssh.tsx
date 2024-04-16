@@ -9,23 +9,19 @@ import React, {
 import { Server } from '../typing/server';
 
 // Create the context
-interface ServerContextValue {
+interface SshContextValue {
   sshServer: Server | null;
   setSshServer: React.Dispatch<React.SetStateAction<Server | null>>;
   sshClient: SSHClient | null;
 }
-const SshServerConnectionContext = createContext<ServerContextValue>({
+const SshContext = createContext<SshContextValue>({
   sshServer: null,
   setSshServer: () => {},
   sshClient: null,
 });
 
 // Create the provider component
-export function ServerConnectionProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function SshProvider({ children }: { children: ReactNode }) {
   const [server, setSshServer] = useState<Server | null>(null);
   const [sshClient, setSSHClient] = useState<SSHClient | null>(null);
 
@@ -71,17 +67,15 @@ export function ServerConnectionProvider({
   }, [server]);
 
   return (
-    <SshServerConnectionContext.Provider
-      value={{ sshServer: server, setSshServer, sshClient }}
-    >
+    <SshContext.Provider value={{ sshServer: server, setSshServer, sshClient }}>
       {children}
-    </SshServerConnectionContext.Provider>
+    </SshContext.Provider>
   );
 }
 
 // Create a custom hook to use the server connection context
-export function useSshServerConnection() {
-  const context = useContext(SshServerConnectionContext);
+export function useSsh() {
+  const context = useContext(SshContext);
   if (context === undefined) {
     throw new Error(
       'useServerConnection must be used within a ServerConnectionProvider',

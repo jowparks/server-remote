@@ -30,7 +30,7 @@ export default function TabLayout() {
           headerShown: false,
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons
-              name={focused ? 'desktop' : 'desktop-outline'}
+              name={focused ? 'desktop-outline' : 'desktop-outline'}
               size={size}
               color={color}
             />
@@ -43,7 +43,7 @@ export default function TabLayout() {
           headerShown: false,
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons
-              name={focused ? 'folder' : 'folder-outline'}
+              name={focused ? 'folder-outline' : 'folder-outline'}
               size={size}
               color={color}
             />

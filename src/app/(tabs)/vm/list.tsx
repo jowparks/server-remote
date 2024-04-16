@@ -1,9 +1,9 @@
 import { Separator, Spinner, View, YGroup } from 'tamagui';
 import React, { useEffect, useState } from 'react';
-import { useSshServerConnection } from '../../../contexts/ssh-client';
+import { useSsh } from '../../../contexts/ssh';
 import { parseVirshDumpXML } from '../../../util/vm/util';
 import ContainerCard from '../../../components/container-card';
-import { useVirshVms } from '../../../contexts/virtual-machines';
+import { useVms } from '../../../contexts/vm';
 import { VirshVm } from '../../../typing/virsh';
 import { useRouter } from 'expo-router';
 
@@ -16,8 +16,8 @@ export default function VmList() {
 }
 
 function VmListScreen() {
-  const { sshClient } = useSshServerConnection();
-  const { virshVms, setVirshVms, setCurrentVmName } = useVirshVms();
+  const { sshClient } = useSsh();
+  const { vms, setVms, setCurrentVmName } = useVms();
   const [loaded, setLoaded] = useState(false);
   const [trigger, setTrigger] = useState(false);
   const router = useRouter();
@@ -53,7 +53,7 @@ function VmListScreen() {
         );
         return { ...vm, state: stateObj?.state || '' };
       });
-      setVirshVms(vms);
+      setVms(vms);
       setLoaded(true);
     };
     fetchVms();
@@ -130,7 +130,7 @@ function VmListScreen() {
       separator={<Separator />}
     >
       <YGroup.Item>
-        {virshVms.map((vm) => (
+        {vms.map((vm) => (
           <ContainerCard
             key={vm.domain.name[0]}
             name={vm.domain.name[0]}

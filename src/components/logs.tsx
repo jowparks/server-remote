@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useSshServerConnection } from '../contexts/ssh-client';
+import { useSsh } from '../contexts/ssh';
 import { View, Text } from 'tamagui';
 import { ScrollView } from 'react-native';
 
@@ -9,7 +9,7 @@ export type LogsProps = {
 };
 
 export default function Logs({ command, refreshCommand }: LogsProps) {
-  const { sshClient } = useSshServerConnection();
+  const { sshClient } = useSsh();
   const [logs, setLogs] = useState<string>('');
   const scrollViewRef = useRef<ScrollView>(null);
   const [isAtEnd, setIsAtEnd] = useState(true);

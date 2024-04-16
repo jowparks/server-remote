@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import Logs from '../../../components/logs';
-import { useDockerContainers } from '../../../contexts/docker-container';
+import { useDocker } from '../../../contexts/docker';
 import { Spinner } from 'tamagui';
 
 export default function LogsScreen() {
-  const { currentContainerId, dockerContainers } = useDockerContainers();
+  const { currentContainerId, containers } = useDocker();
   const [command, setCommand] = useState<string | null>(null);
   const [refreshCommand, setRefreshCommand] = useState<string | null>(null);
   useEffect(() => {
-    let container = dockerContainers.find((c) => c.ID === currentContainerId);
+    let container = containers.find((c) => c.ID === currentContainerId);
     if (!container) return;
     setCommand(`docker logs ${container.ID}`);
     setRefreshCommand(`docker logs --since 2s ${container.ID}`);

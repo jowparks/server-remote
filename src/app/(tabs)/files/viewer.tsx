@@ -7,7 +7,7 @@ import {
   View,
   Spinner,
 } from 'tamagui';
-import { useSshServerConnection } from '../../../contexts/ssh-client';
+import { useSsh } from '../../../contexts/ssh';
 import ContextMenuView from 'react-native-context-menu-view';
 import { LsResult } from '@jowparks/react-native-ssh-sftp';
 import { ChevronRight } from '@tamagui/lucide-icons';
@@ -19,7 +19,7 @@ const DirectoryBrowser = () => {
   const navigation = useNavigation();
   const initialPath = Array.isArray(params.path) ? params.path[0] : params.path;
   const path = initialPath || '/';
-  const { sshClient } = useSshServerConnection();
+  const { sshClient } = useSsh();
   const [contents, setContents] = useState<LsResult[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -92,7 +92,7 @@ const DirectoryBrowser = () => {
                   pressTheme
                   title={item.filename}
                   onPress={() => handlePress(item)}
-                  subTitle="Subtitle"
+                  subTitle="TODO"
                   iconAfter={item.isDirectory ? ChevronRight : undefined}
                 />
               </ContextMenuView>

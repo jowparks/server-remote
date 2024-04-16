@@ -1,11 +1,11 @@
 import React from 'react';
 import { ScrollView, View } from 'tamagui';
-import { useDockerContainers } from '../../../contexts/docker-container';
+import { useDocker } from '../../../contexts/docker';
 import JsonViewer from '../../../components/json';
 
 export default function JsonScreen() {
-  const { currentContainerId, dockerContainers } = useDockerContainers();
-  let container = dockerContainers.find((c) => c.ID === currentContainerId);
+  const { currentContainerId, containers } = useDocker();
+  let container = containers.find((c) => c.ID === currentContainerId);
 
   // TODO fix error with created at
   container = container
