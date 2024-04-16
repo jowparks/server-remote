@@ -60,6 +60,29 @@ export function SshProvider({ children }: { children: ReactNode }) {
           },
         );
       }
+      if (!client) {
+        throw new Error('Failed to connect to server');
+      }
+      // Used for reconnecting on any error
+      // const sshClientProxy = new Proxy(client, {
+      //   get: function (target, prop, receiver) {
+      //     if (typeof target[prop] === 'function') {
+      //       return async function (...args) {
+      //         try {
+      //           return await target[prop].apply(target, args);
+      //         } catch (error) {
+      //           console.error('Error executing command, reconnecting...');
+      //           // Reconnect using the appropriate method
+      //           await connectToServer();
+      //           // Retry the command
+      //           return await target[prop].apply(target, args);
+      //         }
+      //       };
+      //     } else {
+      //       return target[prop];
+      //     }
+      //   },
+      // });
       setSSHClient(client);
     };
 

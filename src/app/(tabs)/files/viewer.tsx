@@ -12,6 +12,18 @@ import ContextMenuView from 'react-native-context-menu-view';
 import { LsResult } from '@jowparks/react-native-ssh-sftp';
 import { ChevronRight } from '@tamagui/lucide-icons';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import DocumentPicker from 'react-native-document-picker';
+
+enum FileContext {
+  GetInfo = 'Get Info',
+  Download = 'Download',
+  Copy = 'Copy',
+  Move = 'Move',
+  Rename = 'Rename',
+  Duplicate = 'Duplicate',
+  Compress = 'Compress',
+  Delete = 'Delete',
+}
 
 const DirectoryBrowser = () => {
   const router = useRouter();
@@ -22,6 +34,7 @@ const DirectoryBrowser = () => {
   const { sshClient } = useSsh();
   const [contents, setContents] = useState<LsResult[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloadLocation, setDownloadLocation] = useState<string | null>(null);
 
   navigation.setOptions({ title: path });
 
@@ -48,12 +61,38 @@ const DirectoryBrowser = () => {
   }, []);
 
   const handlePress = (item: LsResult) => {
+    console.log('Pressed:', item);
     if (item.isDirectory) {
       router.push({
         pathname: '(tabs)/files/viewer',
         params: { path: `${path}${item.filename}` },
       });
     }
+  };
+
+  const handleDownload = async (item: LsResult) => {
+    if (item.isDirectory) {
+      console.error('Downloading directory not supported');
+      return;
+    }
+    if (!sshClient) return;
+    const directory = await DocumentPicker.pickDirectory({
+      presentationStyle: 'pageSheet',
+    });
+    if (!directory?.uri) return;
+    const targetPath = directory.uri.replace('file://', '');
+    console.log(`Downloading from: ${path}${item.filename} to ${targetPath}`);
+    await sshClient.sftpDownload(
+      `${path}${item.filename}`,
+      targetPath,
+      (error) => {
+        if (error) {
+          console.warn('Download failed:', error);
+        } else {
+          console.log('Download successful');
+        }
+      },
+    );
   };
 
   return loading ? (
@@ -72,18 +111,54 @@ const DirectoryBrowser = () => {
             <YGroup.Item>
               <ContextMenuView
                 actions={[
-                  { title: 'Get Info', systemIcon: 'info.circle' },
-                  { title: 'Copy', systemIcon: 'doc.on.doc' },
-                  { title: 'Move', systemIcon: 'folder' },
-                  { title: 'Rename', systemIcon: 'pencil' },
-                  { title: 'Compress', systemIcon: 'arrowshape.turn.up.right' },
-                  { title: 'Duplicate', systemIcon: 'plus.square.on.square' },
-                  { title: 'Compress', systemIcon: 'archivebox' },
-                  { title: 'Share', systemIcon: 'square.and.arrow.up' },
-                  { title: 'Delete', systemIcon: 'trash', destructive: true },
+                  { title: FileContext.GetInfo, systemIcon: 'info.circle' },
+                  {
+                    title: FileContext.Download,
+                    systemIcon: 'square.and.arrow.down',
+                  },
+                  { title: FileContext.Copy, systemIcon: 'doc.on.doc' },
+                  { title: FileContext.Move, systemIcon: 'folder' },
+                  { title: FileContext.Rename, systemIcon: 'pencil' },
+                  {
+                    title: FileContext.Duplicate,
+                    systemIcon: 'plus.square.on.square',
+                  },
+                  { title: FileContext.Compress, systemIcon: 'archivebox' },
+                  {
+                    title: FileContext.Delete,
+                    systemIcon: 'trash',
+                    destructive: true,
+                  },
                 ]}
                 onPress={(event) => {
-                  event.nativeEvent.index == 0 ? () => {} : () => {};
+                  switch (event.nativeEvent.name) {
+                    case FileContext.GetInfo:
+                      console.log('Get Info');
+                      break;
+                    case FileContext.Download:
+                      handleDownload(item);
+                      break;
+                    case FileContext.Copy:
+                      console.log('Copy');
+                      break;
+                    case FileContext.Move:
+                      console.log('Move');
+                      break;
+                    case FileContext.Rename:
+                      console.log('Rename');
+                      break;
+                    case FileContext.Duplicate:
+                      console.log('Duplicate');
+                      break;
+                    case FileContext.Compress:
+                      console.log('Compress');
+                      break;
+                    case FileContext.Delete:
+                      console.log('Delete');
+                      break;
+                    default:
+                      break;
+                  }
                 }}
                 previewBackgroundColor="transparent"
               >
