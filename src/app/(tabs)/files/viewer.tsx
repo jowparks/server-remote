@@ -80,7 +80,7 @@ const DirectoryBrowser = () => {
       presentationStyle: 'pageSheet',
     });
     if (!directory?.uri) return;
-    const targetPath = directory.uri.replace('file://', '');
+    const targetPath = decodeURI(directory.uri.replace('file://', ''));
     console.log(`Downloading from: ${path}${item.filename} to ${targetPath}`);
     await sshClient.sftpDownload(
       `${path}${item.filename}`,
