@@ -95,6 +95,13 @@ const DirectoryBrowser = () => {
     );
   };
 
+  function handleInfo(item: LsResult) {
+    router.push({
+      pathname: '(tabs)/files/info',
+      params: { item },
+    });
+  }
+
   return loading ? (
     <Spinner />
   ) : (
@@ -133,7 +140,7 @@ const DirectoryBrowser = () => {
                 onPress={(event) => {
                   switch (event.nativeEvent.name) {
                     case FileContext.GetInfo:
-                      console.log('Get Info');
+                      handleInfo(item);
                       break;
                     case FileContext.Download:
                       handleDownload(item);

@@ -18,6 +18,7 @@ function FilesLayoutNav() {
         name="viewer"
         options={{ headerShown: true, title: 'Files', headerRight: root }}
       />
+      <Stack.Screen name="info" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }
