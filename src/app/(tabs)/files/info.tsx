@@ -1,8 +1,17 @@
-import { Link } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ListItem, Separator, View, YGroup, Text } from 'tamagui';
+import { useFiles } from '../../../contexts/files';
+import { fileInfoKeyMap } from '../../../util/files/util';
+import { useNavigation } from 'expo-router';
 
 export default function InfoScreen() {
+  const { currentFile } = useFiles();
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({ title: currentFile?.fileName });
+  }, [currentFile, navigation]);
+
+  if (!currentFile) return null;
   return (
     <View flex={1} alignItems="center">
       <YGroup
@@ -13,32 +22,22 @@ export default function InfoScreen() {
         separator={<Separator />}
       >
         <YGroup.Item>
-          <ListItem
-            elevate
-            size="$4"
-            bordered
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Text>File Size</Text>
-            <Text>1024 KB</Text>
-          </ListItem>
-          <ListItem
-            elevate
-            size="$4"
-            bordered
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Text>Last Modified</Text>
-            <Text>2022-01-01</Text>
-          </ListItem>
+          {Object.keys(currentFile).map((key) => (
+            <ListItem
+              key={key}
+              elevate
+              size="$4"
+              bordered
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <Text>{fileInfoKeyMap[key]}</Text>
+              <Text>{currentFile[key]}</Text>
+            </ListItem>
+          ))}
         </YGroup.Item>
       </YGroup>
     </View>

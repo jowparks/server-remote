@@ -9,10 +9,11 @@ import {
 } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
 import ContextMenuView from 'react-native-context-menu-view';
-import { LsResult } from '@jowparks/react-native-ssh-sftp';
 import { ChevronRight } from '@tamagui/lucide-icons';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
+import { FileInfo, fileCommand, parseFileInfo } from '../../../util/files/util';
+import { useFiles } from '../../../contexts/files';
 
 enum FileContext {
   GetInfo = 'Get Info',
@@ -32,46 +33,45 @@ const DirectoryBrowser = () => {
   const initialPath = Array.isArray(params.path) ? params.path[0] : params.path;
   const path = initialPath || '/';
   const { sshClient } = useSsh();
-  const [contents, setContents] = useState<LsResult[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [downloadLocation, setDownloadLocation] = useState<string | null>(null);
+  const { files, setFiles, setCurrentFile } = useFiles();
 
-  navigation.setOptions({ title: path });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDirectory = async () => {
-      setLoading(true);
+    navigation.setOptions({ title: path });
+  }, [path, navigation]);
+
+  useEffect(() => {
+    setLoading(true);
+    const fetchFileInfo = async () => {
       if (!sshClient) return;
-      sshClient.sftpLs(path, (error, response) => {
-        if (!response) return;
-        if (error) {
-          console.warn(error);
-          return;
-        }
-        // actually a list of strings as json
-        const data = (response as unknown as string[]).map((item) =>
-          JSON.parse(item),
-        ) as LsResult[];
-        setContents(data);
-        setLoading(false);
-      });
+      const response = await sshClient.execute(fileCommand(path));
+      const lines = response?.split('\n').filter((line) => line !== '');
+      if (!lines) return;
+      const files = lines
+        .map(parseFileInfo)
+        .filter((file) => file.filePath !== path)
+        .sort((a, b) => a.filePath.localeCompare(b.filePath));
+      setFiles(files);
+      setLoading(false);
     };
 
-    fetchDirectory();
+    fetchFileInfo();
   }, []);
 
-  const handlePress = (item: LsResult) => {
+  const handlePress = (item: FileInfo) => {
     console.log('Pressed:', item);
-    if (item.isDirectory) {
+    setCurrentFile(item);
+    if (item.fileType === 'd') {
       router.push({
         pathname: '(tabs)/files/viewer',
-        params: { path: `${path}${item.filename}` },
+        params: { path: `${path}${item.fileName}` },
       });
     }
   };
 
-  const handleDownload = async (item: LsResult) => {
-    if (item.isDirectory) {
+  const handleDownload = async (item: FileInfo) => {
+    if (item.fileType === 'd') {
       console.error('Downloading directory not supported');
       return;
     }
@@ -81,9 +81,9 @@ const DirectoryBrowser = () => {
     });
     if (!directory?.uri) return;
     const targetPath = decodeURI(directory.uri.replace('file://', ''));
-    console.log(`Downloading from: ${path}${item.filename} to ${targetPath}`);
+    console.log(`Downloading from: ${path}${item.fileName} to ${targetPath}`);
     await sshClient.sftpDownload(
-      `${path}${item.filename}`,
+      `${path}${item.fileName}`,
       targetPath,
       (error) => {
         if (error) {
@@ -95,10 +95,10 @@ const DirectoryBrowser = () => {
     );
   };
 
-  function handleInfo(item: LsResult) {
+  function handleInfo(file: FileInfo) {
     router.push({
       pathname: '(tabs)/files/info',
-      params: { item },
+      params: { file },
     });
   }
 
@@ -114,7 +114,7 @@ const DirectoryBrowser = () => {
           size="$5"
           separator={<Separator />}
         >
-          {contents?.map((item) => (
+          {files?.map((item) => (
             <YGroup.Item>
               <ContextMenuView
                 actions={[
@@ -138,6 +138,7 @@ const DirectoryBrowser = () => {
                   },
                 ]}
                 onPress={(event) => {
+                  setCurrentFile(item);
                   switch (event.nativeEvent.name) {
                     case FileContext.GetInfo:
                       handleInfo(item);
@@ -172,10 +173,10 @@ const DirectoryBrowser = () => {
                 <ListItem
                   hoverTheme
                   pressTheme
-                  title={item.filename}
+                  title={item.fileName}
                   onPress={() => handlePress(item)}
                   subTitle="TODO"
-                  iconAfter={item.isDirectory ? ChevronRight : undefined}
+                  iconAfter={item.fileType === 'd' ? ChevronRight : undefined}
                 />
               </ContextMenuView>
             </YGroup.Item>

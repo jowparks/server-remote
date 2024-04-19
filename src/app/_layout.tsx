@@ -14,6 +14,7 @@ import { SshProvider } from '../contexts/ssh';
 import React from 'react';
 import { DockerProvider } from '../contexts/docker';
 import { VmProvider } from '../contexts/vm';
+import { FilesProvider } from '../contexts/files';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -58,25 +59,30 @@ function RootLayoutNav() {
         <SshProvider>
           <VmProvider>
             <DockerProvider>
-              <ToastProvider>
-                <ToastViewport
-                  flexDirection="column-reverse"
-                  top={top}
-                  left={left}
-                  right={right}
-                />
-                <Stack>
-                  <Stack.Screen name="index" options={{ headerShown: false }} />
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false }}
+              <FilesProvider>
+                <ToastProvider>
+                  <ToastViewport
+                    flexDirection="column-reverse"
+                    top={top}
+                    left={left}
+                    right={right}
                   />
-                  <Stack.Screen
-                    name="modal"
-                    options={{ presentation: 'modal' }}
-                  />
-                </Stack>
-              </ToastProvider>
+                  <Stack>
+                    <Stack.Screen
+                      name="index"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="modal"
+                      options={{ presentation: 'modal' }}
+                    />
+                  </Stack>
+                </ToastProvider>
+              </FilesProvider>
             </DockerProvider>
           </VmProvider>
         </SshProvider>

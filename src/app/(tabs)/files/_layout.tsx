@@ -16,7 +16,12 @@ function FilesLayoutNav() {
     <Stack>
       <Stack.Screen
         name="viewer"
-        options={{ headerShown: true, title: 'Files', headerRight: root }}
+        options={{
+          headerShown: true,
+          headerBackTitleVisible: false,
+          title: 'Files',
+          headerRight: root,
+        }}
       />
       <Stack.Screen name="info" options={{ presentation: 'modal' }} />
     </Stack>
