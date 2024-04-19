@@ -6,7 +6,7 @@ import { Server } from '../typing/server';
 
 type ServerModalProps = {
   open: boolean;
-  server?: Server;
+  server: Server | null;
   onOpenChange: (open: boolean) => void;
   onSaveServer: (server: Server) => void;
 };
@@ -18,19 +18,18 @@ export default function ServerModal({
   onOpenChange,
 }: ServerModalProps) {
   const [position, setPosition] = useState(0);
+  const defaultServer = {
+    host: '',
+    port: 22,
+    user: '',
+  };
   const [serverDetails, setServerDetails] = useState<Server>(
-    server ?? {
-      host: '',
-      port: 22,
-      user: '',
-    },
+    server ?? defaultServer,
   );
   const [testResult, setTestResult] = useState('');
 
   useEffect(() => {
-    if (server) {
-      setServerDetails(server);
-    }
+    setServerDetails(server ?? defaultServer);
   }, [server]);
 
   const handleAddServer = () => {
@@ -163,6 +162,7 @@ export default function ServerModal({
               size="$4"
               style={{ width: '90%' }}
               value={serverDetails.password}
+              secureTextEntry={true}
               onChange={(e) =>
                 setServerDetails({
                   ...serverDetails,

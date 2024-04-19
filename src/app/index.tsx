@@ -9,13 +9,10 @@ import { useSsh } from '../contexts/ssh';
 import { Server } from '../typing/server';
 
 export default function ServerSelectScreen() {
-  const { setSshServer } = useSsh();
+  const { sshServer, setSshServer } = useSsh();
 
   const [servers, setServers] = useState<Server[]>([]);
   const [serverModalOpen, setServerModalOpen] = useState(false);
-  const [currentServer, setCurrentServer] = useState<Server | undefined>(
-    undefined,
-  );
 
   useEffect(() => {
     // Load servers from AsyncStorage
@@ -39,7 +36,7 @@ export default function ServerSelectScreen() {
   };
 
   const updateServer = (server: Server) => {
-    const newServers = servers.map((s) => (s === currentServer ? server : s));
+    const newServers = servers.map((s) => (s === sshServer ? server : s));
     setItem('servers', newServers);
     setServers(newServers);
   };
@@ -50,13 +47,13 @@ export default function ServerSelectScreen() {
   };
 
   const handleServerEdit = (server: Server) => {
-    setCurrentServer(server);
+    setSshServer(server);
     setServerModalOpen(true);
   };
 
   const handleAddPress = () => {
+    setSshServer(null);
     setServerModalOpen(true);
-    setCurrentServer(undefined);
   };
 
   return (
@@ -80,10 +77,10 @@ export default function ServerSelectScreen() {
       </Button>
       <ServerModal
         open={serverModalOpen}
-        server={currentServer}
+        server={sshServer}
         onOpenChange={setServerModalOpen}
         onSaveServer={(server) =>
-          currentServer ? updateServer(server) : addServer(server)
+          sshServer ? updateServer(server) : addServer(server)
         }
       />
     </View>
