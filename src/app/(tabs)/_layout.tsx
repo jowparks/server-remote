@@ -1,13 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
+import { DarkBlueTheme } from '../../style/theme';
 
 export default function TabLayout() {
   const router = useRouter();
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: 'red',
+        tabBarActiveTintColor: 'white',
+        tabBarInactiveTintColor: 'grey',
+        tabBarActiveBackgroundColor: DarkBlueTheme.colors.background,
+        tabBarInactiveBackgroundColor: DarkBlueTheme.colors.background,
       }}
       initialRouteName="docker"
     >

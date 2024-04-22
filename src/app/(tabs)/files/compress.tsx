@@ -1,16 +1,5 @@
-import { Check } from '@tamagui/lucide-icons';
 import React, { useState } from 'react';
-import {
-  View,
-  Select,
-  Text,
-  Input,
-  Button,
-  Checkbox,
-  RadioGroup,
-  YStack,
-  Slider,
-} from 'tamagui';
+import { View, Text, Input, Button, RadioGroup, YStack, Slider } from 'tamagui';
 import { RadioGroupItemWithLabel } from '../../../components/radio';
 import { CheckboxWithLabel } from '../../../components/checkbox-labeled';
 
@@ -33,10 +22,40 @@ export default function CompressModal() {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleCompress = () => {
-    let command = 'tar';
+    let command = '';
 
-    if (compressionFormat === CompressionFormats.Tar) {
-      command += ' -c';
+    switch (compressionFormat) {
+      case CompressionFormats.Zip:
+        command = 'zip';
+        if (compressionLevel) {
+          command += ` -${compressionLevel}`;
+        }
+        if (includeSubdirectories) {
+          command += ' -r';
+        }
+        if (excludePattern) {
+          command += ` -x ${excludePattern}`;
+        }
+        command += ` ${outputName}`;
+        console.log(command);
+        return;
+      case CompressionFormats.TarBz2:
+        command = 'tar -I pbzip2';
+        if (compressionLevel) {
+          command += ` -${compressionLevel}`;
+        }
+        break;
+      case CompressionFormats.Tar:
+        command = 'tar -c';
+        break;
+      case CompressionFormats.TarGz:
+        command = 'tar -z';
+        if (compressionLevel) {
+          command += ` -${compressionLevel}`;
+        }
+        break;
+      default:
+        throw new Error(`Unsupported compression format: ${compressionFormat}`);
     }
 
     if (includeSubdirectories) {
@@ -52,6 +71,7 @@ export default function CompressModal() {
     }
 
     command += ` -cvf ${outputName}${compressionFormat}`;
+    console.log(command);
   };
 
   return (
@@ -65,15 +85,18 @@ export default function CompressModal() {
         />
         <RadioGroup
           aria-labelledby="Select one item"
-          defaultValue="3"
+          defaultValue={CompressionFormats.TarGz}
           name="form"
+          onValueChange={(value) =>
+            setCompressionFormat(value as CompressionFormats)
+          }
         >
           <YStack width={300} alignItems="center" space="$2">
             {Object.values(CompressionFormats).map((format, index) => (
               <RadioGroupItemWithLabel
                 key={index}
                 size="$3"
-                value={String(index)}
+                value={format}
                 label={format}
               />
             ))}
@@ -85,7 +108,13 @@ export default function CompressModal() {
         {showAdvanced && (
           <>
             <Text>Compression Level (1-9)</Text>
-            <Slider defaultValue={[6]} max={9} min={1} step={1}>
+            <Slider
+              defaultValue={[6]}
+              max={9}
+              min={1}
+              step={1}
+              onValueChange={(values) => setCompressionLevel(values[0])}
+            >
               <Slider.Track>
                 <Slider.TrackActive />
               </Slider.Track>

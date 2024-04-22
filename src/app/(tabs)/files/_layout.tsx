@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import root from '../../../components/root-button';
+import Exit from '../../../components/exit-button';
+import { DarkBlueTheme } from '../../../style/theme';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -18,13 +19,22 @@ function FilesLayoutNav() {
         name="viewer"
         options={{
           headerShown: true,
+          headerStyle: {
+            backgroundColor: DarkBlueTheme.colors.background,
+          },
           headerBackTitleVisible: false,
           title: 'Files',
-          headerRight: root,
+          headerRight: Exit,
         }}
       />
-      <Stack.Screen name="info" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="compress" />
+      <Stack.Screen
+        name="info"
+        options={{ presentation: 'modal', headerShown: false }}
+      />
+      <Stack.Screen
+        name="compress"
+        options={{ presentation: 'modal', headerShown: false }}
+      />
     </Stack>
   );
 }

@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import root from '../../../components/root-button';
+import Exit from '../../../components/exit-button';
+import { DarkBlueTheme } from '../../../style/theme';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -16,23 +17,47 @@ function VmLayoutNav() {
     <Stack>
       <Stack.Screen
         name="list"
-        options={{ headerShown: true, title: 'VMs', headerRight: root }}
+        options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: DarkBlueTheme.colors.background,
+          },
+          title: 'VMs',
+          headerRight: Exit,
+        }}
       />
       <Stack.Screen
         name="menu"
-        options={{ headerShown: true, title: 'Menu', headerRight: root }}
+        options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: DarkBlueTheme.colors.background,
+          },
+          title: 'Menu',
+          headerRight: Exit,
+        }}
       />
       <Stack.Screen
         name="details"
         options={{
           headerShown: true,
+          headerStyle: {
+            backgroundColor: DarkBlueTheme.colors.background,
+          },
           title: 'Details',
-          headerRight: root,
+          headerRight: Exit,
         }}
       />
       <Stack.Screen
         name="logs"
-        options={{ headerShown: true, title: 'Logs', headerRight: root }}
+        options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: DarkBlueTheme.colors.background,
+          },
+          title: 'Logs',
+          headerRight: Exit,
+        }}
       />
     </Stack>
   );

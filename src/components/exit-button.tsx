@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Button, Text } from 'tamagui';
 
-export default function root() {
+export default function Exit() {
   const router = useRouter();
   return (
     <Button unstyled onPress={() => router.navigate('/')}>
