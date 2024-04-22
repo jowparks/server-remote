@@ -26,7 +26,7 @@ enum FileContext {
   Delete = 'Delete',
 }
 
-const DirectoryBrowser = () => {
+const FolderViewer = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const navigation = useNavigation();
@@ -60,7 +60,6 @@ const DirectoryBrowser = () => {
   }, []);
 
   const handlePress = (item: FileInfo) => {
-    console.log('Pressed:', item);
     setCurrentFile(item);
     if (item.fileType === 'd') {
       router.push({
@@ -95,11 +94,12 @@ const DirectoryBrowser = () => {
     );
   };
 
-  function handleInfo(file: FileInfo) {
-    router.push({
-      pathname: '(tabs)/files/info',
-      params: { file },
-    });
+  function handleInfo() {
+    router.push('(tabs)/files/info');
+  }
+
+  function handleCompress() {
+    router.push('(tabs)/files/compress');
   }
 
   return loading ? (
@@ -115,7 +115,7 @@ const DirectoryBrowser = () => {
           separator={<Separator />}
         >
           {files?.map((item) => (
-            <YGroup.Item>
+            <YGroup.Item key={item.filePath}>
               <ContextMenuView
                 actions={[
                   { title: FileContext.GetInfo, systemIcon: 'info.circle' },
@@ -141,7 +141,7 @@ const DirectoryBrowser = () => {
                   setCurrentFile(item);
                   switch (event.nativeEvent.name) {
                     case FileContext.GetInfo:
-                      handleInfo(item);
+                      handleInfo();
                       break;
                     case FileContext.Download:
                       handleDownload(item);
@@ -159,7 +159,7 @@ const DirectoryBrowser = () => {
                       console.log('Duplicate');
                       break;
                     case FileContext.Compress:
-                      console.log('Compress');
+                      handleCompress();
                       break;
                     case FileContext.Delete:
                       console.log('Delete');
@@ -187,4 +187,4 @@ const DirectoryBrowser = () => {
   );
 };
 
-export default DirectoryBrowser;
+export default FolderViewer;

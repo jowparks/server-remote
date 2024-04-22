@@ -1,4 +1,3 @@
-import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { SplashScreen, Stack } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { TamaguiProvider } from 'tamagui';
@@ -15,6 +14,7 @@ import React from 'react';
 import { DockerProvider } from '../contexts/docker';
 import { VmProvider } from '../contexts/vm';
 import { FilesProvider } from '../contexts/files';
+import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -50,11 +50,12 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  // const colorScheme = useColorScheme();
   const { left, top, right } = useSafeAreaInsets();
   return (
-    <TamaguiProvider config={config} defaultTheme={colorScheme as any}>
+    <TamaguiProvider config={config} defaultTheme="dark_blue">
       {/* <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}> */}
+      {/* <ThemeProvider value={DarkTheme}> */}
       <ThemeProvider value={DarkTheme}>
         <SshProvider>
           <VmProvider>

@@ -24,6 +24,7 @@ function FilesLayoutNav() {
         }}
       />
       <Stack.Screen name="info" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="compress" />
     </Stack>
   );
 }

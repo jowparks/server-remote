@@ -10,7 +10,6 @@ export default function InfoScreen() {
   useEffect(() => {
     navigation.setOptions({ title: currentFile?.fileName });
   }, [currentFile, navigation]);
-
   if (!currentFile) return null;
   return (
     <View flex={1} alignItems="center">
@@ -21,10 +20,9 @@ export default function InfoScreen() {
         size="$5"
         separator={<Separator />}
       >
-        <YGroup.Item>
-          {Object.keys(currentFile).map((key) => (
+        {Object.keys(currentFile).map((key) => (
+          <YGroup.Item key={key}>
             <ListItem
-              key={key}
               elevate
               size="$4"
               bordered
@@ -37,8 +35,8 @@ export default function InfoScreen() {
               <Text>{fileInfoKeyMap[key]}</Text>
               <Text>{currentFile[key]}</Text>
             </ListItem>
-          ))}
-        </YGroup.Item>
+          </YGroup.Item>
+        ))}
       </YGroup>
     </View>
   );

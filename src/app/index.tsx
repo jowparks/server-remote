@@ -61,6 +61,7 @@ export default function ServerSelectScreen() {
       <Spacer size="10%" />
       {servers.map((server, index) => (
         <ServerCard
+          key={index}
           server={server}
           onEdit={(server) => handleServerEdit(server)}
           onDelete={(server) => removeServer(server)}

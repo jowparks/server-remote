@@ -22,7 +22,6 @@ function DockerList() {
   const { sshClient } = useSsh();
   const { containers, setContainers, setCurrentContainerId } = useDocker();
   const [loaded, setLoaded] = useState(false);
-  const [trigger, setTrigger] = useState(false);
 
   const router = useRouter();
 
@@ -55,59 +54,49 @@ function DockerList() {
 
     // Clear the interval when the component is unmounted or sshClient changes
     return () => clearInterval(intervalId);
-  }, [sshClient, trigger]);
+  }, [sshClient]);
 
   const stopContainer = (container: DockerContainer) => {
-    setTrigger((prev) => !prev);
     sshClient
       ?.execute(`docker stop ${container.ID}`)
       .then((response) => {
         console.log(response);
-        setTrigger((prev) => !prev);
       })
       .catch((error) => console.log(error));
   };
 
   const startContainer = (container: DockerContainer) => {
-    setTrigger((prev) => !prev);
     sshClient
       ?.execute(`docker start ${container.ID}`)
       .then((response) => {
         console.log(response);
-        setTrigger((prev) => !prev);
       })
       .catch((error) => console.log(error));
   };
 
   const restartContainer = (container: DockerContainer) => {
-    setTrigger((prev) => !prev);
     sshClient
       ?.execute(`docker restart ${container.ID}`)
       .then((response) => {
         console.log(response);
-        setTrigger((prev) => !prev);
       })
       .catch((error) => console.log(error));
   };
 
   const pauseContainer = (container: DockerContainer) => {
-    setTrigger((prev) => !prev);
     sshClient
       ?.execute(`docker pause ${container.ID}`)
       .then((response) => {
         console.log(response);
-        setTrigger((prev) => !prev);
       })
       .catch((error) => console.log(error));
   };
 
   const unpauseContainer = (container: DockerContainer) => {
-    setTrigger((prev) => !prev);
     sshClient
       ?.execute(`docker unpause ${container.ID}`)
       .then((response) => {
         console.log(response);
-        setTrigger((prev) => !prev);
       })
       .catch((error) => console.log(error));
   };
@@ -124,6 +113,7 @@ function DockerList() {
     >
       <YGroup.Item>
         {containers.map((container) => (
+          // TODO max width needed for text or it will push buttons off the screen
           <ContainerCard
             key={container.ID}
             name={container.Image?.split('/').pop() || 'N/A'}

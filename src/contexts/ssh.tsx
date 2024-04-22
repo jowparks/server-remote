@@ -27,6 +27,9 @@ export function SshProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let client: SSHClient | null = null;
+    if (!server || (!server.password && !server.key)) {
+      return;
+    }
     const connectToServer = async () => {
       if (server && server.password) {
         client = await SSHClient.connectWithPassword(
@@ -37,8 +40,6 @@ export function SshProvider({ children }: { children: ReactNode }) {
           (err, _) => {
             if (err) {
               console.log('Fail: ' + err.message);
-            } else {
-              console.log('Success');
             }
           },
         );

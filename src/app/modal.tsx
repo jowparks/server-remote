@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Sheet, TextArea, XStack, Text, View } from 'tamagui';
+import { Button, Sheet, XStack, Text, View } from 'tamagui';
 import SSHClient from '@jowparks/react-native-ssh-sftp';
 import LabeledInput from '../components/labeled-input';
 import { Server } from '../typing/server';
@@ -17,7 +17,6 @@ export default function ServerModal({
   open,
   onOpenChange,
 }: ServerModalProps) {
-  const [position, setPosition] = useState(0);
   const defaultServer = {
     host: '',
     port: 22,
@@ -91,8 +90,6 @@ export default function ServerModal({
         snapPoints={[95, 10]}
         snapPointsMode={'percent'}
         dismissOnSnapToBottom
-        position={position}
-        onPositionChange={setPosition}
         // animation="medium"
       >
         <Sheet.Overlay
