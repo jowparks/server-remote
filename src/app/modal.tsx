@@ -3,6 +3,7 @@ import { Button, Sheet, XStack, Text, View } from 'tamagui';
 import SSHClient from '@jowparks/react-native-ssh-sftp';
 import LabeledInput from '../components/labeled-input';
 import { Server } from '../typing/server';
+import { DarkBlueTheme } from '../style/theme';
 
 type ServerModalProps = {
   open: boolean;
@@ -79,7 +80,7 @@ export default function ServerModal({
       );
     }
   };
-
+  // TODO: animation is pretty aggressive currently
   return (
     <>
       <Sheet
@@ -90,14 +91,14 @@ export default function ServerModal({
         snapPoints={[95, 10]}
         snapPointsMode={'percent'}
         dismissOnSnapToBottom
-        // animation="medium"
+        animation="medium"
       >
         <Sheet.Overlay
           animation="lazy"
           enterStyle={{ opacity: 0 }}
           exitStyle={{ opacity: 0 }}
         />
-        <Sheet.Handle />
+        <Sheet.Handle backgroundColor={DarkBlueTheme.colors.notification} />
         <Sheet.Frame>
           <View
             justifyContent="center"

@@ -27,14 +27,6 @@ function FilesLayoutNav() {
           headerRight: Exit,
         }}
       />
-      <Stack.Screen
-        name="info"
-        options={{ presentation: 'modal', headerShown: false }}
-      />
-      <Stack.Screen
-        name="compress"
-        options={{ presentation: 'modal', headerShown: false }}
-      />
     </Stack>
   );
 }

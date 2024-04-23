@@ -1,24 +1,40 @@
 import React, { useState } from 'react';
-import { View, Text, Input, Button, RadioGroup, YStack, Slider } from 'tamagui';
+import { View, Text, Button, RadioGroup, YStack, Slider, Sheet } from 'tamagui';
 import { RadioGroupItemWithLabel } from '../../../components/radio';
 import { CheckboxWithLabel } from '../../../components/checkbox-labeled';
+import { DarkBlueTheme } from '../../../style/theme';
+import LabeledInput from '../../../components/labeled-input';
+import { FileInfo } from '../../../util/files/util';
 
 export enum CompressionFormats {
+  Zip = '.zip',
   Tar = '.tar',
   TarGz = '.tar.gz',
   TarBz2 = '.tar.bz2',
-  Zip = '.zip',
 }
 
-export default function CompressModal() {
+export type CompressModalProps = {
+  open: boolean;
+  file: FileInfo | null;
+  onOpenChange: (open: boolean) => void;
+};
+
+export default function CompressModal({
+  open,
+  file,
+  onOpenChange,
+}: CompressModalProps) {
+  const defaultCompressionFormat = CompressionFormats.Zip;
   const [compressionLevel, setCompressionLevel] = useState(6);
   const [compressionFormat, setCompressionFormat] = useState(
-    CompressionFormats.TarGz,
+    defaultCompressionFormat,
   );
   const [includeSubdirectories, setIncludeSubdirectories] = useState(true);
   const [preservePermissions, setPreservePermissions] = useState(true);
   const [excludePattern, setExcludePattern] = useState('');
-  const [outputName, setOutputName] = useState('compressed');
+  const [outputName, setOutputName] = useState(
+    file ? file.fileName + defaultCompressionFormat : '',
+  );
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleCompress = () => {
@@ -75,76 +91,106 @@ export default function CompressModal() {
   };
 
   return (
-    <View style={{ marginTop: 22 }}>
-      <View>
-        <Text>Compress File</Text>
-        <Input
-          placeholder="Output Name"
-          value={outputName}
-          onChangeText={setOutputName}
-        />
-        <RadioGroup
-          aria-labelledby="Select one item"
-          defaultValue={CompressionFormats.TarGz}
-          name="form"
-          onValueChange={(value) =>
-            setCompressionFormat(value as CompressionFormats)
-          }
+    <Sheet
+      forceRemoveScrollEnabled={open}
+      modal={true}
+      open={open}
+      onOpenChange={onOpenChange}
+      snapPoints={[95, 10]}
+      snapPointsMode={'percent'}
+      dismissOnSnapToBottom
+      // animation="medium"
+    >
+      <Sheet.Overlay
+        animation="lazy"
+        enterStyle={{ opacity: 0 }}
+        exitStyle={{ opacity: 0 }}
+      />
+      <Sheet.Handle backgroundColor={DarkBlueTheme.colors.notification} />
+      <Sheet.Frame>
+        <View
+          justifyContent="center"
+          padding="$4"
+          space="$5"
+          alignItems="center"
         >
-          <YStack width={300} alignItems="center" space="$2">
-            {Object.values(CompressionFormats).map((format, index) => (
-              <RadioGroupItemWithLabel
-                key={index}
+          <LabeledInput
+            label="Output File Name"
+            value={outputName}
+            onChangeText={setOutputName}
+            style={{ marginBottom: 10 }}
+          />
+          <RadioGroup
+            aria-labelledby="Select one item"
+            defaultValue={CompressionFormats.TarGz}
+            name="form"
+            onValueChange={(value) =>
+              setCompressionFormat(value as CompressionFormats)
+            }
+            style={{ marginBottom: 10 }}
+          >
+            <YStack width={300} alignItems="center" space="$2">
+              {Object.values(CompressionFormats).map((format, index) => (
+                <RadioGroupItemWithLabel
+                  key={index}
+                  size="$3"
+                  value={format}
+                  label={format}
+                />
+              ))}
+            </YStack>
+          </RadioGroup>
+          <Button
+            onPress={() => setShowAdvanced(!showAdvanced)}
+            style={{ marginBottom: 10, width: '90%' }}
+          >
+            {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
+          </Button>
+          {showAdvanced && (
+            <>
+              <Text style={{ marginBottom: 10 }}>Compression Level (1-9)</Text>
+              <Slider
+                defaultValue={[6]}
+                max={9}
+                min={1}
+                step={1}
+                onValueChange={(values) => setCompressionLevel(values[0])}
+                style={{ marginBottom: 10 }}
+              >
+                <Slider.Track>
+                  <Slider.TrackActive />
+                </Slider.Track>
+                <Slider.Thumb circular index={0} />
+              </Slider>
+              <CheckboxWithLabel
                 size="$3"
-                value={format}
-                label={format}
+                checked={includeSubdirectories}
+                onCheckedChange={() =>
+                  setIncludeSubdirectories(!includeSubdirectories)
+                }
+                label="Include Subdirectories"
+                style={{ marginBottom: 10 }}
               />
-            ))}
-          </YStack>
-        </RadioGroup>
-        <Button onPress={() => setShowAdvanced(!showAdvanced)}>
-          {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
-        </Button>
-        {showAdvanced && (
-          <>
-            <Text>Compression Level (1-9)</Text>
-            <Slider
-              defaultValue={[6]}
-              max={9}
-              min={1}
-              step={1}
-              onValueChange={(values) => setCompressionLevel(values[0])}
-            >
-              <Slider.Track>
-                <Slider.TrackActive />
-              </Slider.Track>
-              <Slider.Thumb circular index={0} />
-            </Slider>
-            <CheckboxWithLabel
-              size="$3"
-              checked={includeSubdirectories}
-              onCheckedChange={() =>
-                setIncludeSubdirectories(!includeSubdirectories)
-              }
-              label="Include Subdirectories"
-            />
-            <CheckboxWithLabel
-              size="$3"
-              defaultChecked={preservePermissions}
-              onCheckedChange={() =>
-                setPreservePermissions(!preservePermissions)
-              }
-              label="Preserve Permissions"
-            />
-            <Input
-              placeholder="Exclude Pattern"
-              value={excludePattern}
-              onChangeText={setExcludePattern}
-            />
-          </>
-        )}
-        <Button onPress={handleCompress}> Compress </Button>
-      </View>
-    </View>
+              <CheckboxWithLabel
+                size="$3"
+                defaultChecked={preservePermissions}
+                onCheckedChange={() =>
+                  setPreservePermissions(!preservePermissions)
+                }
+                label="Preserve Permissions"
+                style={{ marginBottom: 10 }}
+              />
+              <LabeledInput
+                label="Exclude Pattern"
+                value={excludePattern}
+                onChangeText={setExcludePattern}
+                style={{ marginBottom: 10 }}
+              />
+            </>
+          )}
+          <Button onPress={handleCompress}> Compress </Button>
+        </View>
+      </Sheet.Frame>
+    </Sheet>
   );
 }

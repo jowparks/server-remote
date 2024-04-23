@@ -14,6 +14,8 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
 import { FileInfo, fileCommand, parseFileInfo } from '../../../util/files/util';
 import { useFiles } from '../../../contexts/files';
+import CompressModal from './compress';
+import InfoModal from './info';
 
 enum FileContext {
   GetInfo = 'Get Info',
@@ -30,16 +32,59 @@ const FolderViewer = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const navigation = useNavigation();
-  const initialPath = Array.isArray(params.path) ? params.path[0] : params.path;
-  const path = initialPath || '/';
   const { sshClient } = useSsh();
-  const { files, setFiles, setCurrentFile } = useFiles();
+  const { files, setFiles, currentFile, setCurrentFile } = useFiles();
 
+  const [action, setAction] = useState<FileContext | null>(null);
   const [loading, setLoading] = useState(true);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [compressOpen, setCompressOpen] = useState(false);
+  const [path, setPath] = useState('');
 
   useEffect(() => {
+    const initialPath = Array.isArray(params.path)
+      ? params.path[0]
+      : params.path;
+    const path = initialPath || '/';
+
+    setPath(path);
     navigation.setOptions({ title: path });
-  }, [path, navigation]);
+  }, [navigation]);
+
+  useEffect(() => {
+    if (!currentFile || !action) {
+      return;
+    }
+    switch (action) {
+      case FileContext.GetInfo:
+        handleInfo();
+        break;
+      case FileContext.Download:
+        handleDownload(currentFile);
+        break;
+      case FileContext.Copy:
+        console.log('Copy');
+        break;
+      case FileContext.Move:
+        console.log('Move');
+        break;
+      case FileContext.Rename:
+        console.log('Rename');
+        break;
+      case FileContext.Duplicate:
+        console.log('Duplicate');
+        break;
+      case FileContext.Compress:
+        handleCompress();
+        break;
+      case FileContext.Delete:
+        console.log('Delete');
+        break;
+      default:
+        break;
+    }
+    setAction(null);
+  }, [action, currentFile]);
 
   useEffect(() => {
     setLoading(true);
@@ -95,11 +140,11 @@ const FolderViewer = () => {
   };
 
   function handleInfo() {
-    router.push('(tabs)/files/info');
+    setInfoOpen(true);
   }
 
   function handleCompress() {
-    router.push('(tabs)/files/compress');
+    setCompressOpen(true);
   }
 
   return loading ? (
@@ -139,34 +184,7 @@ const FolderViewer = () => {
                 ]}
                 onPress={(event) => {
                   setCurrentFile(item);
-                  switch (event.nativeEvent.name) {
-                    case FileContext.GetInfo:
-                      handleInfo();
-                      break;
-                    case FileContext.Download:
-                      handleDownload(item);
-                      break;
-                    case FileContext.Copy:
-                      console.log('Copy');
-                      break;
-                    case FileContext.Move:
-                      console.log('Move');
-                      break;
-                    case FileContext.Rename:
-                      console.log('Rename');
-                      break;
-                    case FileContext.Duplicate:
-                      console.log('Duplicate');
-                      break;
-                    case FileContext.Compress:
-                      handleCompress();
-                      break;
-                    case FileContext.Delete:
-                      console.log('Delete');
-                      break;
-                    default:
-                      break;
-                  }
+                  setAction(event.nativeEvent.name as FileContext);
                 }}
                 previewBackgroundColor="transparent"
               >
@@ -183,6 +201,20 @@ const FolderViewer = () => {
           ))}
         </YGroup>
       </ScrollView>
+      {!!compressOpen && (
+        <CompressModal
+          open={compressOpen}
+          onOpenChange={(state) => setCompressOpen(state)}
+          file={currentFile}
+        />
+      )}
+      {!!infoOpen && (
+        <InfoModal
+          open={infoOpen}
+          onOpenChange={(state) => setInfoOpen(state)}
+          file={currentFile}
+        />
+      )}
     </View>
   );
 };

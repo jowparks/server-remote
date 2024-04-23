@@ -76,14 +76,16 @@ export default function ServerSelectScreen() {
       >
         <Plus />
       </Button>
-      <ServerModal
-        open={serverModalOpen}
-        server={sshServer}
-        onOpenChange={setServerModalOpen}
-        onSaveServer={(server) =>
-          sshServer ? updateServer(server) : addServer(server)
-        }
-      />
+      {!!serverModalOpen && (
+        <ServerModal
+          open={serverModalOpen}
+          server={sshServer}
+          onOpenChange={setServerModalOpen}
+          onSaveServer={(server) =>
+            sshServer ? updateServer(server) : addServer(server)
+          }
+        />
+      )}
     </View>
   );
 }
