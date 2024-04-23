@@ -16,6 +16,7 @@ import { FileInfo, fileCommand, parseFileInfo } from '../../../util/files/util';
 import { useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
 import InfoModal from './info';
+import Alert from '../../../components/alert';
 
 enum FileContext {
   GetInfo = 'Get Info',
@@ -39,6 +40,7 @@ const FolderViewer = () => {
   const [loading, setLoading] = useState(true);
   const [infoOpen, setInfoOpen] = useState(false);
   const [compressOpen, setCompressOpen] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
   const [path, setPath] = useState('');
 
   useEffect(() => {
@@ -57,7 +59,7 @@ const FolderViewer = () => {
     }
     switch (action) {
       case FileContext.GetInfo:
-        handleInfo();
+        setInfoOpen(true);
         break;
       case FileContext.Download:
         handleDownload(currentFile);
@@ -75,10 +77,10 @@ const FolderViewer = () => {
         console.log('Duplicate');
         break;
       case FileContext.Compress:
-        handleCompress();
+        setCompressOpen(true);
         break;
       case FileContext.Delete:
-        console.log('Delete');
+        setAlertOpen(true);
         break;
       default:
         break;
@@ -138,14 +140,6 @@ const FolderViewer = () => {
       },
     );
   };
-
-  function handleInfo() {
-    setInfoOpen(true);
-  }
-
-  function handleCompress() {
-    setCompressOpen(true);
-  }
 
   return loading ? (
     <Spinner />
@@ -215,6 +209,17 @@ const FolderViewer = () => {
           file={currentFile}
         />
       )}
+
+      <Alert
+        title="Delete"
+        description={`Are you sure you want to delete ${currentFile?.fileName}?`}
+        open={alertOpen}
+        onOk={() => {
+          console.log('Delete');
+          setAlertOpen(false);
+        }}
+        onCancel={() => setAlertOpen(false)}
+      />
     </View>
   );
 };

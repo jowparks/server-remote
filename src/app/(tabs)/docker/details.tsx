@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View } from 'tamagui';
+import { ScrollView, View, Text } from 'tamagui';
 import { useDocker } from '../../../contexts/docker';
 import JsonViewer from '../../../components/json';
 
@@ -18,7 +18,14 @@ export default function JsonScreen() {
   return (
     <View flex={1} alignItems="center">
       <ScrollView>
-        <JsonViewer data={container as Record<string, unknown>} />
+        <JsonViewer
+          data={container as Record<string, unknown>}
+          renderArrayLabel={(label) => (
+            <Text style={{ color: 'lightblue' }} selectable>
+              {label}
+            </Text>
+          )}
+        />
       </ScrollView>
     </View>
   );

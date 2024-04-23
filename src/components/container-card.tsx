@@ -1,6 +1,6 @@
 import { Pause, Play, RefreshCcw, Square } from '@tamagui/lucide-icons';
 import React from 'react';
-import { Button, H5, ListItem, Paragraph, XStack, YStack } from 'tamagui';
+import { Button, Text, ListItem, Paragraph, XStack, YStack } from 'tamagui';
 
 // TODO add icon props for container (either image or url)
 type ContainerCardProps = {
@@ -32,7 +32,7 @@ export default function ContainerCard(props: ContainerCardProps) {
   return (
     <ListItem elevate size="$4" bordered onPress={onCardPress}>
       <YStack>
-        <H5>{name}</H5>
+        <Text fontSize={16}>{name}</Text>
         <Paragraph theme="alt2">{subheading}</Paragraph>
       </YStack>
       <XStack

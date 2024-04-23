@@ -1,6 +1,7 @@
 import React, { useState, ReactNode } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Text, View, ScrollView } from 'tamagui';
+import { DarkBlueTheme } from '../style/theme';
 
 type JsonNodeProps = {
   name: string;
@@ -8,7 +9,7 @@ type JsonNodeProps = {
   level?: number;
   renderKey?: (key: string) => ReactNode;
   renderValue?: (value: any) => ReactNode;
-  renderArrayLabel?: (length: number) => ReactNode;
+  renderArrayLabel?: (label: string) => ReactNode;
 };
 
 const JsonNode: React.FC<JsonNodeProps> = ({
@@ -95,7 +96,7 @@ const Triangle = ({ isOpen }: { isOpen: boolean }) => (
   <Text
     style={{
       transform: [{ rotate: isOpen ? '90deg' : '0deg' }],
-      color: 'white',
+      color: 'lightblue',
     }}
   >
     ▶
@@ -106,7 +107,7 @@ type JsonViewerProps = {
   data: any;
   renderKey?: (key: string) => ReactNode;
   renderValue?: (value: any) => ReactNode;
-  renderArrayLabel?: (length: number) => ReactNode;
+  renderArrayLabel?: (label: string) => ReactNode;
 };
 
 const JsonViewer: React.FC<JsonViewerProps> = ({
