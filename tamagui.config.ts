@@ -1,7 +1,5 @@
 import { createTamagui } from 'tamagui';
-import { AnimationDriver } from '@tamagui/web';
-import { createAnimations } from '@tamagui/animations-react-native';
-
+import { createAnimations } from '@tamagui/animations-moti';
 import { config as tamaguiConfig, themes } from '@tamagui/config/v3';
 
 const config = createTamagui({
@@ -9,23 +7,23 @@ const config = createTamagui({
   themes: themes,
   animations: createAnimations({
     fast: {
+      type: 'spring',
       damping: 20,
       mass: 1.2,
       stiffness: 250,
-      delay: 0,
     },
     medium: {
+      type: 'spring',
       damping: 10,
       mass: 0.9,
       stiffness: 100,
-      delay: 0,
     },
     slow: {
+      type: 'spring',
       damping: 20,
       stiffness: 60,
-      delay: 0,
     },
-  }) as AnimationDriver<any>,
+  }),
 });
 
 export type AppConfig = typeof config;

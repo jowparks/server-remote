@@ -80,24 +80,30 @@ export default function ServerModal({
       );
     }
   };
-  // TODO: animation is pretty aggressive currently
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setTimeout(() => {
+        onOpenChange(isOpen);
+      }, 300);
+    } else {
+      onOpenChange(isOpen);
+    }
+  };
   return (
     <>
       <Sheet
         forceRemoveScrollEnabled={open}
         modal={true}
         open={open}
-        onOpenChange={onOpenChange}
-        snapPoints={[95, 10]}
-        snapPointsMode={'percent'}
+        onOpenChange={handleOpenChange}
+        snapPoints={[95, 50, 0]}
         dismissOnSnapToBottom
+        dismissOnOverlayPress
+        snapPointsMode={'percent'}
         animation="medium"
       >
-        <Sheet.Overlay
-          animation="lazy"
-          enterStyle={{ opacity: 0 }}
-          exitStyle={{ opacity: 0 }}
-        />
+        <Sheet.Overlay enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
         <Sheet.Handle backgroundColor={DarkBlueTheme.colors.notification} />
         <Sheet.Frame>
           <View
