@@ -22765,13 +22765,21 @@
       "isReactNative": true,
       "animations": {
         "fast": {
-          "type": "timing"
+          "type": "spring",
+          "damping": 20,
+          "mass": 1.2,
+          "stiffness": 250
         },
         "medium": {
-          "type": "timing"
+          "type": "spring",
+          "damping": 13,
+          "mass": 0.7,
+          "stiffness": 100
         },
         "slow": {
-          "type": "timing"
+          "type": "spring",
+          "damping": 20,
+          "stiffness": 60
         }
       },
       "usePresence": "Function",

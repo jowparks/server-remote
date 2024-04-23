@@ -14,8 +14,8 @@ const config = createTamagui({
     },
     medium: {
       type: 'spring',
-      damping: 10,
-      mass: 0.9,
+      damping: 13,
+      mass: 0.7,
       stiffness: 100,
     },
     slow: {
