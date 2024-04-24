@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  YGroup,
-  Separator,
-  ListItem,
-  ScrollView,
-  View,
-  Spinner,
-} from 'tamagui';
+import { ScrollView, View, Spinner, Button } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
-import ContextMenuView from 'react-native-context-menu-view';
-import { ChevronRight } from '@tamagui/lucide-icons';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
 import { FileInfo, fileCommand, parseFileInfo } from '../../../util/files/util';
@@ -17,31 +8,23 @@ import { useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
 import InfoModal from './info';
 import Alert from '../../../components/alert';
-
-enum FileContext {
-  GetInfo = 'Get Info',
-  Download = 'Download',
-  Copy = 'Copy',
-  Move = 'Move',
-  Rename = 'Rename',
-  Duplicate = 'Duplicate',
-  Compress = 'Compress',
-  Delete = 'Delete',
-}
+import FileList from '../../../components/file-list';
 
 const FolderViewer = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const navigation = useNavigation();
   const { sshClient } = useSsh();
-  const { files, setFiles, currentFile, setCurrentFile } = useFiles();
+  const { selectedFile, setSelectedFile, cachedFile, setCachedFile } =
+    useFiles();
 
-  const [action, setAction] = useState<FileContext | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [files, setFiles] = useState<FileInfo[] | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [compressOpen, setCompressOpen] = useState(false);
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [path, setPath] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [trigger, setTrigger] = useState(false);
+  const [path, setPath] = useState('/');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const initialPath = Array.isArray(params.path)
@@ -54,44 +37,13 @@ const FolderViewer = () => {
   }, [navigation]);
 
   useEffect(() => {
-    if (!currentFile || !action) {
-      return;
-    }
-    switch (action) {
-      case FileContext.GetInfo:
-        setInfoOpen(true);
-        break;
-      case FileContext.Download:
-        handleDownload(currentFile);
-        break;
-      case FileContext.Copy:
-        console.log('Copy');
-        break;
-      case FileContext.Move:
-        console.log('Move');
-        break;
-      case FileContext.Rename:
-        console.log('Rename');
-        break;
-      case FileContext.Duplicate:
-        console.log('Duplicate');
-        break;
-      case FileContext.Compress:
-        setCompressOpen(true);
-        break;
-      case FileContext.Delete:
-        setAlertOpen(true);
-        break;
-      default:
-        break;
-    }
-    setAction(null);
-  }, [action, currentFile]);
-
-  useEffect(() => {
     setLoading(true);
+    // don't want files reloading when moving between screens
+    if (path !== params.path) return;
     const fetchFileInfo = async () => {
+      setLoading(true);
       if (!sshClient) return;
+      console.log(fileCommand(path));
       const response = await sshClient.execute(fileCommand(path));
       const lines = response?.split('\n').filter((line) => line !== '');
       if (!lines) return;
@@ -104,19 +56,20 @@ const FolderViewer = () => {
     };
 
     fetchFileInfo();
-  }, []);
+  }, [trigger, path]);
 
   const handlePress = (item: FileInfo) => {
-    setCurrentFile(item);
+    setSelectedFile(item);
     if (item.fileType === 'd') {
       router.push({
         pathname: '(tabs)/files/viewer',
-        params: { path: `${path}${item.fileName}` },
+        params: { path: item.filePath },
       });
     }
   };
 
-  const handleDownload = async (item: FileInfo) => {
+  const handleDownload = async (item: FileInfo | null) => {
+    if (!item) return;
     if (item.fileType === 'd') {
       console.error('Downloading directory not supported');
       return;
@@ -141,85 +94,105 @@ const FolderViewer = () => {
     );
   };
 
-  return loading ? (
+  const handleDelete = async (item: FileInfo | null) => {
+    if (!sshClient || !item) return;
+    const command = `rm -r ${item.filePath}`;
+    console.log(`Deleting: ${command}`);
+    // TODO: handle delete
+    await sshClient.execute('ls', (error) => {
+      if (error) {
+        console.warn('Delete failed:', error);
+      } else {
+        console.log('Delete successful');
+      }
+      setTrigger(!trigger);
+    });
+  };
+
+  const handleCopy = async (item: FileInfo | null) => {
+    if (!item) return;
+    setCachedFile({ file: item, type: 'copy' });
+    console.log('Copying:', item);
+  };
+
+  const handleMove = async (item: FileInfo | null) => {
+    if (!item) return;
+    setCachedFile({ file: item, type: 'move' });
+    console.log('Moving:', item);
+  };
+
+  return loading || !files ? (
     <Spinner />
   ) : (
     <View>
       <ScrollView>
-        <YGroup
-          alignSelf="center"
-          bordered
-          width="90%"
-          size="$5"
-          separator={<Separator />}
-        >
-          {files?.map((item) => (
-            <YGroup.Item key={item.filePath}>
-              <ContextMenuView
-                actions={[
-                  { title: FileContext.GetInfo, systemIcon: 'info.circle' },
-                  {
-                    title: FileContext.Download,
-                    systemIcon: 'square.and.arrow.down',
-                  },
-                  { title: FileContext.Copy, systemIcon: 'doc.on.doc' },
-                  { title: FileContext.Move, systemIcon: 'folder' },
-                  { title: FileContext.Rename, systemIcon: 'pencil' },
-                  {
-                    title: FileContext.Duplicate,
-                    systemIcon: 'plus.square.on.square',
-                  },
-                  { title: FileContext.Compress, systemIcon: 'archivebox' },
-                  {
-                    title: FileContext.Delete,
-                    systemIcon: 'trash',
-                    destructive: true,
-                  },
-                ]}
-                onPress={(event) => {
-                  setCurrentFile(item);
-                  setAction(event.nativeEvent.name as FileContext);
-                }}
-                previewBackgroundColor="transparent"
-              >
-                <ListItem
-                  hoverTheme
-                  pressTheme
-                  title={item.fileName}
-                  onPress={() => handlePress(item)}
-                  subTitle="TODO"
-                  iconAfter={item.fileType === 'd' ? ChevronRight : undefined}
-                />
-              </ContextMenuView>
-            </YGroup.Item>
-          ))}
-        </YGroup>
+        <FileList
+          files={files}
+          handlePress={handlePress}
+          setSelectedFile={setSelectedFile}
+          onInfo={(item) => {
+            setSelectedFile(item);
+            setInfoOpen(true);
+          }}
+          onCompress={(item) => {
+            setSelectedFile(item);
+            setCompressOpen(true);
+          }}
+          onRename={(item) => {
+            setSelectedFile(item);
+          }}
+          onDuplicate={(item) => {
+            setSelectedFile(item);
+          }}
+          onDeleteOpen={(item) => {
+            setSelectedFile(item);
+            setDeleteOpen(true);
+          }}
+          onDownload={handleDownload}
+          onCopy={handleCopy}
+          onMove={handleMove}
+        />
       </ScrollView>
       {!!compressOpen && (
         <CompressModal
           open={compressOpen}
           onOpenChange={(state) => setCompressOpen(state)}
-          file={currentFile}
+          file={selectedFile}
         />
       )}
       {!!infoOpen && (
         <InfoModal
           open={infoOpen}
           onOpenChange={(state) => setInfoOpen(state)}
-          file={currentFile}
+          file={selectedFile}
         />
       )}
 
       <Alert
-        title="Delete"
-        description={`Are you sure you want to delete ${currentFile?.fileName}?`}
-        open={alertOpen}
+        title="WARNING: This action cannot be undone!"
+        description={`Are you sure you want to delete ${selectedFile?.filePath}?`}
+        open={deleteOpen}
         onOk={() => {
-          console.log('Delete');
-          setAlertOpen(false);
+          handleDelete(selectedFile);
+          setDeleteOpen(false);
         }}
-        onCancel={() => setAlertOpen(false)}
+        onCancel={() => setDeleteOpen(false)}
       />
+      {cachedFile && (
+        <View
+          className="cached-file"
+          style={{
+            animation: 'move 2s forwards',
+            position: 'absolute',
+            top: '30%',
+            right: '0%',
+          }}
+        >
+          <Button width={50} height={50}>
+            F
+          </Button>
+        </View>
+      )}
     </View>
   );
 };

@@ -17,6 +17,7 @@ function FilesLayoutNav() {
     <Stack>
       <Stack.Screen
         name="viewer"
+        initialParams={{ path: '/' }}
         options={{
           headerShown: true,
           headerStyle: {

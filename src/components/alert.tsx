@@ -6,10 +6,11 @@ export type AlertProps = {
   description: string;
   onOk: () => void;
   onCancel: () => void;
-  okText?: string;
-  cancelText?: string;
   open?: boolean;
   children?: React.ReactNode;
+  danger?: boolean;
+  okText?: string;
+  cancelText?: string;
 };
 
 export default function Alert({
@@ -19,6 +20,7 @@ export default function Alert({
   onCancel,
   children,
   open,
+  danger = false,
   cancelText = 'Cancel',
   okText = 'Ok',
 }: AlertProps) {
