@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, Spinner, Button } from 'tamagui';
+import { ScrollView, View, Spinner } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
+import { StyleSheet } from 'react-native';
 import { FileInfo, fileCommand, parseFileInfo } from '../../../util/files/util';
-import { useFiles } from '../../../contexts/files';
+import { CachedFile, useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
 import InfoModal from './info';
 import Alert from '../../../components/alert';
 import FileList from '../../../components/file-list';
+import CacheFileOverlay from '../../../components/cache-file';
 
 const FolderViewer = () => {
   const router = useRouter();
@@ -22,7 +24,6 @@ const FolderViewer = () => {
   const [infoOpen, setInfoOpen] = useState(false);
   const [compressOpen, setCompressOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [trigger, setTrigger] = useState(false);
   const [path, setPath] = useState('/');
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +57,7 @@ const FolderViewer = () => {
     };
 
     fetchFileInfo();
-  }, [trigger, path]);
+  }, [path]);
 
   const handlePress = (item: FileInfo) => {
     setSelectedFile(item);
@@ -65,6 +66,10 @@ const FolderViewer = () => {
         pathname: '(tabs)/files/viewer',
         params: { path: item.filePath },
       });
+    } else if (item.fileType === 'f' || item.fileType === 'l') {
+      setInfoOpen(true);
+    } else {
+      console.error('Invalid file type: ', item.fileType);
     }
   };
 
@@ -99,14 +104,26 @@ const FolderViewer = () => {
     const command = `rm -r ${item.filePath}`;
     console.log(`Deleting: ${command}`);
     // TODO: handle delete
+    setFiles(files?.filter((file) => file.filePath !== item.filePath) || []);
     await sshClient.execute('ls', (error) => {
       if (error) {
         console.warn('Delete failed:', error);
       } else {
         console.log('Delete successful');
       }
-      setTrigger(!trigger);
     });
+  };
+
+  const handleCachedFile = async () => {
+    if (!cachedFile) return;
+    if (cachedFile.type === 'copy') {
+      handlePaste(cachedFile, path);
+    } else if (cachedFile.type === 'move') {
+      handleFinalizeMove(cachedFile, path);
+    } else {
+      console.error('Invalid cached file type');
+    }
+    setCachedFile(null);
   };
 
   const handleCopy = async (item: FileInfo | null) => {
@@ -115,20 +132,47 @@ const FolderViewer = () => {
     console.log('Copying:', item);
   };
 
+  const handlePaste = async (cachedFile: CachedFile, path: string) => {
+    if (!sshClient) return;
+    const command = `cp -r ${cachedFile.file.filePath} ${path}`;
+    console.log(`Copying: ${command}`);
+    // TODO: finalize paste
+    await sshClient.execute('ls', (error) => {
+      if (error) {
+        console.warn('Copy failed:', error);
+      } else {
+        console.log('Copy successful');
+      }
+    });
+  };
+
   const handleMove = async (item: FileInfo | null) => {
     if (!item) return;
     setCachedFile({ file: item, type: 'move' });
     console.log('Moving:', item);
   };
 
+  const handleFinalizeMove = async (cachedFile: CachedFile, path: string) => {
+    if (!sshClient) return;
+    const command = `mv ${cachedFile.file.filePath} ${path}`;
+    console.log(`Moving: ${command}`);
+    await sshClient.execute('ls', (error) => {
+      if (error) {
+        console.warn('Move failed:', error);
+      } else {
+        console.log('Move successful');
+      }
+    });
+  };
+
   return loading || !files ? (
     <Spinner />
   ) : (
-    <View>
+    <View flexGrow={1}>
       <ScrollView>
         <FileList
           files={files}
-          handlePress={handlePress}
+          onPress={handlePress}
           setSelectedFile={setSelectedFile}
           onInfo={(item) => {
             setSelectedFile(item);
@@ -167,34 +211,22 @@ const FolderViewer = () => {
           file={selectedFile}
         />
       )}
-
-      <Alert
-        title="WARNING: This action cannot be undone!"
-        description={`Are you sure you want to delete ${selectedFile?.filePath}?`}
-        open={deleteOpen}
-        onOk={() => {
-          handleDelete(selectedFile);
-          setDeleteOpen(false);
-        }}
-        onCancel={() => setDeleteOpen(false)}
-      />
-      {cachedFile && (
-        <View
-          className="cached-file"
-          style={{
-            animation: 'move 2s forwards',
-            position: 'absolute',
-            top: '30%',
-            right: '0%',
+      {!!deleteOpen && (
+        <Alert
+          title="WARNING: This action cannot be undone!"
+          description={`Are you sure you want to delete ${selectedFile?.filePath}?`}
+          open={deleteOpen}
+          onOk={() => {
+            handleDelete(selectedFile);
+            setDeleteOpen(false);
           }}
-        >
-          <Button width={50} height={50}>
-            F
-          </Button>
-        </View>
+          onCancel={() => setDeleteOpen(false)}
+        />
       )}
+      <CacheFileOverlay open={!!cachedFile} onPress={handleCachedFile} />
     </View>
   );
 };
+// TODO: CacheFileOverlay is not in right position when folder is not full of files
 
 export default FolderViewer;

@@ -1,13 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {
-  YGroup,
-  Separator,
-  ListItem,
-  ScrollView,
-  View,
-  Spinner,
-  Button,
-} from 'tamagui';
+import React from 'react';
+import { YGroup, Separator, ListItem } from 'tamagui';
 import { ChevronRight } from '@tamagui/lucide-icons';
 
 import ContextMenuView from 'react-native-context-menu-view';
@@ -25,9 +17,9 @@ enum FileContext {
 }
 
 interface FileListProps {
-  files: FileInfo[]; // Replace with your actual type
-  handlePress: (item: FileInfo) => void; // Replace with your actual type
-  setSelectedFile: (item: FileInfo) => void; // Replace with your actual type
+  files: FileInfo[];
+  setSelectedFile: (item: FileInfo) => void;
+  onPress: (item: FileInfo) => void;
   onInfo: (item: FileInfo) => void;
   onCompress: (item: FileInfo) => void;
   onRename: (item: FileInfo) => void;
@@ -40,7 +32,7 @@ interface FileListProps {
 
 const FileList: React.FC<FileListProps> = ({
   files,
-  handlePress,
+  onPress,
   setSelectedFile,
   onInfo,
   onCompress,
@@ -118,7 +110,7 @@ const FileList: React.FC<FileListProps> = ({
             hoverTheme
             pressTheme
             title={item.fileName}
-            onPress={() => handlePress(item)}
+            onPress={() => onPress(item)}
             iconAfter={item.fileType === 'd' ? ChevronRight : undefined}
           />
         </ContextMenuView>
