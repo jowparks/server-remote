@@ -3,7 +3,6 @@ import { ScrollView, View, Spinner } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
-import { StyleSheet } from 'react-native';
 import { FileInfo, fileCommand, parseFileInfo } from '../../../util/files/util';
 import { CachedFile, useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
@@ -11,6 +10,7 @@ import InfoModal from './info';
 import Alert from '../../../components/alert';
 import FileList from '../../../components/file-list';
 import CacheFileOverlay from '../../../components/cache-file';
+import RenameModal from '../../../components/rename';
 
 const FolderViewer = () => {
   const router = useRouter();
@@ -26,6 +26,7 @@ const FolderViewer = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [path, setPath] = useState('/');
   const [loading, setLoading] = useState(true);
+  const [renameOpen, setRenameOpen] = useState(false);
 
   useEffect(() => {
     const initialPath = Array.isArray(params.path)
@@ -73,7 +74,7 @@ const FolderViewer = () => {
     }
   };
 
-  const handleDownload = async (item: FileInfo | null) => {
+  const handleDownload = async (item: FileInfo) => {
     if (!item) return;
     if (item.fileType === 'd') {
       console.error('Downloading directory not supported');
@@ -126,14 +127,8 @@ const FolderViewer = () => {
     setCachedFile(null);
   };
 
-  const handleCopy = async (item: FileInfo | null) => {
-    if (!item) return;
-    setCachedFile({ file: item, type: 'copy' });
-    console.log('Copying:', item);
-  };
-
   const handlePaste = async (cachedFile: CachedFile, path: string) => {
-    if (!sshClient) return;
+    if (!sshClient || !files) return;
     const command = `cp -r ${cachedFile.file.filePath} ${path}`;
     console.log(`Copying: ${command}`);
     // TODO: finalize paste
@@ -144,16 +139,14 @@ const FolderViewer = () => {
         console.log('Copy successful');
       }
     });
-  };
-
-  const handleMove = async (item: FileInfo | null) => {
-    if (!item) return;
-    setCachedFile({ file: item, type: 'move' });
-    console.log('Moving:', item);
+    setFiles([
+      ...files,
+      { ...cachedFile.file, filePath: `${path}/${cachedFile.file.fileName}` },
+    ]);
   };
 
   const handleFinalizeMove = async (cachedFile: CachedFile, path: string) => {
-    if (!sshClient) return;
+    if (!sshClient || !files) return;
     const command = `mv ${cachedFile.file.filePath} ${path}`;
     console.log(`Moving: ${command}`);
     await sshClient.execute('ls', (error) => {
@@ -163,6 +156,62 @@ const FolderViewer = () => {
         console.log('Move successful');
       }
     });
+    setFiles([
+      ...files,
+      { ...cachedFile.file, filePath: `${path}${cachedFile.file.fileName}` },
+    ]);
+  };
+
+  // Add this function to handle the renaming process
+  const handleRename = async (item: FileInfo | null, newName: string) => {
+    if (!sshClient || !item || !newName) return;
+    const command = `mv ${item.filePath} ${path}/${newName}`;
+    console.log(`Renaming: ${command}`);
+    await sshClient.execute('ls', (error) => {
+      if (error) {
+        console.warn('Rename failed:', error);
+      } else {
+        console.log('Rename successful');
+      }
+    });
+    setFiles(
+      files?.map((file) =>
+        file.filePath === item.filePath
+          ? { ...file, filePath: `${path}/${newName}` }
+          : file,
+      ) || [],
+    );
+    setRenameOpen(false);
+  };
+
+  const handleDuplicate = async (item: FileInfo) => {
+    if (!sshClient || !files) return;
+    let i = 1;
+    const fileNameParts = item.fileName.split('.');
+    const baseName = fileNameParts.slice(0, -1).join('.');
+    const extension =
+      fileNameParts.length > 1
+        ? '.' + fileNameParts[fileNameParts.length - 1]
+        : '';
+    let duplicate = `${baseName}${i}${extension}`;
+
+    while (files.some((file) => file.fileName === duplicate)) {
+      i++;
+      duplicate = `${baseName}${i}${extension}`;
+    }
+    const command = `cp -r ${path}/${item.fileName} ${path}/${duplicate}`;
+    console.log(`Duplicating: ${command}`);
+    await sshClient.execute('ls', (error) => {
+      if (error) {
+        console.warn('Duplicate failed:', error);
+      } else {
+        console.log('Duplicate successful');
+      }
+    });
+    setFiles([
+      ...(files || []),
+      { ...item, fileName: duplicate, filePath: `${path}/${duplicate}` },
+    ]);
   };
 
   return loading || !files ? (
@@ -184,17 +233,16 @@ const FolderViewer = () => {
           }}
           onRename={(item) => {
             setSelectedFile(item);
+            setRenameOpen(true);
           }}
-          onDuplicate={(item) => {
-            setSelectedFile(item);
-          }}
+          onDuplicate={handleDuplicate}
           onDeleteOpen={(item) => {
             setSelectedFile(item);
             setDeleteOpen(true);
           }}
           onDownload={handleDownload}
-          onCopy={handleCopy}
-          onMove={handleMove}
+          onCopy={(item) => setCachedFile({ file: item, type: 'copy' })}
+          onMove={(item) => setCachedFile({ file: item, type: 'move' })}
         />
       </ScrollView>
       {!!compressOpen && (
@@ -221,6 +269,18 @@ const FolderViewer = () => {
             setDeleteOpen(false);
           }}
           onCancel={() => setDeleteOpen(false)}
+        />
+      )}
+      {!!renameOpen && (
+        <RenameModal
+          open={renameOpen}
+          originalName={selectedFile?.fileName || ''}
+          onOpenChange={(state) => setRenameOpen(state)}
+          onConfirm={(name) => {
+            handleRename(selectedFile, name);
+            setRenameOpen(false);
+          }}
+          onCancel={() => setRenameOpen(false)}
         />
       )}
       <CacheFileOverlay open={!!cachedFile} onPress={handleCachedFile} />
