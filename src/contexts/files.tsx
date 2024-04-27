@@ -1,5 +1,12 @@
-import React, { ReactNode, createContext, useContext, useState } from 'react';
+import React, {
+  ReactNode,
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+} from 'react';
 import { FileInfo } from '../util/files/util';
+import { storage } from '../storage/mmkv';
 
 export interface CachedFile {
   file: FileInfo;
@@ -11,6 +18,13 @@ interface FileContextProps {
   setSelectedFile: React.Dispatch<React.SetStateAction<FileInfo | null>>;
   cachedFile: CachedFile | null;
   setCachedFile: React.Dispatch<React.SetStateAction<CachedFile | null>>;
+  recentFiles: FileInfo[];
+  bookmarkedFiles: FileInfo[];
+  addRecentFile: (file: FileInfo) => void;
+  addBookmarkedFile: (file: FileInfo) => void;
+  removeBookmarkedFile: (file: FileInfo) => void;
+  hostname: string;
+  setHostName: (hostname: string) => void;
 }
 
 const FileContext = createContext<FileContextProps | undefined>(undefined);
@@ -18,7 +32,7 @@ const FileContext = createContext<FileContextProps | undefined>(undefined);
 export const useFiles = () => {
   const context = useContext(FileContext);
   if (!context) {
-    throw new Error('useFile must be used within a FileProvider');
+    throw new Error('useFiles must be used within a FilesProvider');
   }
   return context;
 };
@@ -26,6 +40,44 @@ export const useFiles = () => {
 export function FilesProvider({ children }: { children: ReactNode }) {
   const [selectedFile, setSelectedFile] = useState<FileInfo | null>(null);
   const [cachedFile, setCachedFile] = useState<CachedFile | null>(null);
+  const [recentFiles, setRecentFiles] = useState<FileInfo[]>([]);
+  const [bookmarkedFiles, setBookmarkedFiles] = useState<FileInfo[]>([]);
+  const [hostname, setHostName] = useState<string>('');
+  const bookmarkedFileStore = `${hostname}_recentFiles_file_arr`;
+  const recentFileStore = `${hostname}_bookmarkedFiles_file_arr`;
+
+  useEffect(() => {
+    const loadedRecentFiles = storage.get<FileInfo[]>(bookmarkedFileStore);
+    const loadedBookmarkedFiles = storage.get<FileInfo[]>(bookmarkedFileStore);
+
+    if (loadedRecentFiles) {
+      setRecentFiles(loadedRecentFiles);
+    }
+
+    if (loadedBookmarkedFiles) {
+      setBookmarkedFiles(loadedBookmarkedFiles);
+    }
+  }, [hostname]);
+
+  const addRecentFile = (file: FileInfo) => {
+    const newRecentFiles = [file, ...recentFiles];
+    setRecentFiles(newRecentFiles);
+    storage.setObject(recentFileStore, newRecentFiles);
+  };
+
+  const addBookmarkedFile = (file: FileInfo) => {
+    const newBookmarkedFiles = [file, ...bookmarkedFiles];
+    setBookmarkedFiles(newBookmarkedFiles);
+    storage.setObject(bookmarkedFileStore, newBookmarkedFiles);
+  };
+
+  const removeBookmarkedFile = (file: FileInfo) => {
+    const newBookmarkedFiles = bookmarkedFiles.filter(
+      (f) => f.filePath !== file.filePath,
+    );
+    setBookmarkedFiles(newBookmarkedFiles);
+    storage.setObject(bookmarkedFileStore, newBookmarkedFiles);
+  };
 
   return (
     <FileContext.Provider
@@ -34,6 +86,13 @@ export function FilesProvider({ children }: { children: ReactNode }) {
         setSelectedFile,
         cachedFile,
         setCachedFile,
+        recentFiles,
+        bookmarkedFiles,
+        addRecentFile,
+        addBookmarkedFile,
+        removeBookmarkedFile,
+        hostname,
+        setHostName,
       }}
     >
       {children}

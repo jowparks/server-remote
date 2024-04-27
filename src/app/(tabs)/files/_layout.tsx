@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import Exit from '../../../components/exit-button';
+import Exit from '../../../components/file-viewer-nav';
 import { DarkBlueTheme } from '../../../style/theme';
 
 export {
@@ -15,6 +15,17 @@ export default function FilesLayout() {
 function FilesLayoutNav() {
   return (
     <Stack>
+      <Stack.Screen
+        name="paths"
+        options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: DarkBlueTheme.colors.background,
+          },
+          title: 'Files',
+          headerRight: Exit,
+        }}
+      />
       <Stack.Screen
         name="viewer"
         initialParams={{ path: '/' }}

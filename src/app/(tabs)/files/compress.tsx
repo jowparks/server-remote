@@ -122,7 +122,7 @@ export default function CompressModal({
           />
           <RadioGroup
             aria-labelledby="Select one item"
-            defaultValue={CompressionFormats.TarGz}
+            defaultValue={CompressionFormats.Zip}
             name="form"
             onValueChange={(value) =>
               setCompressionFormat(value as CompressionFormats)

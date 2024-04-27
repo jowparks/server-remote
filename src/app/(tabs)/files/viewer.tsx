@@ -3,7 +3,7 @@ import { ScrollView, View, Spinner } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
-import { FileInfo, fileCommand, parseFileInfo } from '../../../util/files/util';
+import { FileInfo, fileCommand, sftpPaths } from '../../../util/files/util';
 import { CachedFile, useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
 import InfoModal from './info';
@@ -45,14 +45,7 @@ const FolderViewer = () => {
     const fetchFileInfo = async () => {
       setLoading(true);
       if (!sshClient) return;
-      console.log(fileCommand(path));
-      const response = await sshClient.execute(fileCommand(path));
-      const lines = response?.split('\n').filter((line) => line !== '');
-      if (!lines) return;
-      const files = lines
-        .map(parseFileInfo)
-        .filter((file) => file.filePath !== path)
-        .sort((a, b) => a.filePath.localeCompare(b.filePath));
+      const files = await sftpPaths(sshClient, path);
       setFiles(files);
       setLoading(false);
     };
@@ -149,6 +142,7 @@ const FolderViewer = () => {
     if (!sshClient || !files) return;
     const command = `mv ${cachedFile.file.filePath} ${path}`;
     console.log(`Moving: ${command}`);
+    // TODO: finalize move
     await sshClient.execute('ls', (error) => {
       if (error) {
         console.warn('Move failed:', error);
@@ -167,6 +161,7 @@ const FolderViewer = () => {
     if (!sshClient || !item || !newName) return;
     const command = `mv ${item.filePath} ${path}/${newName}`;
     console.log(`Renaming: ${command}`);
+    // TODO: finalize rename
     await sshClient.execute('ls', (error) => {
       if (error) {
         console.warn('Rename failed:', error);
@@ -201,6 +196,7 @@ const FolderViewer = () => {
     }
     const command = `cp -r ${path}/${item.fileName} ${path}/${duplicate}`;
     console.log(`Duplicating: ${command}`);
+    // TODO: finalize duplicate
     await sshClient.execute('ls', (error) => {
       if (error) {
         console.warn('Duplicate failed:', error);
@@ -287,6 +283,5 @@ const FolderViewer = () => {
     </View>
   );
 };
-// TODO: CacheFileOverlay is not in right position when folder is not full of files
 
 export default FolderViewer;

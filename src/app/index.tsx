@@ -7,10 +7,11 @@ import ServerCard from '../components/server-card';
 import { router } from 'expo-router';
 import { useSsh } from '../contexts/ssh';
 import { Server } from '../typing/server';
+import { useFiles } from '../contexts/files';
 
 export default function ServerSelectScreen() {
   const { sshServer, setSshServer } = useSsh();
-
+  const { setHostName } = useFiles();
   const [servers, setServers] = useState<Server[]>([]);
   const [serverModalOpen, setServerModalOpen] = useState(false);
 
@@ -43,6 +44,7 @@ export default function ServerSelectScreen() {
 
   const handleServerPress = (server: Server) => {
     setSshServer(server);
+    setHostName(`${server.user}@${server.host}:{server.port}`);
     router.push('/(tabs)/docker');
   };
 
