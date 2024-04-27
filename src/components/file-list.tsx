@@ -18,6 +18,7 @@ enum FileContext {
 
 interface FileListProps {
   files: FileInfo[];
+  folder: FileInfo | null;
   setSelectedFile: (item: FileInfo) => void;
   onPress: (item: FileInfo) => void;
   onInfo: (item: FileInfo) => void;
@@ -28,10 +29,12 @@ interface FileListProps {
   onDownload: (item: FileInfo) => void;
   onCopy: (item: FileInfo) => void;
   onMove: (item: FileInfo) => void;
+  onContext: (item: FileInfo) => void;
 }
 
 const FileList: React.FC<FileListProps> = ({
   files,
+  folder,
   onPress,
   setSelectedFile,
   onInfo,
@@ -42,6 +45,7 @@ const FileList: React.FC<FileListProps> = ({
   onDownload,
   onCopy,
   onMove,
+  onContext,
 }) => (
   <YGroup
     alignSelf="center"
@@ -75,6 +79,7 @@ const FileList: React.FC<FileListProps> = ({
           ]}
           onPress={(event) => {
             setSelectedFile(item);
+            folder && onContext(folder);
             switch (event.nativeEvent.name as FileContext) {
               case FileContext.GetInfo:
                 onInfo(item);

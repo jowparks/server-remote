@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import Exit from '../../../components/file-viewer-nav';
+import Exit from '../../../components/exit-button';
+import FilesViewerNav from '../../../components/file-viewer-nav';
 import { DarkBlueTheme } from '../../../style/theme';
 
 export {
@@ -36,7 +37,7 @@ function FilesLayoutNav() {
           },
           headerBackTitleVisible: false,
           title: 'Files',
-          headerRight: Exit,
+          headerRight: FilesViewerNav,
         }}
       />
     </Stack>

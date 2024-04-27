@@ -3,10 +3,17 @@ import { ListItem, Separator, View, YGroup, Text } from 'tamagui';
 import { useRouter } from 'expo-router';
 import { useFiles } from '../../../contexts/files';
 import { FileInfo } from '../../../util/files/util';
+import ContextMenuView from 'react-native-context-menu-view';
 
 export default function PathsView() {
-  const { recentFiles, bookmarkedFiles, addBookmarkedFile, setSelectedFile } =
-    useFiles();
+  const {
+    recentFiles,
+    bookmarkedFiles,
+    addBookmarkedFile,
+    removeBookmarkedFile,
+    removeRecentFile,
+    setSelectedFile,
+  } = useFiles();
   const router = useRouter();
 
   useEffect(() => {
@@ -48,20 +55,27 @@ export default function PathsView() {
       >
         <YGroup.Item>
           {recentFiles.map((file) => (
-            <ListItem
-              key={file.fileName}
-              elevate
-              size="$4"
-              bordered
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-              onPress={() => handlePathClick(file)}
+            <ContextMenuView
+              actions={[
+                { title: 'delete', systemIcon: 'trash', destructive: true },
+              ]}
+              onPress={() => removeRecentFile(file)}
             >
-              <Text>{file.filePath}</Text>
-            </ListItem>
+              <ListItem
+                key={file.filePath}
+                elevate
+                size="$4"
+                bordered
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+                onPress={() => handlePathClick(file)}
+              >
+                <Text>{file.filePath}</Text>
+              </ListItem>
+            </ContextMenuView>
           ))}
         </YGroup.Item>
       </YGroup>
@@ -75,20 +89,27 @@ export default function PathsView() {
       >
         <YGroup.Item>
           {bookmarkedFiles.map((file) => (
-            <ListItem
-              key={file.fileName}
-              elevate
-              size="$4"
-              bordered
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-              onPress={() => handlePathClick(file)}
+            <ContextMenuView
+              actions={[
+                { title: 'delete', systemIcon: 'trash', destructive: true },
+              ]}
+              onPress={() => removeBookmarkedFile(file)}
             >
-              <Text>{file.filePath}</Text>
-            </ListItem>
+              <ListItem
+                key={file.filePath}
+                elevate
+                size="$4"
+                bordered
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+                onPress={() => handlePathClick(file)}
+              >
+                <Text>{file.filePath}</Text>
+              </ListItem>
+            </ContextMenuView>
           ))}
         </YGroup.Item>
       </YGroup>

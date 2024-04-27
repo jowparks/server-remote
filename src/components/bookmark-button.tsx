@@ -2,7 +2,6 @@ import { Bookmark, BookmarkCheck } from '@tamagui/lucide-icons';
 import React, { useEffect, useState } from 'react';
 import { Button } from 'tamagui';
 import { useFiles } from '../contexts/files';
-import { FileInfo } from '../util/files/util';
 
 export function BookmarkButton() {
   const { selectedFile } = useFiles();
@@ -26,7 +25,6 @@ export function BookmarkButton() {
     <Button
       unstyled
       onPress={() => {
-        console.log('BookmarkButton', selectedFile, bookmarkedFiles, checked);
         if (!selectedFile) return;
         if (!checked) {
           addBookmarkedFile(selectedFile);

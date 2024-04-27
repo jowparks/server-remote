@@ -16,11 +16,16 @@ export interface CachedFile {
 interface FileContextProps {
   selectedFile: FileInfo | null;
   setSelectedFile: React.Dispatch<React.SetStateAction<FileInfo | null>>;
+  currentFolder: FileInfo | null;
+  setCurrentFolder: React.Dispatch<React.SetStateAction<FileInfo | null>>;
   cachedFile: CachedFile | null;
   setCachedFile: React.Dispatch<React.SetStateAction<CachedFile | null>>;
   recentFiles: FileInfo[];
+  pasteLocation: FileInfo | null;
+  setPasteLocation: React.Dispatch<React.SetStateAction<FileInfo | null>>;
   bookmarkedFiles: FileInfo[];
   addRecentFile: (file: FileInfo) => void;
+  removeRecentFile: (file: FileInfo) => void;
   addBookmarkedFile: (file: FileInfo) => void;
   removeBookmarkedFile: (file: FileInfo) => void;
   hostname: string;
@@ -39,10 +44,12 @@ export const useFiles = () => {
 
 export function FilesProvider({ children }: { children: ReactNode }) {
   const [selectedFile, setSelectedFile] = useState<FileInfo | null>(null);
+  const [currentFolder, setCurrentFolder] = useState<FileInfo | null>(null);
   const [cachedFile, setCachedFile] = useState<CachedFile | null>(null);
   const [recentFiles, setRecentFiles] = useState<FileInfo[]>([]);
   const [bookmarkedFiles, setBookmarkedFiles] = useState<FileInfo[]>([]);
   const [hostname, setHostName] = useState<string>('');
+  const [pasteLocation, setPasteLocation] = useState<FileInfo | null>(null);
   const bookmarkedFileStore = `${hostname}_recentFiles_file_arr`;
   const recentFileStore = `${hostname}_bookmarkedFiles_file_arr`;
 
@@ -79,18 +86,31 @@ export function FilesProvider({ children }: { children: ReactNode }) {
     storage.setObject(bookmarkedFileStore, newBookmarkedFiles);
   };
 
+  const removeRecentFile = (file: FileInfo) => {
+    const newRecentFiles = recentFiles.filter(
+      (f) => f.filePath !== file.filePath,
+    );
+    setRecentFiles(newRecentFiles);
+    storage.setObject(recentFileStore, newRecentFiles);
+  };
+
   return (
     <FileContext.Provider
       value={{
         selectedFile,
         setSelectedFile,
+        currentFolder,
+        setCurrentFolder,
         cachedFile,
         setCachedFile,
         recentFiles,
+        pasteLocation,
+        setPasteLocation,
         bookmarkedFiles,
         addRecentFile,
         addBookmarkedFile,
         removeBookmarkedFile,
+        removeRecentFile,
         hostname,
         setHostName,
       }}

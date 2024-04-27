@@ -3,13 +3,12 @@ import { ScrollView, View, Spinner } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
-import { FileInfo, fileCommand, sftpPaths } from '../../../util/files/util';
+import { FileInfo, sftpPaths } from '../../../util/files/util';
 import { CachedFile, useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
 import InfoModal from './info';
 import Alert from '../../../components/alert';
 import FileList from '../../../components/file-list';
-import CacheFileOverlay from '../../../components/cache-file';
 import RenameModal from '../../../components/rename';
 
 const FolderViewer = () => {
@@ -17,10 +16,18 @@ const FolderViewer = () => {
   const params = useLocalSearchParams();
   const navigation = useNavigation();
   const { sshClient } = useSsh();
-  const { selectedFile, setSelectedFile, cachedFile, setCachedFile } =
-    useFiles();
+  const {
+    selectedFile,
+    cachedFile,
+    pasteLocation,
+    setSelectedFile,
+    setCachedFile,
+    setCurrentFolder,
+    addRecentFile,
+  } = useFiles();
 
   const [files, setFiles] = useState<FileInfo[] | null>(null);
+  const [folder, setFolder] = useState<FileInfo | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [compressOpen, setCompressOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -35,13 +42,15 @@ const FolderViewer = () => {
     const path = initialPath || '/';
 
     setPath(path);
+    setFolder(selectedFile);
+    setCurrentFolder(selectedFile);
     navigation.setOptions({ title: path });
   }, [navigation]);
 
   useEffect(() => {
-    setLoading(true);
     // don't want files reloading when moving between screens
     if (path !== params.path) return;
+    setLoading(true);
     const fetchFileInfo = async () => {
       setLoading(true);
       if (!sshClient) return;
@@ -52,6 +61,32 @@ const FolderViewer = () => {
 
     fetchFileInfo();
   }, [path]);
+
+  useEffect(() => {
+    // don't want files reloading when moving between screens
+    if (path !== params.path) return;
+    if (!sshClient || !files || !cachedFile) return;
+    const baseCommand = cachedFile.type === 'copy' ? 'cp -r' : 'mv';
+
+    const copy = async () => {
+      const command = `${baseCommand} ${cachedFile.file.filePath} ${path}`;
+      console.log(`Pasting: ${command}`);
+      // TODO: finalize paste
+      await sshClient.execute('ls', (error) => {
+        if (error) {
+          console.warn('Pasting failed:', error);
+        } else {
+          console.log('Pasting successful');
+        }
+      });
+      setFiles([
+        ...files,
+        { ...cachedFile.file, filePath: `${path}/${cachedFile.file.fileName}` },
+      ]);
+      setCachedFile(null);
+    };
+    copy();
+  }, [pasteLocation]);
 
   const handlePress = (item: FileInfo) => {
     setSelectedFile(item);
@@ -106,54 +141,6 @@ const FolderViewer = () => {
         console.log('Delete successful');
       }
     });
-  };
-
-  const handleCachedFile = async () => {
-    if (!cachedFile) return;
-    if (cachedFile.type === 'copy') {
-      handlePaste(cachedFile, path);
-    } else if (cachedFile.type === 'move') {
-      handleFinalizeMove(cachedFile, path);
-    } else {
-      console.error('Invalid cached file type');
-    }
-    setCachedFile(null);
-  };
-
-  const handlePaste = async (cachedFile: CachedFile, path: string) => {
-    if (!sshClient || !files) return;
-    const command = `cp -r ${cachedFile.file.filePath} ${path}`;
-    console.log(`Copying: ${command}`);
-    // TODO: finalize paste
-    await sshClient.execute('ls', (error) => {
-      if (error) {
-        console.warn('Copy failed:', error);
-      } else {
-        console.log('Copy successful');
-      }
-    });
-    setFiles([
-      ...files,
-      { ...cachedFile.file, filePath: `${path}/${cachedFile.file.fileName}` },
-    ]);
-  };
-
-  const handleFinalizeMove = async (cachedFile: CachedFile, path: string) => {
-    if (!sshClient || !files) return;
-    const command = `mv ${cachedFile.file.filePath} ${path}`;
-    console.log(`Moving: ${command}`);
-    // TODO: finalize move
-    await sshClient.execute('ls', (error) => {
-      if (error) {
-        console.warn('Move failed:', error);
-      } else {
-        console.log('Move successful');
-      }
-    });
-    setFiles([
-      ...files,
-      { ...cachedFile.file, filePath: `${path}${cachedFile.file.fileName}` },
-    ]);
   };
 
   // Add this function to handle the renaming process
@@ -217,6 +204,7 @@ const FolderViewer = () => {
       <ScrollView>
         <FileList
           files={files}
+          folder={folder}
           onPress={handlePress}
           setSelectedFile={setSelectedFile}
           onInfo={(item) => {
@@ -239,6 +227,7 @@ const FolderViewer = () => {
           onDownload={handleDownload}
           onCopy={(item) => setCachedFile({ file: item, type: 'copy' })}
           onMove={(item) => setCachedFile({ file: item, type: 'move' })}
+          onContext={(item) => addRecentFile(item)}
         />
       </ScrollView>
       {!!compressOpen && (
@@ -279,7 +268,6 @@ const FolderViewer = () => {
           onCancel={() => setRenameOpen(false)}
         />
       )}
-      <CacheFileOverlay open={!!cachedFile} onPress={handleCachedFile} />
     </View>
   );
 };
