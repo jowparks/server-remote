@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import React from 'react';
 import Exit from '../../../components/exit-button';
 import { DarkBlueTheme } from '../../../style/theme';
+import { Menu } from '@tamagui/lucide-icons';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -23,6 +24,7 @@ function VmLayoutNav() {
             backgroundColor: DarkBlueTheme.colors.background,
           },
           title: 'VMs',
+          headerLeft: () => <Menu />,
           headerRight: Exit,
         }}
       />

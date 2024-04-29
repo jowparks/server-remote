@@ -15,16 +15,13 @@ import { VmProvider } from '../contexts/vm';
 import { FilesProvider } from '../contexts/files';
 import { ThemeProvider } from '@react-navigation/native';
 import { DarkBlueTheme } from '../style/theme';
+import { DrawerToggleButton } from '@react-navigation/drawer';
+import Drawer from 'expo-router/drawer';
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
-
-// export const unstable_settings = {
-//   // Ensure that reloading on `/modal` keeps a back button present.
-//   initialRouteName: 'server-select',
-// }
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -68,20 +65,27 @@ function RootLayoutNav() {
                     left={left}
                     right={right}
                   />
-                  <Stack>
-                    <Stack.Screen
+                  <Drawer>
+                    <Drawer.Screen
                       name="index"
-                      options={{ headerShown: false }}
+                      options={{
+                        headerShown: true,
+                        title: '',
+                        headerLeft: () => <DrawerToggleButton />,
+                        headerStyle: {
+                          backgroundColor: DarkBlueTheme.colors.background,
+                        },
+                      }}
                     />
-                    <Stack.Screen
+                    <Drawer.Screen
                       name="(tabs)"
                       options={{ headerShown: false }}
                     />
                     <Stack.Screen
                       name="modal"
-                      options={{ presentation: 'modal' }}
+                      // options={{ presentation: 'modal' }}
                     />
-                  </Stack>
+                  </Drawer>
                 </ToastProvider>
               </FilesProvider>
             </DockerProvider>

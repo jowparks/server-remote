@@ -1104,7 +1104,11 @@ PODS:
     - React-jsi (= 0.73.4)
     - React-logger (= 0.73.4)
     - React-perflogger (= 0.73.4)
-  - RNReanimated (3.8.1):
+  - RNGestureHandler (2.16.0):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+  - RNReanimated (3.9.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
@@ -1192,6 +1196,7 @@ DEPENDENCIES:
   - React-runtimescheduler (from `../node_modules/react-native/ReactCommon/react/renderer/runtimescheduler`)
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - "RNSSHClient (from `../node_modules/@jowparks/react-native-ssh-sftp`)"
@@ -1341,6 +1346,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/utils"
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  RNGestureHandler:
+    :path: "../node_modules/react-native-gesture-handler"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
@@ -1427,7 +1434,8 @@ SPEC CHECKSUMS:
   React-runtimescheduler: ed48e5faac6751e66ee1261c4bd01643b436f112
   React-utils: 6e5ad394416482ae21831050928ae27348f83487
   ReactCommon: 840a955d37b7f3358554d819446bffcf624b2522
-  RNReanimated: 3e23d4be380e295e504b7b3b3a357df60e1168a2
+  RNGestureHandler: 727b656d5a3fa247aac2c8cc70b8757356066451
+  RNReanimated: a954c5b84dc88431f80e1d00f612f13d38e1b5d6
   RNScreens: 77fc79e66b726ee45b091486b348418ee1d792ab
   RNSSHClient: f0c37711ec6599f29dfcf160701cfe74e1405e06
   RNSVG: ba3e7232f45e34b7b47e74472386cf4e1a676d0a

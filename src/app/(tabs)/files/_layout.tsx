@@ -3,6 +3,7 @@ import React from 'react';
 import Exit from '../../../components/exit-button';
 import FilesViewerNav from '../../../components/file-viewer-nav';
 import { DarkBlueTheme } from '../../../style/theme';
+import { Menu } from '@tamagui/lucide-icons';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -24,6 +25,7 @@ function FilesLayoutNav() {
             backgroundColor: DarkBlueTheme.colors.background,
           },
           title: 'Files',
+          headerLeft: () => <Menu />,
           headerRight: Exit,
         }}
       />

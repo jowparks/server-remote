@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus } from '@tamagui/lucide-icons';
-import { Button, Spacer, View } from 'tamagui';
+import { Button, ScrollView, Spacer, View } from 'tamagui';
+import { Menu } from '@tamagui/menu';
 import ServerModal from './modal';
 import { getItem, setItem } from '../storage/secure';
 import ServerCard from '../components/server-card';
@@ -14,7 +15,7 @@ export default function ServerSelectScreen() {
   const { setHostName } = useFiles();
   const [servers, setServers] = useState<Server[]>([]);
   const [serverModalOpen, setServerModalOpen] = useState(false);
-
+  Menu;
   useEffect(() => {
     // Load servers from AsyncStorage
     getItem('servers').then((data) => {
@@ -59,35 +60,37 @@ export default function ServerSelectScreen() {
   };
 
   return (
-    <View flex={1} alignItems="center" style={{ padding: 20 }}>
-      <Spacer size="10%" />
-      {servers.map((server, index) => (
-        <ServerCard
-          key={index}
-          server={server}
-          onEdit={(server) => handleServerEdit(server)}
-          onDelete={(server) => removeServer(server)}
-          onPress={(server) => handleServerPress(server)}
-        />
-      ))}
-      <Button
-        hoverTheme
-        pressTheme
-        onPress={() => handleAddPress()}
-        style={{ marginTop: 20, width: '90%' }}
-      >
-        <Plus />
-      </Button>
-      {!!serverModalOpen && (
-        <ServerModal
-          open={serverModalOpen}
-          server={sshServer}
-          onOpenChange={setServerModalOpen}
-          onSaveServer={(server) =>
-            sshServer ? updateServer(server) : addServer(server)
-          }
-        />
-      )}
-    </View>
+    <ScrollView>
+      <View flex={1} alignItems="center" style={{ padding: 20 }}>
+        <Spacer size="10%" />
+        {servers.map((server, index) => (
+          <ServerCard
+            key={index}
+            server={server}
+            onEdit={(server) => handleServerEdit(server)}
+            onDelete={(server) => removeServer(server)}
+            onPress={(server) => handleServerPress(server)}
+          />
+        ))}
+        <Button
+          hoverTheme
+          pressTheme
+          onPress={() => handleAddPress()}
+          style={{ marginTop: 20, width: '90%' }}
+        >
+          <Plus />
+        </Button>
+        {!!serverModalOpen && (
+          <ServerModal
+            open={serverModalOpen}
+            server={sshServer}
+            onOpenChange={setServerModalOpen}
+            onSaveServer={(server) =>
+              sshServer ? updateServer(server) : addServer(server)
+            }
+          />
+        )}
+      </View>
+    </ScrollView>
   );
 }
