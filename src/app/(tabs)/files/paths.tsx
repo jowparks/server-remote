@@ -15,7 +15,7 @@ export default function PathsView() {
     setSelectedFile,
   } = useFiles();
   const router = useRouter();
-
+  // TODO: implement search for paths and in viewer
   useEffect(() => {
     if (recentFiles.length === 0) {
       const mockFileInfo: FileInfo = {
@@ -44,7 +44,7 @@ export default function PathsView() {
   };
 
   return (
-    <View flex={1} padding="$4" space="$5" alignItems="center">
+    <View flex={1} space="$5" alignItems="center">
       <Text>Recent Paths</Text>
       <YGroup
         alignSelf="center"

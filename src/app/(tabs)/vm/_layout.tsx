@@ -1,8 +1,8 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import React from 'react';
-import Exit from '../../../components/exit-button';
 import { DarkBlueTheme } from '../../../style/theme';
-import { Menu } from '@tamagui/lucide-icons';
+import DrawerButton from '../../../components/drawer-button';
+import HeaderBack from '../../../components/header-back';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -14,6 +14,7 @@ export default function VmLayout() {
 }
 
 function VmLayoutNav() {
+  // TODO: headerLeft is slightly off alignment on left side
   return (
     <Stack>
       <Stack.Screen
@@ -24,8 +25,7 @@ function VmLayoutNav() {
             backgroundColor: DarkBlueTheme.colors.background,
           },
           title: 'VMs',
-          headerLeft: () => <Menu />,
-          headerRight: Exit,
+          headerLeft: () => <DrawerButton />,
         }}
       />
       <Stack.Screen
@@ -35,8 +35,8 @@ function VmLayoutNav() {
           headerStyle: {
             backgroundColor: DarkBlueTheme.colors.background,
           },
+          headerLeft: () => <HeaderBack />,
           title: 'Menu',
-          headerRight: Exit,
         }}
       />
       <Stack.Screen
@@ -46,8 +46,8 @@ function VmLayoutNav() {
           headerStyle: {
             backgroundColor: DarkBlueTheme.colors.background,
           },
+          headerLeft: () => <HeaderBack />,
           title: 'Details',
-          headerRight: Exit,
         }}
       />
       <Stack.Screen
@@ -57,8 +57,8 @@ function VmLayoutNav() {
           headerStyle: {
             backgroundColor: DarkBlueTheme.colors.background,
           },
+          headerLeft: () => <HeaderBack />,
           title: 'Logs',
-          headerRight: Exit,
         }}
       />
     </Stack>

@@ -4,20 +4,20 @@ import { Button } from 'tamagui';
 import { useFiles } from '../contexts/files';
 
 export function BookmarkButton() {
-  const { selectedFile } = useFiles();
+  const { currentFolder } = useFiles();
   const { bookmarkedFiles } = useFiles();
 
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (selectedFile) {
+    if (currentFolder) {
       setChecked(
         !!bookmarkedFiles.find(
-          (file) => selectedFile.filePath === file.filePath,
+          (file) => currentFolder.filePath === file.filePath,
         ),
       );
     }
-  }, [selectedFile, bookmarkedFiles]);
+  }, [currentFolder, bookmarkedFiles]);
 
   const Icon = checked ? BookmarkCheck : Bookmark;
   const { addBookmarkedFile, removeBookmarkedFile } = useFiles();
@@ -25,12 +25,12 @@ export function BookmarkButton() {
     <Button
       unstyled
       onPress={() => {
-        if (!selectedFile) return;
+        if (!currentFolder) return;
         if (!checked) {
-          addBookmarkedFile(selectedFile);
+          addBookmarkedFile(currentFolder);
           setChecked(true);
         } else {
-          removeBookmarkedFile(selectedFile);
+          removeBookmarkedFile(currentFolder);
           setChecked(false);
         }
       }}

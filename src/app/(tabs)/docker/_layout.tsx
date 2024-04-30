@@ -1,9 +1,9 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import Exit from '../../../components/exit-button';
 import { DarkBlueTheme } from '../../../style/theme';
-import { Menu } from '@tamagui/lucide-icons';
 import { DrawerToggleButton } from '@react-navigation/drawer';
+import DrawerButton from '../../../components/drawer-button';
+import HeaderBack from '../../../components/header-back';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -44,8 +44,7 @@ function DockerLayoutNav() {
             backgroundColor: DarkBlueTheme.colors.background,
           },
           title: 'Docker',
-          headerLeft: () => <DrawerToggleButton />,
-          headerRight: Exit,
+          headerLeft: () => <DrawerButton />,
         }}
       />
       <Stack.Screen
@@ -56,7 +55,7 @@ function DockerLayoutNav() {
             backgroundColor: DarkBlueTheme.colors.background,
           },
           title: 'Menu',
-          headerRight: Exit,
+          headerLeft: () => <HeaderBack />,
         }}
       />
       <Stack.Screen
@@ -67,7 +66,7 @@ function DockerLayoutNav() {
             backgroundColor: DarkBlueTheme.colors.background,
           },
           title: 'Details',
-          headerRight: Exit,
+          headerLeft: () => <HeaderBack />,
         }}
       />
       <Stack.Screen
@@ -78,7 +77,7 @@ function DockerLayoutNav() {
             backgroundColor: DarkBlueTheme.colors.background,
           },
           title: 'Logs',
-          headerRight: Exit,
+          headerLeft: () => <HeaderBack />,
         }}
       />
     </Stack>

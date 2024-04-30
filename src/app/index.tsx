@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus } from '@tamagui/lucide-icons';
 import { Button, ScrollView, Spacer, View } from 'tamagui';
 import { Menu } from '@tamagui/menu';
-import ServerModal from './modal';
+import ServerModal from './add-server/modal';
 import { getItem, setItem } from '../storage/secure';
 import ServerCard from '../components/server-card';
 import { router } from 'expo-router';

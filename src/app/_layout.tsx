@@ -17,6 +17,7 @@ import { ThemeProvider } from '@react-navigation/native';
 import { DarkBlueTheme } from '../style/theme';
 import { DrawerToggleButton } from '@react-navigation/drawer';
 import Drawer from 'expo-router/drawer';
+import DrawerButton from '../components/drawer-button';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -65,13 +66,25 @@ function RootLayoutNav() {
                     left={left}
                     right={right}
                   />
-                  <Drawer>
+                  <Drawer
+                    screenOptions={{
+                      drawerActiveBackgroundColor:
+                        DarkBlueTheme.colors.background,
+                      drawerInactiveBackgroundColor:
+                        DarkBlueTheme.colors.background,
+                      drawerContentStyle: {
+                        backgroundColor: DarkBlueTheme.colors.background,
+                      },
+                      drawerActiveTintColor: 'white',
+                      drawerInactiveTintColor: 'grey',
+                    }}
+                  >
                     <Drawer.Screen
                       name="index"
                       options={{
                         headerShown: true,
-                        title: '',
-                        headerLeft: () => <DrawerToggleButton />,
+                        title: 'Servers',
+                        headerLeft: () => <DrawerButton />,
                         headerStyle: {
                           backgroundColor: DarkBlueTheme.colors.background,
                         },
@@ -79,11 +92,25 @@ function RootLayoutNav() {
                     />
                     <Drawer.Screen
                       name="(tabs)"
-                      options={{ headerShown: false }}
+                      options={{
+                        drawerStatusBarAnimation: 'fade',
+                        headerShown: false,
+                        drawerItemStyle: { display: 'none' },
+                      }}
                     />
-                    <Stack.Screen
-                      name="modal"
-                      // options={{ presentation: 'modal' }}
+                    <Drawer.Screen
+                      name="add-server"
+                      options={{
+                        headerShown: false,
+                        drawerItemStyle: { display: 'none' },
+                      }}
+                    />
+                    <Drawer.Screen
+                      name="+not-found"
+                      options={{
+                        headerShown: false,
+                        drawerItemStyle: { display: 'none' },
+                      }}
                     />
                   </Drawer>
                 </ToastProvider>
