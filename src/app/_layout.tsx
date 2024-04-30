@@ -1,5 +1,5 @@
-import { SplashScreen, Stack } from 'expo-router';
-import { TamaguiProvider } from 'tamagui';
+import { SplashScreen } from 'expo-router';
+import { TamaguiProvider, Text, XStack } from 'tamagui';
 
 import '../../tamagui-web.css';
 
@@ -15,9 +15,9 @@ import { VmProvider } from '../contexts/vm';
 import { FilesProvider } from '../contexts/files';
 import { ThemeProvider } from '@react-navigation/native';
 import { DarkBlueTheme } from '../style/theme';
-import { DrawerToggleButton } from '@react-navigation/drawer';
 import Drawer from 'expo-router/drawer';
 import DrawerButton from '../components/drawer-button';
+import { Server, Settings, Wand2 } from '@tamagui/lucide-icons';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -46,7 +46,7 @@ export default function RootLayout() {
 
   return <RootLayoutNav />;
 }
-
+// TODO: add root view for block on require update
 function RootLayoutNav() {
   // const colorScheme = useColorScheme();
   const { left, top, right } = useSafeAreaInsets();
@@ -82,8 +82,68 @@ function RootLayoutNav() {
                     <Drawer.Screen
                       name="index"
                       options={{
-                        headerShown: true,
                         title: 'Servers',
+                        headerShown: true,
+                        drawerLabel: () => (
+                          <>
+                            <XStack
+                              alignContent="center"
+                              alignItems="center"
+                              gap={'$2'}
+                            >
+                              <Server />
+                              <Text>Servers</Text>
+                            </XStack>
+                          </>
+                        ),
+                        headerLeft: () => <DrawerButton />,
+                        headerStyle: {
+                          backgroundColor: DarkBlueTheme.colors.background,
+                        },
+                      }}
+                    />
+                    <Drawer.Screen
+                      name="feature-request"
+                      options={{
+                        title: 'Request a feature',
+                        headerShown: true,
+                        drawerLabel: () => (
+                          <>
+                            <XStack
+                              alignContent="center"
+                              alignItems="center"
+                              gap={'$2'}
+                            >
+                              <Wand2 />
+                              <Text>Request a feature!</Text>
+                            </XStack>
+                          </>
+                        ),
+                        headerLeft: () => <DrawerButton />,
+                        headerStyle: {
+                          backgroundColor: DarkBlueTheme.colors.background,
+                        },
+                      }}
+                    />
+                    <Drawer.Screen
+                      name="settings"
+                      options={{
+                        title: 'Settings',
+                        headerShown: true,
+                        drawerLabel: () => (
+                          <>
+                            <XStack
+                              alignContent="center"
+                              alignItems="center"
+                              gap={'$2'}
+                            >
+                              <Settings />
+                              <Text>Settings</Text>
+                            </XStack>
+                          </>
+                        ),
+                        drawerActiveTintColor: 'white',
+                        drawerInactiveTintColor: 'grey',
                         headerLeft: () => <DrawerButton />,
                         headerStyle: {
                           backgroundColor: DarkBlueTheme.colors.background,

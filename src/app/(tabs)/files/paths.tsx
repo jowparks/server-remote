@@ -42,9 +42,9 @@ export default function PathsView() {
       params: { path: file.filePath },
     });
   };
-
+  // TODO: add scroll view
   return (
-    <View flex={1} space="$5" alignItems="center">
+    <View flex={1} gap="$5" alignItems="center">
       <Text>Recent Paths</Text>
       <YGroup
         alignSelf="center"

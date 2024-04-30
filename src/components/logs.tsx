@@ -9,7 +9,7 @@ export type LogsProps = {
 };
 
 export default function Logs({ command, refreshCommand }: LogsProps) {
-  const { sshClient } = useSsh();
+  const { sshClient, executeCommand } = useSsh();
   const [logs, setLogs] = useState<string>('');
   const scrollViewRef = useRef<ScrollView>(null);
   const [isAtEnd, setIsAtEnd] = useState(true);
@@ -17,7 +17,7 @@ export default function Logs({ command, refreshCommand }: LogsProps) {
   useEffect(() => {
     async function fetchLogs() {
       if (!sshClient) return;
-      const response = await sshClient.execute(command);
+      const response = await executeCommand(command);
       setLogs(response);
       console.log(response);
     }
@@ -29,10 +29,10 @@ export default function Logs({ command, refreshCommand }: LogsProps) {
     const fetchLogs = async () => {
       if (!sshClient) return;
       if (refreshCommand) {
-        const response = await sshClient.execute(refreshCommand);
+        const response = await executeCommand(refreshCommand);
         setLogs((prevLogs) => prevLogs + response);
       } else {
-        const response = await sshClient.execute(command);
+        const response = await executeCommand(command);
         setLogs(response);
       }
     };

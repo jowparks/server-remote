@@ -8,3 +8,7 @@ export interface Server {
   keyPassphrase?: string;
   name?: string;
 }
+
+export function hostname(server: Server) {
+  return `${server.user}@${server.host}:${server.port}`;
+}

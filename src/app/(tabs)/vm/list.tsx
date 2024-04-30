@@ -16,7 +16,7 @@ export default function VmList() {
 }
 
 function VmListScreen() {
-  const { sshClient } = useSsh();
+  const { sshClient, executeCommand } = useSsh();
   const { vms, setVms, setCurrentVmName } = useVms();
   const [loaded, setLoaded] = useState(false);
   const [trigger, setTrigger] = useState(false);
@@ -25,12 +25,12 @@ function VmListScreen() {
   useEffect(() => {
     const fetchVms = async () => {
       if (!sshClient) return;
-      const response = await sshClient.execute('virsh list --all --name');
+      const response = await executeCommand('virsh list --all --name');
       const names = response?.split('\n').filter(Boolean);
       if (!names) return;
       const vmXMLStrings = await Promise.all(
         names.map((name) => {
-          return sshClient.execute(`virsh dumpxml "${name}"`);
+          return executeCommand(`virsh dumpxml "${name}"`);
         }),
       );
       const vmXMLs = await Promise.all(
@@ -40,7 +40,7 @@ function VmListScreen() {
       );
       const states = await Promise.all(
         names.map(async (name) => {
-          const state = await sshClient.execute(`virsh domstate "${name}"`);
+          const state = await executeCommand(`virsh domstate "${name}"`);
           return {
             name: name,
             state: state.trim(),

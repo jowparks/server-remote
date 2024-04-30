@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, H4, Paragraph } from 'tamagui';
 import ContextMenuView from 'react-native-context-menu-view';
 import { Animated } from 'react-native';
-import { Server } from '../typing/server';
+import { Server, hostname } from '../typing/server';
 
 export type ServerCardProps = {
   server: Server;
@@ -64,9 +64,7 @@ export default function ServerCard(props: ServerCardProps) {
         >
           <Card.Header padded style={{ padding: 10 }}>
             <H4>{server.name}</H4>
-            <Paragraph theme="alt2">
-              {server.user}@{server.host}:{server.port}
-            </Paragraph>
+            <Paragraph theme="alt2">{hostname(server)}</Paragraph>
           </Card.Header>
         </Card>
       </ContextMenuView>

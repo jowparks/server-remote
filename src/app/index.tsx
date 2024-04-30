@@ -7,7 +7,7 @@ import { getItem, setItem } from '../storage/secure';
 import ServerCard from '../components/server-card';
 import { router } from 'expo-router';
 import { useSsh } from '../contexts/ssh';
-import { Server } from '../typing/server';
+import { Server, hostname } from '../typing/server';
 import { useFiles } from '../contexts/files';
 
 export default function ServerSelectScreen() {
@@ -45,7 +45,7 @@ export default function ServerSelectScreen() {
 
   const handleServerPress = (server: Server) => {
     setSshServer(server);
-    setHostName(`${server.user}@${server.host}:{server.port}`);
+    setHostName(hostname(server));
     router.push('/(tabs)/docker');
   };
 
