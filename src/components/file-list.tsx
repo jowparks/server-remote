@@ -54,7 +54,7 @@ const FileList: React.FC<FileListProps> = ({
     size="$5"
     separator={<Separator />}
   >
-    {files?.map((item) => (
+    {files?.map((item, index) => (
       <YGroup.Item key={item.filePath}>
         <ContextMenuView
           actions={[
@@ -117,6 +117,12 @@ const FileList: React.FC<FileListProps> = ({
             title={item.fileName}
             onPress={() => onPress(item)}
             iconAfter={item.fileType === 'd' ? ChevronRight : undefined}
+            style={{
+              borderTopLeftRadius: index === 0 ? 10 : 0,
+              borderTopRightRadius: index === 0 ? 10 : 0,
+              borderBottomLeftRadius: index === files.length - 1 ? 10 : 0,
+              borderBottomRightRadius: index === files.length - 1 ? 10 : 0,
+            }}
           />
         </ContextMenuView>
       </YGroup.Item>

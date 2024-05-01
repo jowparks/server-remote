@@ -130,7 +130,7 @@ function VmListScreen() {
       separator={<Separator />}
     >
       <YGroup.Item>
-        {vms.map((vm) => (
+        {vms.map((vm, index) => (
           <ContainerCard
             key={vm.domain.name[0]}
             name={vm.domain.name[0]}
@@ -151,6 +151,12 @@ function VmListScreen() {
             onPause={() => saveVm(vm)}
             onRestart={() => restartVm(vm)}
             onStop={() => stopVm(vm)}
+            listItemStyle={{
+              borderTopLeftRadius: index === 0 ? 10 : 0,
+              borderTopRightRadius: index === 0 ? 10 : 0,
+              borderBottomLeftRadius: index === vms.length - 1 ? 10 : 0,
+              borderBottomRightRadius: index === vms.length - 1 ? 10 : 0,
+            }}
           />
         ))}
       </YGroup.Item>

@@ -9,6 +9,7 @@ type ContainerCardProps = {
   running: boolean;
   paused: boolean;
   stopped: boolean;
+  listItemStyle?: React.CSSProperties;
   onCardPress: () => void;
   onStart: () => void;
   onStop: () => void;
@@ -23,6 +24,7 @@ export default function ContainerCard(props: ContainerCardProps) {
     running,
     paused,
     stopped,
+    listItemStyle,
     onCardPress,
     onStart,
     onStop,
@@ -30,7 +32,13 @@ export default function ContainerCard(props: ContainerCardProps) {
     onPause,
   } = props;
   return (
-    <ListItem elevate size="$4" bordered onPress={onCardPress}>
+    <ListItem
+      elevate
+      size="$4"
+      bordered
+      onPress={onCardPress}
+      style={listItemStyle}
+    >
       <YStack>
         <Text fontSize={16}>{name}</Text>
         <Paragraph theme="alt2">{subheading}</Paragraph>

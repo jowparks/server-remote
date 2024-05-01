@@ -54,7 +54,7 @@ export default function PathsView() {
         separator={<Separator />}
       >
         <YGroup.Item>
-          {recentFiles.map((file) => (
+          {recentFiles.map((file, index) => (
             <ContextMenuView
               actions={[
                 { title: 'delete', systemIcon: 'trash', destructive: true },
@@ -70,6 +70,16 @@ export default function PathsView() {
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  borderTopLeftRadius: index === 0 ? 10 : 0,
+                  borderTopRightRadius: index === 0 ? 10 : 0,
+                  borderBottomLeftRadius:
+                    index === recentFiles.length - 1 || recentFiles.length === 1
+                      ? 10
+                      : 0,
+                  borderBottomRightRadius:
+                    index === recentFiles.length - 1 || recentFiles.length === 1
+                      ? 10
+                      : 0,
                 }}
                 onPress={() => handlePathClick(file)}
               >
@@ -88,7 +98,7 @@ export default function PathsView() {
         separator={<Separator />}
       >
         <YGroup.Item>
-          {bookmarkedFiles.map((file) => (
+          {bookmarkedFiles.map((file, index) => (
             <ContextMenuView
               actions={[
                 { title: 'delete', systemIcon: 'trash', destructive: true },
@@ -104,6 +114,18 @@ export default function PathsView() {
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  borderTopLeftRadius: index === 0 ? 10 : 0,
+                  borderTopRightRadius: index === 0 ? 10 : 0,
+                  borderBottomLeftRadius:
+                    index === bookmarkedFiles.length - 1 ||
+                    bookmarkedFiles.length === 1
+                      ? 10
+                      : 0,
+                  borderBottomRightRadius:
+                    index === bookmarkedFiles.length - 1 ||
+                    bookmarkedFiles.length === 1
+                      ? 10
+                      : 0,
                 }}
                 onPress={() => handlePathClick(file)}
               >

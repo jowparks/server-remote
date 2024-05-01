@@ -25,10 +25,11 @@ function DockerList() {
 
   const router = useRouter();
 
-  // TODO use better spinner
   useEffect(() => {
     const fetchContainers = async () => {
       if (!sshClient) return;
+      // TODO convert to docker ps -a, use docker inspect to get details for individual container
+      // timing out
       const response = await sshClient.execute(
         'docker ps -a --no-trunc --format "{{json . }}"',
       );
@@ -112,7 +113,7 @@ function DockerList() {
       separator={<Separator />}
     >
       <YGroup.Item>
-        {containers.map((container) => (
+        {containers.map((container, index) => (
           // TODO max width needed for text or it will push buttons off the screen
           <ContainerCard
             key={container.ID}
@@ -133,6 +134,12 @@ function DockerList() {
             onPause={() => pauseContainer(container)}
             onRestart={() => restartContainer(container)}
             onStop={() => stopContainer(container)}
+            listItemStyle={{
+              borderTopLeftRadius: index === 0 ? 10 : 0,
+              borderTopRightRadius: index === 0 ? 10 : 0,
+              borderBottomLeftRadius: index === containers.length - 1 ? 10 : 0,
+              borderBottomRightRadius: index === containers.length - 1 ? 10 : 0,
+            }}
           />
         ))}
       </YGroup.Item>
