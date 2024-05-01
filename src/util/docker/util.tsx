@@ -1,4 +1,6 @@
-export function parseDockerContainerPs(raw: any): DockerContainer {
+import { DockerContainer, DockerPs } from '../../typing/docker';
+
+export function parseDockerContainerInspect(raw: any): DockerContainer {
   return {
     Command: raw.Command,
     CreatedAt: raw.CreatedAt ? new Date(raw.CreatedAt) : undefined,
@@ -25,6 +27,16 @@ export function parseDockerContainerPs(raw: any): DockerContainer {
           virtual: parseInt(raw.Size.split(' ')[3]),
         }
       : undefined,
+    State: raw.State,
+    Status: raw.Status,
+  };
+}
+
+export function parseDockerContainerPs(raw: any): DockerPs {
+  return {
+    ID: raw.ID,
+    Image: raw.Image,
+    Name: raw.Name,
     State: raw.State,
     Status: raw.Status,
   };

@@ -5,7 +5,11 @@ import { Separator, Spinner, YGroup } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
 import { useEffect, useState } from 'react';
 import { parseDockerContainerPs } from '../../../util/docker/util';
-import { DockerContainer } from '../../../typing/docker';
+import {
+  DockerContainer,
+  DockerPs,
+  DockerPsCommand,
+} from '../../../typing/docker';
 import { useRouter } from 'expo-router';
 import { useDocker } from '../../../contexts/docker';
 import ContainerCard from '../../../components/container-card';
@@ -30,20 +34,18 @@ function DockerList() {
       if (!sshClient) return;
       // TODO convert to docker ps -a, use docker inspect to get details for individual container
       // timing out
-      const response = await sshClient.execute(
-        'docker ps -a --no-trunc --format "{{json . }}"',
-      );
-      const lines = response?.split('\n');
-      const parsedContainers: DockerContainer[] = lines
+      const response = await sshClient.execute(DockerPsCommand);
+      const lines = response?.split('\n').filter(Boolean);
+      const parsedContainers: DockerPs[] = lines
         ?.map((line) => {
           try {
-            // TODO there is an error here on the first line
             return parseDockerContainerPs(JSON.parse(line));
           } catch (error) {
+            console.error(error);
             return null;
           }
         })
-        .filter(Boolean) as DockerContainer[];
+        .filter(Boolean) as DockerPs[];
       setContainers(parsedContainers);
       setLoaded(true);
     };

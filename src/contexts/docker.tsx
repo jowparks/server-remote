@@ -1,10 +1,10 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { DockerContainer } from '../typing/docker';
+import { DockerContainer, DockerPs } from '../typing/docker';
 
 // Create the context
 interface DockerContextValue {
-  containers: DockerContainer[];
-  setContainers: React.Dispatch<React.SetStateAction<DockerContainer[]>>;
+  containers: DockerPs[];
+  setContainers: React.Dispatch<React.SetStateAction<DockerPs[]>>;
   currentContainerId: string | null;
   setCurrentContainerId: React.Dispatch<React.SetStateAction<string | null>>;
 }
@@ -17,7 +17,7 @@ const DockerContext = createContext<DockerContextValue>({
 
 // Create the provider component
 export function DockerProvider({ children }: { children: ReactNode }) {
-  const [containers, setContainers] = useState<DockerContainer[]>([]);
+  const [containers, setContainers] = useState<DockerPs[]>([]);
   const [currentContainerId, setCurrentContainerId] = useState<string | null>(
     null,
   );

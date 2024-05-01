@@ -14,3 +14,12 @@ export interface DockerContainer {
   State?: string;
   Status?: string;
 }
+
+export const DockerPsCommand = `docker ps -a --format '{"ID": "{{.ID}}", "Name": "{{.Names}}", "Status": "{{.Status}}", "State": "{{.State}}", "Image": "{{.Image}}"}'`;
+export interface DockerPs {
+  ID: string;
+  Image: string;
+  Name: string;
+  Status: string;
+  State: string;
+}

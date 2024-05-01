@@ -39,7 +39,7 @@ export function SshProvider({ children }: { children: ReactNode }) {
           server.password,
           (err, _) => {
             if (err) {
-              console.log('Fail: ' + err.message);
+              console.log(`Fail: ${JSON.stringify(err)}`);
             }
           },
         );
