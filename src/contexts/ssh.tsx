@@ -1,3 +1,4 @@
+import SSHClient from '@jowparks/react-native-ssh-sftp';
 import React, {
   createContext,
   useState,
@@ -5,42 +6,24 @@ import React, {
   useContext,
   ReactNode,
 } from 'react';
-import { Server, hostname } from '../typing/server';
-import SSHClient, { CallbackFunction } from '@jowparks/react-native-ssh-sftp';
-import { storage } from '../storage/mmkv';
+import { Server } from '../typing/server';
 
 // Create the context
-export type ExecuteCommandType = (
-  command: string,
-  callback?: CallbackFunction<string>,
-) => Promise<string>;
 interface SshContextValue {
   sshServer: Server | null;
   setSshServer: React.Dispatch<React.SetStateAction<Server | null>>;
   sshClient: SSHClient | null;
-  executeCommand: ExecuteCommandType;
-  commandHistory: string[];
 }
 const SshContext = createContext<SshContextValue>({
   sshServer: null,
   setSshServer: () => {},
   sshClient: null,
-  executeCommand: () => Promise.resolve(''),
-  commandHistory: [],
 });
 
 // Create the provider component
 export function SshProvider({ children }: { children: ReactNode }) {
   const [server, setSshServer] = useState<Server | null>(null);
   const [sshClient, setSSHClient] = useState<SSHClient | null>(null);
-  const [commandHistory, setCommandHistory] = useState<string[]>([]);
-
-  useEffect(() => {
-    const loadedCommandHistory = storage.get<string[]>('commandHistory');
-    if (loadedCommandHistory) {
-      setCommandHistory(loadedCommandHistory);
-    }
-  }, []);
 
   useEffect(() => {
     let client: SSHClient | null = null;
@@ -107,29 +90,8 @@ export function SshProvider({ children }: { children: ReactNode }) {
     connectToServer();
   }, [server]);
 
-  const executeCommand = async (
-    command: string,
-    callback?: CallbackFunction<string>,
-  ) => {
-    if (!sshClient || !server) {
-      throw new Error('SSH client or server not set');
-    }
-    const newCommandHistory = [command, ...commandHistory];
-    setCommandHistory(newCommandHistory);
-    storage.setObject(`${hostname(server)}_command_history`, newCommandHistory);
-    return await sshClient.execute(command, callback);
-  };
-
   return (
-    <SshContext.Provider
-      value={{
-        sshServer: server,
-        setSshServer,
-        sshClient,
-        executeCommand,
-        commandHistory,
-      }}
-    >
+    <SshContext.Provider value={{ sshServer: server, setSshServer, sshClient }}>
       {children}
     </SshContext.Provider>
   );

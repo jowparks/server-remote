@@ -19,7 +19,7 @@ export default function DockerScreen() {
 }
 
 function DockerList() {
-  const { sshClient, executeCommand } = useSsh();
+  const { sshClient } = useSsh();
   const { containers, setContainers, setCurrentContainerId } = useDocker();
   const [loaded, setLoaded] = useState(false);
 
@@ -28,7 +28,8 @@ function DockerList() {
   // TODO use better spinner
   useEffect(() => {
     const fetchContainers = async () => {
-      const response = await executeCommand(
+      if (!sshClient) return;
+      const response = await sshClient.execute(
         'docker ps -a --no-trunc --format "{{json . }}"',
       );
       const lines = response?.split('\n');
@@ -56,7 +57,8 @@ function DockerList() {
   }, [sshClient]);
 
   const stopContainer = (container: DockerContainer) => {
-    executeCommand(`docker stop ${container.ID}`)
+    sshClient
+      ?.execute(`docker stop ${container.ID}`)
       .then((response) => {
         console.log(response);
       })

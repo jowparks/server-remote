@@ -129,7 +129,7 @@ function RootLayoutNav() {
                       name="settings"
                       options={{
                         title: 'Settings',
-                        headerShown: true,
+                        headerShown: false,
                         drawerLabel: () => (
                           <>
                             <XStack
@@ -144,10 +144,6 @@ function RootLayoutNav() {
                         ),
                         drawerActiveTintColor: 'white',
                         drawerInactiveTintColor: 'grey',
-                        headerLeft: () => <DrawerButton />,
-                        headerStyle: {
-                          backgroundColor: DarkBlueTheme.colors.background,
-                        },
                       }}
                     />
                     <Drawer.Screen

@@ -1,5 +1,4 @@
 import SSHClient from '@jowparks/react-native-ssh-sftp';
-import { ExecuteCommandType } from '../../contexts/ssh';
 
 export function fileCommand(path: string) {
   return `find ${path} -maxdepth 1 -printf '%M,%n,%u.%g,%s,%AY-%Am-%Ad %AH:%AM:%AS,%TY-%Tm-%Td %TH:%TM:%TS,%p,%y,%l\n'`;
@@ -65,11 +64,8 @@ export function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export async function sftpPaths(
-  executeCommand: ExecuteCommandType,
-  path: string,
-) {
-  const response = await executeCommand(fileCommand(path));
+export async function sftpPaths(sshClient: SSHClient, path: string) {
+  const response = await sshClient.execute(fileCommand(path));
   const lines = response?.split('\n').filter((line) => line !== '');
   if (!lines) return [];
   const files = lines

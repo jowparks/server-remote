@@ -2,7 +2,7 @@ import { Link } from 'expo-router';
 import React from 'react';
 import { ListItem, Separator, View, YGroup } from 'tamagui';
 
-export default function MenuScreen() {
+export default function SettingsScreen() {
   return (
     <View flex={1} alignItems="center">
       <YGroup
@@ -13,14 +13,9 @@ export default function MenuScreen() {
         separator={<Separator />}
       >
         <YGroup.Item>
-          <Link href="/(tabs)/docker/details">
+          <Link href="/settings/info">
             <ListItem elevate size="$4" bordered>
-              Details
-            </ListItem>
-          </Link>
-          <Link href="/(tabs)/docker/logs">
-            <ListItem elevate size="$4" bordered>
-              Logs
+              App Info
             </ListItem>
           </Link>
         </YGroup.Item>

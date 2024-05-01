@@ -2,6 +2,7 @@
   "name": "server-remote",
   "version": "1.0.0",
   "main": "expo-router/entry",
+  "description": "App for controlling a server remotely",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",

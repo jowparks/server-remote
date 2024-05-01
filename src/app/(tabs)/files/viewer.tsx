@@ -15,7 +15,7 @@ const FolderViewer = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const navigation = useNavigation();
-  const { sshClient, executeCommand } = useSsh();
+  const { sshClient } = useSsh();
   const {
     selectedFile,
     cachedFile,
@@ -54,7 +54,7 @@ const FolderViewer = () => {
     const fetchFileInfo = async () => {
       setLoading(true);
       if (!sshClient) return;
-      const files = await sftpPaths(executeCommand, path);
+      const files = await sftpPaths(sshClient, path);
       setFiles(files);
       setLoading(false);
     };
@@ -72,7 +72,7 @@ const FolderViewer = () => {
       const command = `${baseCommand} ${cachedFile.file.filePath} ${path}`;
       console.log(`Pasting: ${command}`);
       // TODO: finalize paste
-      await executeCommand('ls', (error) => {
+      await sshClient.execute('ls', (error) => {
         if (error) {
           console.warn('Pasting failed:', error);
         } else {
@@ -134,7 +134,7 @@ const FolderViewer = () => {
     console.log(`Deleting: ${command}`);
     // TODO: handle delete
     setFiles(files?.filter((file) => file.filePath !== item.filePath) || []);
-    await executeCommand('ls', (error) => {
+    await sshClient.execute('ls', (error) => {
       if (error) {
         console.warn('Delete failed:', error);
       } else {
@@ -149,7 +149,7 @@ const FolderViewer = () => {
     const command = `mv ${item.filePath} ${path}/${newName}`;
     console.log(`Renaming: ${command}`);
     // TODO: finalize rename
-    await executeCommand('ls', (error) => {
+    await sshClient.execute('ls', (error) => {
       if (error) {
         console.warn('Rename failed:', error);
       } else {
@@ -184,7 +184,7 @@ const FolderViewer = () => {
     const command = `cp -r ${path}/${item.fileName} ${path}/${duplicate}`;
     console.log(`Duplicating: ${command}`);
     // TODO: finalize duplicate
-    await executeCommand('ls', (error) => {
+    await sshClient.execute('ls', (error) => {
       if (error) {
         console.warn('Duplicate failed:', error);
       } else {
