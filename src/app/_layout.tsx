@@ -5,7 +5,7 @@ import '../../tamagui-web.css';
 
 import config from '../../tamagui.config';
 import { useFonts } from 'expo-font';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ToastProvider, ToastViewport } from '@tamagui/toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SshProvider } from '../contexts/ssh';
@@ -19,6 +19,7 @@ import Drawer from 'expo-router/drawer';
 import DrawerButton from '../components/drawer-button';
 import { Server, Settings, Wand2 } from '@tamagui/lucide-icons';
 import { HeaderProvider } from '../contexts/header';
+import { BiometricsProvider, useBiometrics } from '../contexts/biometrics';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -29,24 +30,52 @@ export {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  return (
+    <BiometricsProvider>
+      <RootLayoutContent />
+    </BiometricsProvider>
+  );
+}
+
+function RootLayoutContent() {
   const [interLoaded, interError] = useFonts({
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
   });
+  const { biometricsEnabled, promptBiometrics } = useBiometrics();
+  const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
-    if (interLoaded || interError) {
+    const authenticate = async () => {
+      if (biometricsEnabled) {
+        const success = await promptBiometrics();
+        console.log('biometrics success:', success);
+        setAuthenticated(success);
+      } else {
+        setAuthenticated(true);
+      }
+    };
+    authenticate();
+  }, [biometricsEnabled]);
+
+  useEffect(() => {
+    if ((interLoaded || interError) && authenticated) {
       // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
       SplashScreen.hideAsync();
     }
-  }, [interLoaded, interError]);
+  }, [interLoaded, interError, authenticated]);
 
   if (!interLoaded && !interError) {
     return null;
   }
 
+  if (!authenticated) {
+    return null;
+  }
+
   return <RootLayoutNav />;
 }
+
 // TODO: add root view for block on require update
 function RootLayoutNav() {
   // const colorScheme = useColorScheme();

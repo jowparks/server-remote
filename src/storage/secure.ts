@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { Server } from '../typing/types';
+import { Server } from '../typing/server';
 
 interface StorageItems {
   servers: Server[];

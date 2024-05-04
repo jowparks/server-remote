@@ -38,6 +38,17 @@ function SettingsLayoutNav() {
           title: 'App Info',
         }}
       />
+      <Stack.Screen
+        name="app"
+        options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: DarkBlueTheme.colors.background,
+          },
+          headerLeft: () => <HeaderBack />,
+          title: 'App Settings',
+        }}
+      />
     </Stack>
   );
 }

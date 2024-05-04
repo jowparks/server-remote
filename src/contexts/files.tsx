@@ -64,15 +64,19 @@ export function FilesProvider({ children }: { children: ReactNode }) {
   }, [hostname]);
 
   const addRecentFile = (file: FileInfo) => {
-    const newRecentFiles = [file, ...recentFiles];
-    setRecentFiles(newRecentFiles);
-    storage.setObject(recentFileStore, newRecentFiles);
+    if (!recentFiles.some((f) => f.filePath === file.filePath)) {
+      const newRecentFiles = [file, ...recentFiles];
+      setRecentFiles(newRecentFiles);
+      storage.setObject(recentFileStore, newRecentFiles);
+    }
   };
 
   const addBookmarkedFile = (file: FileInfo) => {
-    const newBookmarkedFiles = [file, ...bookmarkedFiles];
-    setBookmarkedFiles(newBookmarkedFiles);
-    storage.setObject(bookmarkedFileStore, newBookmarkedFiles);
+    if (!bookmarkedFiles.some((f) => f.filePath === file.filePath)) {
+      const newBookmarkedFiles = [file, ...bookmarkedFiles];
+      setBookmarkedFiles(newBookmarkedFiles);
+      storage.setObject(bookmarkedFileStore, newBookmarkedFiles);
+    }
   };
 
   const removeBookmarkedFile = (file: FileInfo) => {
