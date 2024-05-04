@@ -47,12 +47,12 @@ function RootLayoutContent() {
 
   useEffect(() => {
     const authenticate = async () => {
-      if (biometricsEnabled) {
+      if (biometricsEnabled == true) {
         const success = await promptBiometrics();
-        console.log('biometrics success:', success);
         setAuthenticated(success);
-      } else {
+      } else if (biometricsEnabled == false) {
         setAuthenticated(true);
+      } else {
       }
     };
     authenticate();

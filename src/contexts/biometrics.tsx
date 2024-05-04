@@ -10,7 +10,7 @@ import { storage } from '../storage/mmkv';
 
 interface BiometricsContextProps {
   biometrics: BiometryType | undefined;
-  biometricsEnabled: boolean;
+  biometricsEnabled: boolean | null;
   setBiometricsEnabled: (value: boolean) => void;
   promptBiometrics: () => Promise<boolean>; // New method
 }
@@ -20,7 +20,9 @@ const BiometricsContext = createContext<BiometricsContextProps | undefined>(
 );
 
 export function BiometricsProvider({ children }: { children: ReactNode }) {
-  const [biometricsEnabled, setBiometricsEnabled] = useState<boolean>(true);
+  const [biometricsEnabled, setBiometricsEnabled] = useState<boolean | null>(
+    null,
+  );
   const [biometrics, setBiometrics] = useState<BiometryType | undefined>(
     undefined,
   );
@@ -28,11 +30,14 @@ export function BiometricsProvider({ children }: { children: ReactNode }) {
   const biometricStorageKey = 'biometricPublicKey';
 
   useEffect(() => {
-    const storedPublicKey = storage.getString(biometricStorageKey);
-    if (storedPublicKey) {
-      setBiometricsEnabled(true);
-    }
     const checkBiometrics = async () => {
+      const storedPublicKey = storage.getString(biometricStorageKey);
+      console.log('Stored public key:', storedPublicKey);
+      if (storedPublicKey) {
+        setBiometricsEnabled(true);
+      } else {
+        setBiometricsEnabled(false);
+      }
       const { biometryType } = await rnBiometrics.isSensorAvailable();
       setBiometrics(biometryType);
     };
@@ -40,6 +45,7 @@ export function BiometricsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (biometricsEnabled == null) return;
     setBiometricKey(biometricsEnabled);
   }, [biometricsEnabled]);
 
@@ -50,6 +56,7 @@ export function BiometricsProvider({ children }: { children: ReactNode }) {
     } else {
       storage.delete(biometricStorageKey);
     }
+    console.log(storage.getString(biometricStorageKey));
   };
 
   const promptBiometrics = async () => {
