@@ -21,8 +21,6 @@ interface FileContextProps {
   cachedFile: CachedFile | null;
   setCachedFile: React.Dispatch<React.SetStateAction<CachedFile | null>>;
   recentFiles: FileInfo[];
-  pasteLocation: FileInfo | null;
-  setPasteLocation: React.Dispatch<React.SetStateAction<FileInfo | null>>;
   bookmarkedFiles: FileInfo[];
   addRecentFile: (file: FileInfo) => void;
   removeRecentFile: (file: FileInfo) => void;
@@ -49,7 +47,6 @@ export function FilesProvider({ children }: { children: ReactNode }) {
   const [recentFiles, setRecentFiles] = useState<FileInfo[]>([]);
   const [bookmarkedFiles, setBookmarkedFiles] = useState<FileInfo[]>([]);
   const [hostname, setHostName] = useState<string>('');
-  const [pasteLocation, setPasteLocation] = useState<FileInfo | null>(null);
   const bookmarkedFileStore = `${hostname}_recentFiles_file_arr`;
   const recentFileStore = `${hostname}_bookmarkedFiles_file_arr`;
 
@@ -104,8 +101,6 @@ export function FilesProvider({ children }: { children: ReactNode }) {
         cachedFile,
         setCachedFile,
         recentFiles,
-        pasteLocation,
-        setPasteLocation,
         bookmarkedFiles,
         addRecentFile,
         addBookmarkedFile,

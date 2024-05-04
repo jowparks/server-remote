@@ -1,4 +1,4 @@
-import { Separator, Spinner, View, YGroup } from 'tamagui';
+import { ScrollView, Separator, Spinner, View, YGroup } from 'tamagui';
 import React, { useEffect, useState } from 'react';
 import { useSsh } from '../../../contexts/ssh';
 import { parseVirshDumpXML } from '../../../util/vm/util';
@@ -122,44 +122,50 @@ function VmListScreen() {
   return !loaded ? (
     <Spinner size="large" />
   ) : (
-    <YGroup
-      alignSelf="center"
-      bordered
-      width={'90%'}
-      size="$5"
-      separator={<Separator />}
-    >
-      <YGroup.Item>
-        {vms.map((vm, index) => (
-          <ContainerCard
-            key={vm.domain.name[0]}
-            name={vm.domain.name[0]}
-            subheading={vm.state}
-            running={vm.state === 'running' || vm.state === 'idle'}
-            paused={vm.state === 'paused' || vm.state === 'pmsuspended'}
-            stopped={
-              vm.state === 'shut off' ||
-              vm.state === 'crashed' ||
-              vm.state === 'in shutdown' ||
-              vm.state === 'dying'
-            }
-            onCardPress={() => {
-              setCurrentVmName(vm.domain.name[0]);
-              router.navigate('(tabs)/vm/menu');
-            }}
-            onStart={() => (vm.state == 'paused' ? restoreVm(vm) : startVm(vm))}
-            onPause={() => saveVm(vm)}
-            onRestart={() => restartVm(vm)}
-            onStop={() => stopVm(vm)}
-            listItemStyle={{
-              borderTopLeftRadius: index === 0 ? 10 : 0,
-              borderTopRightRadius: index === 0 ? 10 : 0,
-              borderBottomLeftRadius: index === vms.length - 1 ? 10 : 0,
-              borderBottomRightRadius: index === vms.length - 1 ? 10 : 0,
-            }}
-          />
-        ))}
-      </YGroup.Item>
-    </YGroup>
+    <View width={'90%'}>
+      <ScrollView>
+        <YGroup
+          alignSelf="center"
+          bordered
+          size="$5"
+          width="100%"
+          separator={<Separator />}
+        >
+          <YGroup.Item>
+            {vms.map((vm, index) => (
+              <ContainerCard
+                key={vm.domain.name[0]}
+                name={vm.domain.name[0]}
+                subheading={vm.state}
+                running={vm.state === 'running' || vm.state === 'idle'}
+                paused={vm.state === 'paused' || vm.state === 'pmsuspended'}
+                stopped={
+                  vm.state === 'shut off' ||
+                  vm.state === 'crashed' ||
+                  vm.state === 'in shutdown' ||
+                  vm.state === 'dying'
+                }
+                onCardPress={() => {
+                  setCurrentVmName(vm.domain.name[0]);
+                  router.navigate('(tabs)/vm/menu');
+                }}
+                onStart={() =>
+                  vm.state == 'paused' ? restoreVm(vm) : startVm(vm)
+                }
+                onPause={() => saveVm(vm)}
+                onRestart={() => restartVm(vm)}
+                onStop={() => stopVm(vm)}
+                listItemStyle={{
+                  borderTopLeftRadius: index === 0 ? 10 : 0,
+                  borderTopRightRadius: index === 0 ? 10 : 0,
+                  borderBottomLeftRadius: index === vms.length - 1 ? 10 : 0,
+                  borderBottomRightRadius: index === vms.length - 1 ? 10 : 0,
+                }}
+              />
+            ))}
+          </YGroup.Item>
+        </YGroup>
+      </ScrollView>
+    </View>
   );
 }

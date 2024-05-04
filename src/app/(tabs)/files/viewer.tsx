@@ -10,16 +10,17 @@ import InfoModal from './info';
 import Alert from '../../../components/alert';
 import FileList from '../../../components/file-list';
 import RenameModal from '../../../components/rename';
+import { useHeader } from '../../../contexts/header';
 
 const FolderViewer = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const navigation = useNavigation();
   const { sshClient } = useSsh();
+  const { pasteLocation } = useHeader();
   const {
     selectedFile,
     cachedFile,
-    pasteLocation,
     setSelectedFile,
     setCachedFile,
     setCurrentFolder,

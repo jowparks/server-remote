@@ -4,6 +4,7 @@ import { DarkBlueTheme } from '../../../style/theme';
 import { DrawerToggleButton } from '@react-navigation/drawer';
 import DrawerButton from '../../../components/drawer-button';
 import HeaderBack from '../../../components/header-back';
+import DetailsNav from '../../../components/details-nav';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -67,6 +68,7 @@ function DockerLayoutNav() {
           },
           title: 'Details',
           headerLeft: () => <HeaderBack />,
+          headerRight: DetailsNav,
         }}
       />
       <Stack.Screen

@@ -1,7 +1,8 @@
-import React, { useState, ReactNode } from 'react';
+import React, { useState, ReactNode, useEffect } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Text, View, ScrollView } from 'tamagui';
 import { DarkBlueTheme } from '../style/theme';
+import { useHeader } from '../contexts/header';
 
 type JsonNodeProps = {
   name: string;
@@ -20,15 +21,19 @@ const JsonNode: React.FC<JsonNodeProps> = ({
   renderValue,
   renderArrayLabel,
 }) => {
+  const { detailsExpanded } = useHeader();
   const [isOpen, setIsOpen] = useState(false);
   const handlePress = () => setIsOpen(!isOpen);
   const isObject = typeof data === 'object' && data !== null;
   const isArray = Array.isArray(data);
 
+  useEffect(() => {
+    setIsOpen(detailsExpanded);
+  }, [detailsExpanded]);
+
   const WrapperComponent = isObject || isArray ? TouchableOpacity : View;
   const wrapperProps = isObject || isArray ? { onPress: handlePress } : {};
   // TODO make text selectable
-  // TODO make default rendering look nicer
   return (
     <View>
       <WrapperComponent
@@ -50,29 +55,33 @@ const JsonNode: React.FC<JsonNodeProps> = ({
         ) : null}
       </WrapperComponent>
       {isOpen &&
-        (isObject
-          ? Object.keys(data)
-              .sort()
-              .map((key) => (
-                <JsonNode
-                  key={key}
-                  name={key}
-                  data={data[key]}
-                  level={level + 1}
-                  renderKey={renderKey}
-                  renderValue={renderValue}
-                />
-              ))
-          : data.map((item, index) => (
+        (isObject ? (
+          Object.keys(data)
+            .sort()
+            .map((key) => (
               <JsonNode
-                key={index}
-                name={index.toString()}
-                data={item}
+                key={key}
+                name={key}
+                data={data[key]}
                 level={level + 1}
                 renderKey={renderKey}
                 renderValue={renderValue}
               />
-            )))}
+            ))
+        ) : isArray ? (
+          data.map((item, index) => (
+            <JsonNode
+              key={index}
+              name={index.toString()}
+              data={item}
+              level={level + 1}
+              renderKey={renderKey}
+              renderValue={renderValue}
+            />
+          ))
+        ) : (
+          <Content content={data} renderer={renderValue} />
+        ))}
     </View>
   );
 };
@@ -119,6 +128,7 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
   return (
     <ScrollView>
       {Object.keys(data)
+        .filter((key) => !!key)
         .sort()
         .map((key) => (
           <JsonNode

@@ -2,9 +2,11 @@ import { ClipboardPaste, FolderOutput } from '@tamagui/lucide-icons';
 import { Button } from 'tamagui';
 import { useFiles } from '../contexts/files';
 import React from 'react';
+import { useHeader } from '../contexts/header';
 
 export function PasteButton() {
-  const { cachedFile, currentFolder, setPasteLocation } = useFiles();
+  const { cachedFile, currentFolder } = useFiles();
+  const { setPasteLocation } = useHeader();
   switch (cachedFile?.type) {
     case 'copy':
       return (

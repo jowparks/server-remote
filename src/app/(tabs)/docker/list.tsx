@@ -1,15 +1,11 @@
-import { View } from 'tamagui';
+import { ScrollView, View } from 'tamagui';
 import React from 'react';
 
 import { Separator, Spinner, YGroup } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
 import { useEffect, useState } from 'react';
 import { parseDockerContainerPs } from '../../../util/docker/util';
-import {
-  DockerContainer,
-  DockerPs,
-  DockerPsCommand,
-} from '../../../typing/docker';
+import { DockerPs, DockerPsCommand } from '../../../typing/docker';
 import { useRouter } from 'expo-router';
 import { useDocker } from '../../../contexts/docker';
 import ContainerCard from '../../../components/container-card';
@@ -32,8 +28,6 @@ function DockerList() {
   useEffect(() => {
     const fetchContainers = async () => {
       if (!sshClient) return;
-      // TODO convert to docker ps -a, use docker inspect to get details for individual container
-      // timing out
       const response = await sshClient.execute(DockerPsCommand);
       const lines = response?.split('\n').filter(Boolean);
       const parsedContainers: DockerPs[] = lines
@@ -59,7 +53,7 @@ function DockerList() {
     return () => clearInterval(intervalId);
   }, [sshClient]);
 
-  const stopContainer = (container: DockerContainer) => {
+  const stopContainer = (container: DockerPs) => {
     sshClient
       ?.execute(`docker stop ${container.ID}`)
       .then((response) => {
@@ -68,7 +62,7 @@ function DockerList() {
       .catch((error) => console.log(error));
   };
 
-  const startContainer = (container: DockerContainer) => {
+  const startContainer = (container: DockerPs) => {
     sshClient
       ?.execute(`docker start ${container.ID}`)
       .then((response) => {
@@ -77,7 +71,7 @@ function DockerList() {
       .catch((error) => console.log(error));
   };
 
-  const restartContainer = (container: DockerContainer) => {
+  const restartContainer = (container: DockerPs) => {
     sshClient
       ?.execute(`docker restart ${container.ID}`)
       .then((response) => {
@@ -86,7 +80,7 @@ function DockerList() {
       .catch((error) => console.log(error));
   };
 
-  const pauseContainer = (container: DockerContainer) => {
+  const pauseContainer = (container: DockerPs) => {
     sshClient
       ?.execute(`docker pause ${container.ID}`)
       .then((response) => {
@@ -95,7 +89,7 @@ function DockerList() {
       .catch((error) => console.log(error));
   };
 
-  const unpauseContainer = (container: DockerContainer) => {
+  const unpauseContainer = (container: DockerPs) => {
     sshClient
       ?.execute(`docker unpause ${container.ID}`)
       .then((response) => {
@@ -105,46 +99,52 @@ function DockerList() {
   };
 
   return !loaded ? (
-    <Spinner size="large" />
+    <Spinner size="large" alignItems="center" />
   ) : (
-    <YGroup
-      alignSelf="center"
-      bordered
-      width={'90%'}
-      size="$5"
-      separator={<Separator />}
-    >
-      <YGroup.Item>
-        {containers.map((container, index) => (
-          // TODO max width needed for text or it will push buttons off the screen
-          <ContainerCard
-            key={container.ID}
-            name={container.Image?.split('/').pop() || 'N/A'}
-            subheading={container.Status || 'N/A'}
-            running={container.State === 'running'}
-            paused={container.State === 'paused'}
-            stopped={container.State === 'exited'}
-            onCardPress={() => {
-              setCurrentContainerId(container.ID || null);
-              router.navigate('(tabs)/docker/menu');
-            }}
-            onStart={() =>
-              container.State == 'paused'
-                ? unpauseContainer(container)
-                : startContainer(container)
-            }
-            onPause={() => pauseContainer(container)}
-            onRestart={() => restartContainer(container)}
-            onStop={() => stopContainer(container)}
-            listItemStyle={{
-              borderTopLeftRadius: index === 0 ? 10 : 0,
-              borderTopRightRadius: index === 0 ? 10 : 0,
-              borderBottomLeftRadius: index === containers.length - 1 ? 10 : 0,
-              borderBottomRightRadius: index === containers.length - 1 ? 10 : 0,
-            }}
-          />
-        ))}
-      </YGroup.Item>
-    </YGroup>
+    <View width={'90%'}>
+      <ScrollView>
+        <YGroup
+          alignSelf="center"
+          bordered
+          size="$5"
+          width="100%"
+          separator={<Separator />}
+        >
+          <YGroup.Item>
+            {containers.map((container, index) => (
+              // TODO max width needed for text or it will push buttons off the screen
+              <ContainerCard
+                key={container.ID}
+                name={container.Image?.split('/').pop() || 'N/A'}
+                subheading={container.Status || 'N/A'}
+                running={container.State === 'running'}
+                paused={container.State === 'paused'}
+                stopped={container.State === 'exited'}
+                onCardPress={() => {
+                  setCurrentContainerId(container.ID || null);
+                  router.navigate('(tabs)/docker/menu');
+                }}
+                onStart={() =>
+                  container.State == 'paused'
+                    ? unpauseContainer(container)
+                    : startContainer(container)
+                }
+                onPause={() => pauseContainer(container)}
+                onRestart={() => restartContainer(container)}
+                onStop={() => stopContainer(container)}
+                listItemStyle={{
+                  borderTopLeftRadius: index === 0 ? 10 : 0,
+                  borderTopRightRadius: index === 0 ? 10 : 0,
+                  borderBottomLeftRadius:
+                    index === containers.length - 1 ? 10 : 0,
+                  borderBottomRightRadius:
+                    index === containers.length - 1 ? 10 : 0,
+                }}
+              />
+            ))}
+          </YGroup.Item>
+        </YGroup>
+      </ScrollView>
+    </View>
   );
 }

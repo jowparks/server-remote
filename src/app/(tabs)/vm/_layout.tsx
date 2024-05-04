@@ -3,6 +3,7 @@ import React from 'react';
 import { DarkBlueTheme } from '../../../style/theme';
 import DrawerButton from '../../../components/drawer-button';
 import HeaderBack from '../../../components/header-back';
+import DetailsNav from '../../../components/details-nav';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -47,6 +48,7 @@ function VmLayoutNav() {
             backgroundColor: DarkBlueTheme.colors.background,
           },
           headerLeft: () => <HeaderBack />,
+          headerRight: DetailsNav,
           title: 'Details',
         }}
       />
