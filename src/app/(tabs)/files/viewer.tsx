@@ -115,20 +115,21 @@ const FolderViewer = () => {
     });
     if (!directory?.uri) return;
     const targetPath = decodeURI(directory.uri.replace('file://', ''));
-    console.log(`Downloading from: ${path}${item.fileName} to ${targetPath}`);
+    const originatingFile = `${path}/${item.fileName}`;
+    console.log(`Downloading from: ${originatingFile} to ${targetPath}`);
     await sshClient.sftpDownload(
-      `${path}${item.fileName}`,
+      originatingFile,
       targetPath,
-      (error) => {
+      (error, response) => {
         if (error) {
           console.warn('Download failed:', error);
         } else {
-          console.log('Download successful');
+          console.log('Download successful: ', response);
         }
       },
     );
   };
-
+  // TODO: Sftp uploadZ
   const handleDelete = async (item: FileInfo | null) => {
     if (!sshClient || !item) return;
     const command = `rm -r ${item.filePath}`;

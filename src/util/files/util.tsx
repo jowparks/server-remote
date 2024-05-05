@@ -1,7 +1,7 @@
 import SSHClient from '@jowparks/react-native-ssh-sftp';
 
 export function fileCommand(path: string) {
-  return `find ${path} -maxdepth 1 -printf '%M,%n,%u.%g,%s,%AY-%Am-%Ad %AH:%AM:%AS,%TY-%Tm-%Td %TH:%TM:%TS,%p,%y,%l\n'`;
+  return `find "${path}" -maxdepth 1 -printf '%M,%n,%u.%g,%s,%AY-%Am-%Ad %AH:%AM:%AS,%TY-%Tm-%Td %TH:%TM:%TS,%p,%y,%l\n'`;
 }
 
 export type FileType = 'f' | 'd' | 'l';

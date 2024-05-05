@@ -12,7 +12,7 @@ interface BiometricsContextProps {
   biometrics: BiometryType | undefined;
   biometricsEnabled: boolean | null;
   setBiometricsEnabled: (value: boolean) => void;
-  promptBiometrics: () => Promise<boolean>; // New method
+  promptBiometrics: () => Promise<boolean>;
 }
 
 const BiometricsContext = createContext<BiometricsContextProps | undefined>(
