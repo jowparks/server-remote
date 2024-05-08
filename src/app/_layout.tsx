@@ -20,6 +20,7 @@ import { Server, Settings, Wand2 } from '@tamagui/lucide-icons';
 import { HeaderProvider } from '../contexts/header';
 import { BiometricsProvider } from '../contexts/biometrics';
 import { AuthenticationProvider } from '../contexts/authentication';
+import Login from '../components/login';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -71,6 +72,7 @@ function RootLayoutNav() {
                         right={right}
                       />
                       <AuthenticationProvider>
+                        <Login />
                         <Drawer
                           screenOptions={{
                             drawerActiveBackgroundColor:
@@ -86,14 +88,6 @@ function RootLayoutNav() {
                         >
                           <Drawer.Screen
                             name="index"
-                            options={{
-                              headerShown: false,
-                              drawerItemStyle: { display: 'none' },
-                            }}
-                          />
-
-                          <Drawer.Screen
-                            name="servers"
                             options={{
                               title: 'Servers',
                               headerShown: true,

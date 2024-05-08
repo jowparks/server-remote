@@ -7,7 +7,7 @@ export default function NotFoundScreen() {
   useEffect(() => {
     setTimeout(() => {
       console.log('Not Found: Redirecting to /');
-      router.navigate('/');
+      router.push('/');
     }, 0);
   }, [router]);
 
