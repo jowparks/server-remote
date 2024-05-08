@@ -5,11 +5,10 @@ import '../../tamagui-web.css';
 
 import config from '../../tamagui.config';
 import { useFonts } from 'expo-font';
-import { useEffect, useState } from 'react';
 import { ToastProvider, ToastViewport } from '@tamagui/toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SshProvider } from '../contexts/ssh';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DockerProvider } from '../contexts/docker';
 import { VmProvider } from '../contexts/vm';
 import { FilesProvider } from '../contexts/files';
@@ -19,7 +18,8 @@ import Drawer from 'expo-router/drawer';
 import DrawerButton from '../components/drawer-button';
 import { Server, Settings, Wand2 } from '@tamagui/lucide-icons';
 import { HeaderProvider } from '../contexts/header';
-import { BiometricsProvider, useBiometrics } from '../contexts/biometrics';
+import { BiometricsProvider } from '../contexts/biometrics';
+import { AuthenticationProvider } from '../contexts/authentication';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -30,46 +30,18 @@ export {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  return (
-    <BiometricsProvider>
-      <RootLayoutContent />
-    </BiometricsProvider>
-  );
-}
-
-function RootLayoutContent() {
   const [interLoaded, interError] = useFonts({
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
   });
-  const { biometricsEnabled, promptBiometrics } = useBiometrics();
-  const [authenticated, setAuthenticated] = useState(false);
-
   useEffect(() => {
-    const authenticate = async () => {
-      if (biometricsEnabled == true) {
-        const success = await promptBiometrics();
-        setAuthenticated(success);
-      } else if (biometricsEnabled == false) {
-        setAuthenticated(true);
-      } else {
-      }
-    };
-    authenticate();
-  }, [biometricsEnabled]);
-
-  useEffect(() => {
-    if ((interLoaded || interError) && authenticated) {
+    if (interLoaded || interError) {
       // Hide the splash screen after the fonts have loaded (or an error was returned) and the UI is ready.
       SplashScreen.hideAsync();
     }
-  }, [interLoaded, interError, authenticated]);
+  }, [interLoaded, interError]);
 
   if (!interLoaded && !interError) {
-    return null;
-  }
-
-  if (!authenticated) {
     return null;
   }
 
@@ -85,127 +57,141 @@ function RootLayoutNav() {
       {/* <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}> */}
       {/* <ThemeProvider value={DarkTheme}> */}
       <ThemeProvider value={DarkBlueTheme}>
-        <HeaderProvider>
-          <SshProvider>
-            <VmProvider>
-              <DockerProvider>
-                <FilesProvider>
-                  <ToastProvider>
-                    <ToastViewport
-                      flexDirection="column-reverse"
-                      top={top}
-                      left={left}
-                      right={right}
-                    />
-                    <Drawer
-                      screenOptions={{
-                        drawerActiveBackgroundColor:
-                          DarkBlueTheme.colors.background,
-                        drawerInactiveBackgroundColor:
-                          DarkBlueTheme.colors.background,
-                        drawerContentStyle: {
-                          backgroundColor: DarkBlueTheme.colors.background,
-                        },
-                        drawerActiveTintColor: 'white',
-                        drawerInactiveTintColor: 'grey',
-                      }}
-                    >
-                      <Drawer.Screen
-                        name="index"
-                        options={{
-                          title: 'Servers',
-                          headerShown: true,
-                          drawerLabel: () => (
-                            <>
-                              <XStack
-                                alignContent="center"
-                                alignItems="center"
-                                gap={'$2'}
-                              >
-                                <Server />
-                                <Text>Servers</Text>
-                              </XStack>
-                            </>
-                          ),
-                          headerLeft: () => <DrawerButton />,
-                          headerStyle: {
-                            backgroundColor: DarkBlueTheme.colors.background,
-                          },
-                        }}
+        <BiometricsProvider>
+          <HeaderProvider>
+            <SshProvider>
+              <VmProvider>
+                <DockerProvider>
+                  <FilesProvider>
+                    <ToastProvider>
+                      <ToastViewport
+                        flexDirection="column-reverse"
+                        top={top}
+                        left={left}
+                        right={right}
                       />
-                      <Drawer.Screen
-                        name="feature-request"
-                        options={{
-                          title: 'Request a feature',
-                          headerShown: true,
-                          drawerLabel: () => (
-                            <>
-                              <XStack
-                                alignContent="center"
-                                alignItems="center"
-                                gap={'$2'}
-                              >
-                                <Wand2 />
-                                <Text>Request a feature!</Text>
-                              </XStack>
-                            </>
-                          ),
-                          headerLeft: () => <DrawerButton />,
-                          headerStyle: {
-                            backgroundColor: DarkBlueTheme.colors.background,
-                          },
-                        }}
-                      />
-                      <Drawer.Screen
-                        name="settings"
-                        options={{
-                          title: 'Settings',
-                          headerShown: false,
-                          drawerLabel: () => (
-                            <>
-                              <XStack
-                                alignContent="center"
-                                alignItems="center"
-                                gap={'$2'}
-                              >
-                                <Settings />
-                                <Text>Settings</Text>
-                              </XStack>
-                            </>
-                          ),
-                          drawerActiveTintColor: 'white',
-                          drawerInactiveTintColor: 'grey',
-                        }}
-                      />
-                      <Drawer.Screen
-                        name="(tabs)"
-                        options={{
-                          drawerStatusBarAnimation: 'fade',
-                          headerShown: false,
-                          drawerItemStyle: { display: 'none' },
-                        }}
-                      />
-                      <Drawer.Screen
-                        name="add-server"
-                        options={{
-                          headerShown: false,
-                          drawerItemStyle: { display: 'none' },
-                        }}
-                      />
-                      <Drawer.Screen
-                        name="+not-found"
-                        options={{
-                          headerShown: false,
-                          drawerItemStyle: { display: 'none' },
-                        }}
-                      />
-                    </Drawer>
-                  </ToastProvider>
-                </FilesProvider>
-              </DockerProvider>
-            </VmProvider>
-          </SshProvider>
-        </HeaderProvider>
+                      <AuthenticationProvider>
+                        <Drawer
+                          screenOptions={{
+                            drawerActiveBackgroundColor:
+                              DarkBlueTheme.colors.background,
+                            drawerInactiveBackgroundColor:
+                              DarkBlueTheme.colors.background,
+                            drawerContentStyle: {
+                              backgroundColor: DarkBlueTheme.colors.background,
+                            },
+                            drawerActiveTintColor: 'white',
+                            drawerInactiveTintColor: 'grey',
+                          }}
+                        >
+                          <Drawer.Screen
+                            name="index"
+                            options={{
+                              headerShown: false,
+                              drawerItemStyle: { display: 'none' },
+                            }}
+                          />
+
+                          <Drawer.Screen
+                            name="servers"
+                            options={{
+                              title: 'Servers',
+                              headerShown: true,
+                              drawerLabel: () => (
+                                <>
+                                  <XStack
+                                    alignContent="center"
+                                    alignItems="center"
+                                    gap={'$2'}
+                                  >
+                                    <Server />
+                                    <Text>Servers</Text>
+                                  </XStack>
+                                </>
+                              ),
+                              headerLeft: () => <DrawerButton />,
+                              headerStyle: {
+                                backgroundColor:
+                                  DarkBlueTheme.colors.background,
+                              },
+                            }}
+                          />
+                          <Drawer.Screen
+                            name="feature-request"
+                            options={{
+                              title: 'Request a feature',
+                              headerShown: true,
+                              drawerLabel: () => (
+                                <>
+                                  <XStack
+                                    alignContent="center"
+                                    alignItems="center"
+                                    gap={'$2'}
+                                  >
+                                    <Wand2 />
+                                    <Text>Request a feature!</Text>
+                                  </XStack>
+                                </>
+                              ),
+                              headerLeft: () => <DrawerButton />,
+                              headerStyle: {
+                                backgroundColor:
+                                  DarkBlueTheme.colors.background,
+                              },
+                            }}
+                          />
+                          <Drawer.Screen
+                            name="settings"
+                            options={{
+                              title: 'Settings',
+                              headerShown: false,
+                              drawerLabel: () => (
+                                <>
+                                  <XStack
+                                    alignContent="center"
+                                    alignItems="center"
+                                    gap={'$2'}
+                                  >
+                                    <Settings />
+                                    <Text>Settings</Text>
+                                  </XStack>
+                                </>
+                              ),
+                              drawerActiveTintColor: 'white',
+                              drawerInactiveTintColor: 'grey',
+                            }}
+                          />
+                          <Drawer.Screen
+                            name="(tabs)"
+                            options={{
+                              drawerStatusBarAnimation: 'fade',
+                              headerShown: false,
+                              drawerItemStyle: { display: 'none' },
+                            }}
+                          />
+                          <Drawer.Screen
+                            name="add-server"
+                            options={{
+                              headerShown: false,
+                              drawerItemStyle: { display: 'none' },
+                            }}
+                          />
+                          <Drawer.Screen
+                            name="+not-found"
+                            options={{
+                              headerShown: false,
+                              drawerItemStyle: { display: 'none' },
+                            }}
+                          />
+                        </Drawer>
+                      </AuthenticationProvider>
+                    </ToastProvider>
+                  </FilesProvider>
+                </DockerProvider>
+              </VmProvider>
+            </SshProvider>
+          </HeaderProvider>
+        </BiometricsProvider>
       </ThemeProvider>
     </TamaguiProvider>
   );

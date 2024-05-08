@@ -11,6 +11,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: 'grey',
         tabBarActiveBackgroundColor: DarkBlueTheme.colors.background,
         tabBarInactiveBackgroundColor: DarkBlueTheme.colors.background,
+        tabBarBackground: () => <></>,
       }}
       initialRouteName="docker"
     >

@@ -3,6 +3,40 @@
 - ld: building for 'iOS-simulator', but linking in object file (/Users/joe/repos/server-remote/ios/Pods/NMSSH/NMSSH-iOS/Libraries/lib/libcrypto.a[arm64][2](aes_cbc.o)) built for 'iOS'
     - need to run on ios Rosetta simulator, open xcworkspace and run in rosetta simulator
 
+## TestFlight
+
+### New Build
+
+#### In XCode
+
+- Click folder icon in top left of editor
+- Double Click "mobileapp"
+- Signing & Capabilities tab
+- Under signing select "IF Labs" for team (must be added to team in App Store Connect, ask Derek)
+- Bundle identifier should be prepopulated but should read "com.ironfish.mobileapp"
+- In the scheme bar (top center of editor), select Any iOS Device (arm64)
+- Mac menu bar - click Product -> Archive, wait for build (might take a minute or two)
+- Click Distribute App button in popup
+- App Store Connect -> Distribute
+
+#### TestFlight website
+
+- Login at appstoreconnect.apple.com
+- Go to apps
+- Click Iron Fish Wallet
+- Click Test Flight tab
+- From here you can manage internal testing groups/members and builds
+
+### Adding Testflight user
+
+- For internal only, go to AppStoreConnect, Users and Access
+- Click +, enter email of employee that they use on their iOS device (probably not work email), add them as customer support
+- Have them verify joining team by checking email
+- Go to Apps -> Ironfish Wallet -> Testflight
+- Left panel Click Internal Testing IF Labs
+- Click + for testers
+- Select new user, click add
+- Have user go to email, and follow link to test app
 
 ## Libssh2 and Password vs key auth
 

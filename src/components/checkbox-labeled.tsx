@@ -9,7 +9,7 @@ export function CheckboxWithLabel({
 }: CheckboxProps & { size: SizeTokens; label?: string }) {
   const id = `checkbox-${Math.random().toString(36).substring(2, 15)}`;
   return (
-    <XStack width={300} alignItems="center" space="$4">
+    <XStack width={300} alignItems="center" gap="$4">
       <Checkbox id={id} size={size} {...checkboxProps}>
         <Checkbox.Indicator>
           <CheckIcon />

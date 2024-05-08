@@ -97,7 +97,7 @@ export default function ServerModal({
         modal={true}
         open={open}
         onOpenChange={handleOpenChange}
-        snapPoints={[95, 50, 10]}
+        snapPoints={[95, 50]}
         dismissOnSnapToBottom
         dismissOnOverlayPress
         snapPointsMode={'percent'}

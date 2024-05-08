@@ -4,7 +4,7 @@ import { useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
 import { FileInfo, sftpPaths } from '../../../util/files/util';
-import { CachedFile, useFiles } from '../../../contexts/files';
+import { useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
 import InfoModal from './info';
 import Alert from '../../../components/alert';
@@ -103,6 +103,7 @@ const FolderViewer = () => {
     }
   };
 
+  // TODO: download seems to fail with anything bigger than 5MB, might be an issue with new ssh requests being sent at time of download
   const handleDownload = async (item: FileInfo) => {
     if (!item) return;
     if (item.fileType === 'd') {
