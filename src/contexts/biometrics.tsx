@@ -31,9 +31,7 @@ export function BiometricsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const checkBiometrics = async () => {
-      console.log('checkBiometrics');
       const storedPublicKey = storage.getString(biometricStorageKey);
-      console.log('storedPublicKey', storedPublicKey);
       if (storedPublicKey) {
         setBiometricsEnabled(true);
       } else {
@@ -57,7 +55,6 @@ export function BiometricsProvider({ children }: { children: ReactNode }) {
     } else {
       storage.delete(biometricStorageKey);
     }
-    console.log(storage.getString(biometricStorageKey));
   };
 
   const promptBiometrics = async () => {

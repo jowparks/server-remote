@@ -101,7 +101,7 @@ function DockerList() {
   return !loaded ? (
     <Spinner size="large" alignItems="center" />
   ) : (
-    <View width={'90%'}>
+    <View flex={1} width={'90%'}>
       <ScrollView>
         <YGroup
           alignSelf="center"

@@ -20,6 +20,7 @@ import { Server, Settings, Wand2 } from '@tamagui/lucide-icons';
 import { HeaderProvider } from '../contexts/header';
 import { BiometricsProvider } from '../contexts/biometrics';
 import { AuthenticationProvider } from '../contexts/authentication';
+import { Appearance } from 'react-native';
 import Login from '../components/login';
 
 export {
@@ -48,7 +49,7 @@ export default function RootLayout() {
 
   return <RootLayoutNav />;
 }
-
+Appearance.setColorScheme('dark');
 // TODO: add root view for block on require update
 function RootLayoutNav() {
   // const colorScheme = useColorScheme();
