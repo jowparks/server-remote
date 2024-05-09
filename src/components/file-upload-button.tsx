@@ -4,6 +4,7 @@ import React from 'react';
 import { useFiles } from '../contexts/files';
 import { useSsh } from '../contexts/ssh';
 import DocumentPicker from 'react-native-document-picker';
+import TransparentButton from './transparent-button';
 
 export default function UploadButton() {
   const { sshClient } = useSsh();
@@ -34,8 +35,8 @@ export default function UploadButton() {
   };
 
   return (
-    <Button key={'upload'} unstyled onPress={handlePress}>
+    <TransparentButton key={'upload'} onPress={handlePress}>
       <Upload color={'white'} />
-    </Button>
+    </TransparentButton>
   );
 }

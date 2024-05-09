@@ -1,6 +1,7 @@
 import { Pause, Play, RefreshCcw, Square } from '@tamagui/lucide-icons';
 import React from 'react';
 import { Button, Text, ListItem, Paragraph, XStack, YStack } from 'tamagui';
+import TransparentButton from './transparent-button';
 
 // TODO add icon props for container (either image or url)
 type ContainerCardProps = {
@@ -51,33 +52,30 @@ export default function ContainerCard(props: ContainerCardProps) {
           transform: 'translateY(-50%)',
         }}
       >
-        <Button
-          transparent
+        <TransparentButton
           style={{ padding: 1 }}
           onPress={() => onStart()}
           disabled={running}
         >
           <Play maxWidth={16} opacity={running ? 0.5 : 1} />
-        </Button>
-        <Button
-          transparent
+        </TransparentButton>
+        <TransparentButton
           style={{ padding: 1 }}
           onPress={() => onPause()}
           disabled={paused}
         >
           <Pause maxWidth={16} opacity={paused ? 0.5 : 1} />
-        </Button>
-        <Button
-          transparent
+        </TransparentButton>
+        <TransparentButton
           style={{ padding: 1 }}
           onPress={() => onStop()}
           disabled={stopped}
         >
           <Square maxWidth={16} opacity={stopped ? 0.5 : 1} />
-        </Button>
-        <Button transparent style={{ padding: 1 }} onPress={() => onRestart()}>
+        </TransparentButton>
+        <TransparentButton style={{ padding: 1 }} onPress={() => onRestart()}>
           <RefreshCcw maxWidth={16} />
-        </Button>
+        </TransparentButton>
       </XStack>
     </ListItem>
   );

@@ -56,13 +56,13 @@ export default function PathsView() {
         <YGroup.Item>
           {recentFiles.map((file, index) => (
             <ContextMenuView
+              key={file.filePath}
               actions={[
                 { title: 'delete', systemIcon: 'trash', destructive: true },
               ]}
               onPress={() => removeRecentFile(file)}
             >
               <ListItem
-                key={file.filePath}
                 elevate
                 size="$4"
                 bordered
@@ -100,13 +100,13 @@ export default function PathsView() {
         <YGroup.Item>
           {bookmarkedFiles.map((file, index) => (
             <ContextMenuView
+              key={file.filePath}
               actions={[
                 { title: 'delete', systemIcon: 'trash', destructive: true },
               ]}
               onPress={() => removeBookmarkedFile(file)}
             >
               <ListItem
-                key={file.filePath}
                 elevate
                 size="$4"
                 bordered

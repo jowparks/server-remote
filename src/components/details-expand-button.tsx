@@ -2,6 +2,7 @@ import { ListCollapse, ListTree } from '@tamagui/lucide-icons';
 import { Button } from 'tamagui';
 import React from 'react';
 import { useHeader } from '../contexts/header';
+import TransparentButton from './transparent-button';
 
 export default function DetailsExpandButton() {
   const { detailsExpanded, setDetailsExpanded } = useHeader();
@@ -10,8 +11,8 @@ export default function DetailsExpandButton() {
   const Icon = detailsExpanded ? ListCollapse : ListTree;
 
   return (
-    <Button key={'paste'} unstyled onPress={handlePress}>
+    <TransparentButton key={'paste'} onPress={handlePress}>
       <Icon color={'white'} />
-    </Button>
+    </TransparentButton>
   );
 }

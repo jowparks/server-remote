@@ -2,6 +2,7 @@ import { Bookmark, BookmarkCheck } from '@tamagui/lucide-icons';
 import React, { useEffect, useState } from 'react';
 import { Button } from 'tamagui';
 import { useFiles } from '../contexts/files';
+import TransparentButton from './transparent-button';
 
 export function BookmarkButton() {
   const { currentFolder } = useFiles();
@@ -22,8 +23,7 @@ export function BookmarkButton() {
   const Icon = checked ? BookmarkCheck : Bookmark;
   const { addBookmarkedFile, removeBookmarkedFile } = useFiles();
   return (
-    <Button
-      unstyled
+    <TransparentButton
       onPress={() => {
         if (!currentFolder) return;
         if (!checked) {
@@ -36,6 +36,6 @@ export function BookmarkButton() {
       }}
     >
       <Icon color={'white'} />
-    </Button>
+    </TransparentButton>
   );
 }

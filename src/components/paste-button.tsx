@@ -3,6 +3,7 @@ import { Button } from 'tamagui';
 import { useFiles } from '../contexts/files';
 import React from 'react';
 import { useHeader } from '../contexts/header';
+import TransparentButton from './transparent-button';
 
 export function PasteButton() {
   const { cachedFile, currentFolder } = useFiles();
@@ -10,23 +11,21 @@ export function PasteButton() {
   switch (cachedFile?.type) {
     case 'copy':
       return (
-        <Button
+        <TransparentButton
           key={'paste'}
-          unstyled
           onPress={() => setPasteLocation(currentFolder)}
         >
           <ClipboardPaste color={'white'} scaleX={-1} />
-        </Button>
+        </TransparentButton>
       );
     case 'move':
       return (
-        <Button
+        <TransparentButton
           key={'paste'}
-          unstyled
           onPress={() => setPasteLocation(currentFolder)}
         >
           <FolderOutput color={'white'} />
-        </Button>
+        </TransparentButton>
       );
     default:
       return <></>;
