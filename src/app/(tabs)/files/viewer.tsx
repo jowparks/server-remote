@@ -59,15 +59,17 @@ const FolderViewer = () => {
         file.fileName.toLowerCase().includes(searchInput.toLowerCase()),
       )
       .map((file) => ({ ...file, searchString: searchInput }));
-    setFilteredFiles(filtered);
-    console.log(
-      'filtered',
-      localFiles.length,
-      filtered.length,
-      searchInput,
-      searchTab,
-    );
+    debouncedSetFilteredFiles.cancel();
+    debouncedSetFilteredFiles(filtered);
   }, [searchInput, files, allFiles, searchTab]);
+
+  // TODO whole filter above should be debounced but it wasn't working, moving along
+  const debouncedSetFilteredFiles = useCallback(
+    debounce((filteredFiles) => {
+      setFilteredFiles(filteredFiles);
+    }, 300),
+    [],
+  );
 
   useEffect(() => {
     const initialPath = Array.isArray(params.path)
