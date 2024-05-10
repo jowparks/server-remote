@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, Spinner } from 'tamagui';
+import { ScrollView, View, Spinner, Input, Spacer } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
-import { FileInfo, sftpPaths } from '../../../util/files/util';
+import { FileInfo, findPaths } from '../../../util/files/util';
 import { useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
 import InfoModal from './info';
@@ -11,6 +11,7 @@ import Alert from '../../../components/alert';
 import FileList from '../../../components/file-list';
 import RenameModal from '../../../components/rename';
 import { useHeader } from '../../../contexts/header';
+import TabWrapper from '../../../components/tabs';
 
 const FolderViewer = () => {
   const router = useRouter();
@@ -28,13 +29,34 @@ const FolderViewer = () => {
   } = useFiles();
 
   const [files, setFiles] = useState<FileInfo[] | null>(null);
+  // for when search is being used
+  const [filteredFiles, setFilteredFiles] = useState<FileInfo[] | null>(null);
   const [folder, setFolder] = useState<FileInfo | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [compressOpen, setCompressOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [path, setPath] = useState('/');
+  const [searchTab, setSearchTab] = useState(
+    'This Folder' as 'This Folder' | 'All Subfolders',
+  );
   const [loading, setLoading] = useState(true);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+  const [tabsEnabled, setTabsEnabled] = useState(false);
+
+  useEffect(() => {
+    // TODO might need to setLoading here
+    const zeroLength = searchInput.length === 0;
+    setTabsEnabled(!zeroLength);
+    if (!files) return;
+    setFilteredFiles(
+      files
+        .filter((file) =>
+          file.fileName.toLowerCase().includes(searchInput.toLowerCase()),
+        )
+        .map((file) => ({ ...file, searchString: searchInput })),
+    );
+  }, [searchInput, files]);
 
   useEffect(() => {
     const initialPath = Array.isArray(params.path)
@@ -51,16 +73,7 @@ const FolderViewer = () => {
   useEffect(() => {
     // don't want files reloading when moving between screens
     if (path !== params.path) return;
-    setLoading(true);
-    const fetchFileInfo = async () => {
-      setLoading(true);
-      if (!sshClient) return;
-      const files = await sftpPaths(sshClient, path);
-      setFiles(files);
-      setLoading(false);
-    };
-
-    fetchFileInfo();
+    fetchFileInfo(false);
   }, [path]);
 
   useEffect(() => {
@@ -88,6 +101,16 @@ const FolderViewer = () => {
     };
     copy();
   }, [pasteLocation]);
+
+  const fetchFileInfo = async (findAll: boolean) => {
+    setLoading(true);
+    setFiles(null);
+    setFilteredFiles(null);
+    if (!sshClient) return;
+    const files = await findPaths(sshClient, path, findAll);
+    setFiles(files);
+    setLoading(false);
+  };
 
   const handlePress = (item: FileInfo) => {
     setSelectedFile(item);
@@ -200,39 +223,64 @@ const FolderViewer = () => {
     ]);
   };
 
-  return loading || !files ? (
-    <Spinner />
-  ) : (
+  const handleSearch = (text: string) => {
+    setSearchInput(text);
+  };
+
+  const handleTabChange = (tab: string) => {
+    console.log(tab);
+    setSearchTab(tab as 'This Folder' | 'All Subfolders');
+    fetchFileInfo(tab === 'All Subfolders');
+  };
+
+  return (
     <View flexGrow={1}>
-      <ScrollView>
-        <FileList
-          files={files}
-          folder={folder}
-          onPress={handlePress}
-          setSelectedFile={setSelectedFile}
-          onInfo={(item) => {
-            setSelectedFile(item);
-            setInfoOpen(true);
-          }}
-          onCompress={(item) => {
-            setSelectedFile(item);
-            setCompressOpen(true);
-          }}
-          onRename={(item) => {
-            setSelectedFile(item);
-            setRenameOpen(true);
-          }}
-          onDuplicate={handleDuplicate}
-          onDeleteOpen={(item) => {
-            setSelectedFile(item);
-            setDeleteOpen(true);
-          }}
-          onDownload={handleDownload}
-          onCopy={(item) => setCachedFile({ file: item, type: 'copy' })}
-          onMove={(item) => setCachedFile({ file: item, type: 'move' })}
-          onContext={(item) => addRecentFile(item)}
-        />
-      </ScrollView>
+      <Spacer size="$2" />
+      <Input
+        width="90%"
+        alignSelf="center"
+        placeholder="Search"
+        value={searchInput}
+        onChangeText={handleSearch}
+      />
+      <Spacer size="$2" />
+      <TabWrapper
+        isEnabled={tabsEnabled}
+        onTabChange={handleTabChange}
+        tabs={['This Folder', 'All Subfolders']}
+      >
+        <ScrollView width="100%">
+          <FileList
+            loading={loading}
+            files={filteredFiles ?? files}
+            folder={folder}
+            displayAsPath={tabsEnabled && searchTab === 'All Subfolders'}
+            onPress={handlePress}
+            setSelectedFile={setSelectedFile}
+            onInfo={(item) => {
+              setSelectedFile(item);
+              setInfoOpen(true);
+            }}
+            onCompress={(item) => {
+              setSelectedFile(item);
+              setCompressOpen(true);
+            }}
+            onRename={(item) => {
+              setSelectedFile(item);
+              setRenameOpen(true);
+            }}
+            onDuplicate={handleDuplicate}
+            onDeleteOpen={(item) => {
+              setSelectedFile(item);
+              setDeleteOpen(true);
+            }}
+            onDownload={handleDownload}
+            onCopy={(item) => setCachedFile({ file: item, type: 'copy' })}
+            onMove={(item) => setCachedFile({ file: item, type: 'move' })}
+            onContext={(item) => addRecentFile(item)}
+          />
+        </ScrollView>
+      </TabWrapper>
       {!!compressOpen && (
         <CompressModal
           open={compressOpen}

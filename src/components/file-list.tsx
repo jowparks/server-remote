@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { YGroup, Separator, ListItem } from 'tamagui';
+import { YGroup, Separator, ListItem, Spinner } from 'tamagui';
 import { ChevronRight } from '@tamagui/lucide-icons';
 
 import ContextMenuView from 'react-native-context-menu-view';
@@ -17,8 +17,10 @@ enum FileContext {
 }
 
 interface FileListProps {
-  files: FileInfo[];
+  loading: boolean;
+  files: FileInfo[] | null;
   folder: FileInfo | null;
+  displayAsPath: boolean;
   setSelectedFile: (item: FileInfo) => void;
   onPress: (item: FileInfo) => void;
   onInfo: (item: FileInfo) => void;
@@ -33,8 +35,10 @@ interface FileListProps {
 }
 
 export default function FileList({
+  loading,
   files,
   folder,
+  displayAsPath,
   onPress,
   setSelectedFile,
   onInfo,
@@ -48,12 +52,16 @@ export default function FileList({
   onContext,
 }: FileListProps) {
   const pressTimer = useRef(0);
+  const pressOutTimer = useRef(0);
 
-  return (
+  return loading || !files ? (
+    <Spinner />
+  ) : (
     <YGroup
       alignSelf="center"
       bordered
-      width="90%"
+      flexGrow={1}
+      width="100%"
       size="$5"
       separator={<Separator />}
     >
@@ -117,15 +125,18 @@ export default function FileList({
             <ListItem
               hoverTheme
               pressTheme
-              title={item.fileName}
+              title={renderSearchPath(item, displayAsPath, 15)}
+              // prevent trigger of context at same time
+              onPress={() => {
+                if (pressOutTimer.current - pressTimer.current < 500) {
+                  onPress(item);
+                }
+              }}
               onPressIn={() => {
                 pressTimer.current = Date.now();
               }}
               onPressOut={() => {
-                // prevent trigger of context at same time
-                if (Date.now() - pressTimer.current < 450) {
-                  onPress(item);
-                }
+                pressOutTimer.current = Date.now();
               }}
               iconAfter={item.fileType === 'd' ? ChevronRight : undefined}
               style={{
@@ -140,4 +151,24 @@ export default function FileList({
       ))}
     </YGroup>
   );
+}
+
+function renderSearchPath(
+  file: FileInfo,
+  displayAsPath: boolean,
+  maxChar = 10,
+) {
+  const fullPath = displayAsPath
+    ? `${file.filePath}/${file.fileName}`
+    : file.fileName;
+  if (!file.searchString) return fullPath;
+  const index = fullPath.toLowerCase().indexOf(file.searchString.toLowerCase());
+  const start = Math.max(0, index - maxChar);
+  const end = Math.min(
+    fullPath.length,
+    index + file.searchString.length + maxChar,
+  );
+  const prefix = start > 0 ? '...' : '';
+  const suffix = end < fullPath.length ? '...' : '';
+  return `${prefix}${fullPath.substring(start, end)}${suffix}`;
 }

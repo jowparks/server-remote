@@ -1,7 +1,7 @@
 import SSHClient from '@jowparks/react-native-ssh-sftp';
 
-export function fileCommand(path: string) {
-  return `find "${path}" -maxdepth 1 -printf '%M,%n,%u.%g,%s,%AY-%Am-%Ad %AH:%AM:%AS,%TY-%Tm-%Td %TH:%TM:%TS,%p,%y,%l\n'`;
+export function fileCommand(path: string, findAll: boolean) {
+  return `find "${path}" ${findAll ? '' : '-maxdepth 1'} -printf '%M,%n,%u.%g,%s,%AY-%Am-%Ad %AH:%AM:%AS,%TY-%Tm-%Td %TH:%TM:%TS,%p,%y,%l\n'`;
 }
 
 export type FileType = 'f' | 'd' | 'l';
@@ -18,6 +18,7 @@ export interface FileInfo {
   fileName: string;
   fileType: FileType;
   symlinkTarget?: string;
+  searchString?: string;
 }
 
 export const fileInfoKeyMap = {
@@ -64,8 +65,14 @@ export function formatBytes(bytes: number, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export async function sftpPaths(sshClient: SSHClient, path: string) {
-  const response = await sshClient.execute(fileCommand(path));
+export async function findPaths(
+  sshClient: SSHClient,
+  path: string,
+  findAll: boolean,
+) {
+  const cmd = fileCommand(path, findAll);
+  console.log('finding paths:', cmd);
+  const response = await sshClient.execute(cmd);
   const lines = response?.split('\n').filter((line) => line !== '');
   if (!lines) return [];
   const files = lines
