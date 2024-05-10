@@ -1,5 +1,6 @@
 import React from 'react';
 import { Tabs, Separator, SizableText, View, TabsContentProps } from 'tamagui';
+import { DarkBlueTheme } from '../style/theme';
 
 export type TabWrapperProps = {
   children: React.ReactNode;
@@ -58,7 +59,7 @@ function TabWrapper({
 const TabsContent = (props: TabsContentProps) => {
   return (
     <Tabs.Content
-      backgroundColor="$background"
+      backgroundColor={DarkBlueTheme.colors.background}
       key={props.value}
       alignItems="center"
       justifyContent="center"

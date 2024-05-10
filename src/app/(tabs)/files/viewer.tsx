@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, View, Spinner, Input, Spacer } from 'tamagui';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ScrollView, View, Input, Spacer } from 'tamagui';
+import { debounce } from 'lodash';
 import { useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
@@ -12,6 +13,7 @@ import FileList from '../../../components/file-list';
 import RenameModal from '../../../components/rename';
 import { useHeader } from '../../../contexts/header';
 import TabWrapper from '../../../components/tabs';
+import SSHClient from '@jowparks/react-native-ssh-sftp';
 
 const FolderViewer = () => {
   const router = useRouter();
@@ -28,9 +30,10 @@ const FolderViewer = () => {
     addRecentFile,
   } = useFiles();
 
-  const [files, setFiles] = useState<FileInfo[] | null>(null);
+  const [files, setFiles] = useState<FileInfo[]>([]);
+  const [allFiles, setAllFiles] = useState<FileInfo[]>([]);
   // for when search is being used
-  const [filteredFiles, setFilteredFiles] = useState<FileInfo[] | null>(null);
+  const [filteredFiles, setFilteredFiles] = useState<FileInfo[]>([]);
   const [folder, setFolder] = useState<FileInfo | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [compressOpen, setCompressOpen] = useState(false);
@@ -45,18 +48,26 @@ const FolderViewer = () => {
   const [tabsEnabled, setTabsEnabled] = useState(false);
 
   useEffect(() => {
-    // TODO might need to setLoading here
+    let tab = searchTab;
     const zeroLength = searchInput.length === 0;
+    zeroLength && setSearchTab('This Folder');
     setTabsEnabled(!zeroLength);
-    if (!files) return;
-    setFilteredFiles(
-      files
-        .filter((file) =>
-          file.fileName.toLowerCase().includes(searchInput.toLowerCase()),
-        )
-        .map((file) => ({ ...file, searchString: searchInput })),
+
+    let localFiles = tab === 'This Folder' ? files : allFiles;
+    const filtered = localFiles
+      .filter((file) =>
+        file.fileName.toLowerCase().includes(searchInput.toLowerCase()),
+      )
+      .map((file) => ({ ...file, searchString: searchInput }));
+    setFilteredFiles(filtered);
+    console.log(
+      'filtered',
+      localFiles.length,
+      filtered.length,
+      searchInput,
+      searchTab,
     );
-  }, [searchInput, files]);
+  }, [searchInput, files, allFiles, searchTab]);
 
   useEffect(() => {
     const initialPath = Array.isArray(params.path)
@@ -73,7 +84,8 @@ const FolderViewer = () => {
   useEffect(() => {
     // don't want files reloading when moving between screens
     if (path !== params.path) return;
-    fetchFileInfo(false);
+    if (!sshClient) return;
+    fetchFileInfo(sshClient, false).then((files) => setFiles(files));
   }, [path]);
 
   useEffect(() => {
@@ -102,14 +114,11 @@ const FolderViewer = () => {
     copy();
   }, [pasteLocation]);
 
-  const fetchFileInfo = async (findAll: boolean) => {
+  const fetchFileInfo = async (sshClient: SSHClient, findAll: boolean) => {
     setLoading(true);
-    setFiles(null);
-    setFilteredFiles(null);
-    if (!sshClient) return;
     const files = await findPaths(sshClient, path, findAll);
-    setFiles(files);
     setLoading(false);
+    return files;
   };
 
   const handlePress = (item: FileInfo) => {
@@ -227,10 +236,14 @@ const FolderViewer = () => {
     setSearchInput(text);
   };
 
-  const handleTabChange = (tab: string) => {
-    console.log(tab);
+  const handleTabChange = async (tab: string) => {
+    if (!sshClient) return;
     setSearchTab(tab as 'This Folder' | 'All Subfolders');
-    fetchFileInfo(tab === 'All Subfolders');
+    if (allFiles.length === 0 && tab === 'All Subfolders') {
+      setFilteredFiles([]);
+      const files = await fetchFileInfo(sshClient, true);
+      setAllFiles(files);
+    }
   };
 
   return (
