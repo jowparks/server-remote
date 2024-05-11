@@ -29,7 +29,7 @@ export default function RenameModal({
       modal={true}
       open={open}
       onOpenChange={onOpenChange}
-      snapPoints={[45, 10]}
+      snapPoints={[45]}
       snapPointsMode={'percent'}
       dismissOnSnapToBottom
     >

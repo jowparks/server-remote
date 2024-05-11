@@ -250,15 +250,19 @@ const FolderViewer = () => {
 
   return (
     <View flexGrow={1}>
-      <Spacer size="$2" />
-      <Input
-        width="90%"
-        alignSelf="center"
-        placeholder="Search"
-        value={searchInput}
-        onChangeText={handleSearch}
-      />
-      <Spacer size="$2" />
+      {path !== '/' && (
+        <>
+          <Spacer size="$2" />
+          <Input
+            width="90%"
+            alignSelf="center"
+            placeholder="Search"
+            value={searchInput}
+            onChangeText={handleSearch}
+          />
+          <Spacer size="$2" />
+        </>
+      )}
       <TabWrapper
         isEnabled={tabsEnabled}
         onTabChange={handleTabChange}

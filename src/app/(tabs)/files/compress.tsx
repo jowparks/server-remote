@@ -96,7 +96,7 @@ export default function CompressModal({
       modal={true}
       open={open}
       onOpenChange={onOpenChange}
-      snapPoints={[95, 10]}
+      snapPoints={[95, 50]}
       snapPointsMode={'percent'}
       dismissOnSnapToBottom
       // animation="medium"

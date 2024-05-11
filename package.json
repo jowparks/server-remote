@@ -25,6 +25,7 @@
     "@tamagui/shorthands": "^1.91.3",
     "@tamagui/themes": "^1.91.3",
     "@tamagui/toast": "^1.91.3",
+    "airtable": "^0.12.2",
     "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "babel-preset-expo": "^10.0.1",
     "burnt": "^0.12.2",
