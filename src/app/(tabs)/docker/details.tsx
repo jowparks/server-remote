@@ -37,7 +37,7 @@ export default function JsonScreen() {
 
   if (!container) return <Spinner />;
   return (
-    <View width={'100%'} alignItems="center">
+    <View flex={1} width={'100%'} alignItems="center">
       <ScrollView>
         <JsonViewer
           data={container as Record<string, unknown>}

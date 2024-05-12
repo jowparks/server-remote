@@ -1,12 +1,50 @@
-import React, { ReactNode, createContext, useContext, useState } from 'react';
+import React, {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import Airtable from 'airtable';
+import { storage } from '../storage/mmkv';
 
-type FieldSet = Airtable.FieldSet;
+export interface FeatureRequestSchema {
+  _table: {
+    _base: {
+      _airtable: Record<string, unknown>;
+      _id: string;
+    };
+    id: null;
+    name: string;
+  };
+  id: string;
+  _rawJson: {
+    id: string;
+    createdTime: string;
+    fields: {
+      Name: string;
+      Status: string;
+      Votes: number;
+      Priority: string;
+      'Start date': string;
+    };
+  };
+  fields: {
+    Name: string;
+    Status: string;
+    Votes: number;
+    Priority: string;
+    'Start date': string;
+  };
+}
 
 interface AirtableContextProps {
-  features: FieldSet[][] | undefined;
+  features: FeatureRequestSchema[];
+  votedFeatureIds: string[] | undefined;
   fetchFeatures: () => void;
-  updateFeatures: (id: string, fields: any) => void;
+  voteOnFeature: (id: string) => void;
+  unvoteOnFeature: (id: string) => void;
+  requestFeature: (name: string) => void;
 }
 
 const AirtableContext = createContext<AirtableContextProps | undefined>(
@@ -14,7 +52,17 @@ const AirtableContext = createContext<AirtableContextProps | undefined>(
 );
 
 export function AirtableProvider({ children }: { children: ReactNode }) {
-  const [features, setFeatures] = useState<FieldSet[]>([]);
+  const [features, setFeatures] = useState<FeatureRequestSchema[]>([]);
+  const [votedFeatureIds, setVotedFeatureIds] = useState<string[]>([]);
+  const votedFeatureIdsStore = 'votedFeatureIds_arr'; // key for the local storage
+
+  useEffect(() => {
+    const loadedVotedFeatureIds = storage.get<string[]>(votedFeatureIdsStore);
+    if (loadedVotedFeatureIds) {
+      setVotedFeatureIds(loadedVotedFeatureIds);
+    }
+  }, []);
+
   const base = new Airtable({
     apiKey:
       'pat0n7V7OLcNUPHgr.09b737a86f41068f6ee9c6bf10468e4a3d7c7caa16765d2197be5387b0b288a0',
@@ -26,9 +74,18 @@ export function AirtableProvider({ children }: { children: ReactNode }) {
       .select()
       .eachPage(
         (records, fetchNextPage) => {
-          const newData = records.map((record) => record.fields);
-          console.log(JSON.stringify(newData, null, 2));
-          setFeatures([...features, ...newData]);
+          const response = records as unknown as FeatureRequestSchema[];
+          const prevFeatures = features.filter(
+            (typedRecord) =>
+              !response.some(
+                (feature) => feature.fields.Name === typedRecord.fields.Name,
+              ),
+          );
+          setFeatures(
+            [...prevFeatures, ...response].sort(
+              (a, b) => b.fields.Votes - a.fields.Votes,
+            ),
+          );
           fetchNextPage();
         },
         (err) => {
@@ -38,11 +95,36 @@ export function AirtableProvider({ children }: { children: ReactNode }) {
           }
         },
       );
-    console.log(JSON.stringify(features));
   };
 
-  const updateFeatures = (id, fields) => {
-    base('Feature Requests').update([{ id, fields }], (err, records) => {
+  const voteOnFeature = (id: string) => {
+    const newVotedFeatureIds = [...votedFeatureIds, id];
+    setVotedFeatureIds(newVotedFeatureIds);
+    storage.setObject(votedFeatureIdsStore, newVotedFeatureIds);
+    const feature = features.find((f) => f.id === id);
+    if (!feature) {
+      return;
+    }
+    const newVotes = feature.fields.Votes + 1;
+    updateFeatures(id, { Votes: newVotes });
+  };
+
+  const unvoteOnFeature = (id: string) => {
+    const newVotedFeatureIds = votedFeatureIds.filter(
+      (votedId) => votedId !== id,
+    );
+    setVotedFeatureIds(newVotedFeatureIds);
+    storage.setObject(votedFeatureIdsStore, newVotedFeatureIds);
+    const feature = features.find((f) => f.id === id);
+    if (!feature) {
+      return;
+    }
+    const newVotes = feature.fields.Votes - 1;
+    updateFeatures(id, { Votes: newVotes });
+  };
+
+  const updateFeatures = (id: string, fields: Record<string, any>) => {
+    base.table('Feature Requests').update([{ id, fields }], (err, records) => {
       if (err) {
         console.error(err);
         return;
@@ -51,9 +133,44 @@ export function AirtableProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const requestFeature = (name: string) => {
+    base.table('Feature Requests').create(
+      [
+        {
+          fields: {
+            Name: name,
+            Status: 'To do',
+            Votes: 1,
+            Priority: 'Low',
+          },
+        },
+      ],
+      (err, records) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        if (!records) {
+          return;
+        }
+        const newVotedFeatureIds = [...votedFeatureIds, records[0].id];
+        setVotedFeatureIds(newVotedFeatureIds);
+        storage.setObject(votedFeatureIdsStore, newVotedFeatureIds);
+        fetchFeatures(); // re-fetch data after create
+      },
+    );
+  };
+
   return (
     <AirtableContext.Provider
-      value={{ features, fetchFeatures, updateFeatures }}
+      value={{
+        features,
+        votedFeatureIds,
+        fetchFeatures,
+        voteOnFeature,
+        unvoteOnFeature,
+        requestFeature,
+      }}
     >
       {children}
     </AirtableContext.Provider>

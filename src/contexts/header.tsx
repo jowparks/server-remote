@@ -6,6 +6,8 @@ interface HeaderContextProps {
   setPasteLocation: React.Dispatch<React.SetStateAction<FileInfo | null>>;
   detailsExpanded: boolean;
   setDetailsExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  featureRequested: boolean;
+  setFeatureRequested: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const HeaderContext = createContext<HeaderContextProps | undefined>(undefined);
@@ -21,6 +23,7 @@ export const useHeader = () => {
 export function HeaderProvider({ children }: { children: ReactNode }) {
   const [pasteLocation, setPasteLocation] = useState<FileInfo | null>(null);
   const [detailsExpanded, setDetailsExpanded] = useState<boolean>(false);
+  const [featureRequested, setFeatureRequested] = useState<boolean>(false);
 
   return (
     <HeaderContext.Provider
@@ -29,6 +32,8 @@ export function HeaderProvider({ children }: { children: ReactNode }) {
         setPasteLocation,
         detailsExpanded,
         setDetailsExpanded,
+        featureRequested,
+        setFeatureRequested,
       }}
     >
       {children}

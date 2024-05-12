@@ -8,7 +8,6 @@ import { router } from 'expo-router';
 import { useSsh } from '../contexts/ssh';
 import { Server, hostname } from '../typing/server';
 import { useFiles } from '../contexts/files';
-import { useAirtable } from '../contexts/airtable';
 
 export default function ServerSelectScreen() {
   const { sshServer, setSshServer } = useSsh();
@@ -58,12 +57,6 @@ export default function ServerSelectScreen() {
     setSshServer(null);
     setServerModalOpen(true);
   };
-
-  const { fetchFeatures } = useAirtable();
-  useEffect(() => {
-    console.log('f');
-    fetchFeatures();
-  }, []);
 
   return (
     <ScrollView>

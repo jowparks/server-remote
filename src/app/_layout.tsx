@@ -50,6 +50,8 @@ export default function RootLayout() {
 
   return <RootLayoutNav />;
 }
+
+// TODO: add force update overlay for day zero, read entry from airtable
 Appearance.setColorScheme('dark');
 // TODO: add root view for block on require update
 function RootLayoutNav() {
@@ -118,7 +120,7 @@ function RootLayoutNav() {
                               name="feature-request"
                               options={{
                                 title: 'Request a feature',
-                                headerShown: true,
+                                headerShown: false,
                                 drawerLabel: () => (
                                   <>
                                     <XStack
