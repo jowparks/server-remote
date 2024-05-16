@@ -2,9 +2,9 @@ import { Stack } from 'expo-router';
 import React from 'react';
 import { DarkBlueTheme } from '../../../style/theme';
 import { DrawerToggleButton } from '@react-navigation/drawer';
-import DrawerButton from '../../../components/drawer-button';
-import HeaderBack from '../../../components/header-back';
-import DetailsNav from '../../../components/details-nav';
+import DrawerButton from '../../../components/header/drawer-button';
+import HeaderBack from '../../../components/header/header-back';
+import DetailsNav from '../../../components/nav/details-nav';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -16,7 +16,6 @@ export default function DockerLayout() {
 }
 
 function DockerLayoutNav() {
-  // TODO use better spinner
   // useEffect(() => {
   //   if (!sshClient) return;
   //   const fetchContainers = async () => {

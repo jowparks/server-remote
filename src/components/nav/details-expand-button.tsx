@@ -1,8 +1,8 @@
 import { ListCollapse, ListTree } from '@tamagui/lucide-icons';
 import { Button } from 'tamagui';
 import React from 'react';
-import { useHeader } from '../contexts/header';
-import TransparentButton from './transparent-button';
+import { useHeader } from '../../contexts/header';
+import TransparentButton from '../general/transparent-button';
 
 export default function DetailsExpandButton() {
   const { detailsExpanded, setDetailsExpanded } = useHeader();

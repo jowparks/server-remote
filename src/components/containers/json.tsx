@@ -1,8 +1,8 @@
 import React, { useState, ReactNode, useEffect } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Text, View, ScrollView } from 'tamagui';
-import { DarkBlueTheme } from '../style/theme';
-import { useHeader } from '../contexts/header';
+import { DarkBlueTheme } from '../../style/theme';
+import { useHeader } from '../../contexts/header';
 
 type JsonNodeProps = {
   name: string;
@@ -33,7 +33,6 @@ const JsonNode: React.FC<JsonNodeProps> = ({
 
   const WrapperComponent = isObject || isArray ? TouchableOpacity : View;
   const wrapperProps = isObject || isArray ? { onPress: handlePress } : {};
-  // TODO make text selectable
   return (
     <View>
       <WrapperComponent

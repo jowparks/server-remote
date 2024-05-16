@@ -1,10 +1,10 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import FilesViewerNav from '../../../components/file-viewer-nav';
 import { DarkBlueTheme } from '../../../style/theme';
-import DrawerButton from '../../../components/drawer-button';
 import { StyleSheet } from 'react-native';
-import HeaderBack from '../../../components/header-back';
+import DrawerButton from '../../../components/header/drawer-button';
+import HeaderBack from '../../../components/header/header-back';
+import FilesViewerNav from '../../../components/nav/file-viewer-nav';
 
 export {
   // Catch any errors thrown by the Layout component.

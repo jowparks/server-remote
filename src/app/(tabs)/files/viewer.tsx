@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ScrollView, View, Input, Spacer } from 'tamagui';
+import { ScrollView, View, Text } from 'tamagui';
 import { debounce } from 'lodash';
 import { useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -8,14 +8,17 @@ import { FileInfo, findPaths } from '../../../util/files/util';
 import { useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
 import InfoModal from './info';
-import Alert from '../../../components/alert';
-import FileList from '../../../components/file-list';
-import RenameModal from '../../../components/rename';
+import Alert from '../../../components/general/alert';
+import FileList from '../../../components/file-viewer/file-list';
+import RenameModal from '../../../components/file-viewer/rename';
 import { useHeader } from '../../../contexts/header';
-import TabWrapper from '../../../components/tabs';
+import TabWrapper from '../../../components/nav/tabs';
 import SSHClient from '@jowparks/react-native-ssh-sftp';
+import SearchBar from '../../../components/general/search-bar';
 
 const FolderViewer = () => {
+  const searchTimeLimit = 7000;
+
   const router = useRouter();
   const params = useLocalSearchParams();
   const navigation = useNavigation();
@@ -45,11 +48,13 @@ const FolderViewer = () => {
   const [loading, setLoading] = useState(true);
   const [renameOpen, setRenameOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const [searchError, setSearchError] = useState('');
   const [tabsEnabled, setTabsEnabled] = useState(false);
 
   useEffect(() => {
     let tab = searchTab;
     const zeroLength = searchInput.length === 0;
+    setSearchError('');
     zeroLength && setSearchTab('This Folder');
     setTabsEnabled(!zeroLength);
 
@@ -63,7 +68,6 @@ const FolderViewer = () => {
     debouncedSetFilteredFiles(filtered);
   }, [searchInput, files, allFiles, searchTab]);
 
-  // TODO whole filter above should be debounced but it wasn't working, moving along
   const debouncedSetFilteredFiles = useCallback(
     debounce((filteredFiles) => {
       setFilteredFiles(filteredFiles);
@@ -97,7 +101,8 @@ const FolderViewer = () => {
     const baseCommand = cachedFile.type === 'copy' ? 'cp -r' : 'mv';
 
     const copy = async () => {
-      const command = `${baseCommand} ${cachedFile.file.filePath} ${path}`;
+      const deduped = dedupeFileName(cachedFile.file);
+      const command = `${baseCommand} ${cachedFile.file.filePath} ${path}/${deduped}`;
       console.log(`Pasting: ${command}`);
       // TODO: finalize paste
       await sshClient.execute('ls', (error) => {
@@ -122,6 +127,23 @@ const FolderViewer = () => {
     setLoading(false);
     return files;
   };
+
+  function dedupeFileName(item: FileInfo) {
+    let i = 1;
+    const fileNameParts = item.fileName.split('.');
+    const baseName = fileNameParts.slice(0, -1).join('.');
+    const extension =
+      fileNameParts.length > 1
+        ? '.' + fileNameParts[fileNameParts.length - 1]
+        : '';
+    let duplicate = `${baseName}${i}${extension}`;
+
+    while (files.some((file) => file.fileName === duplicate)) {
+      i++;
+      duplicate = `${baseName}${i}${extension}`;
+    }
+    return duplicate;
+  }
 
   const handlePress = (item: FileInfo) => {
     setSelectedFile(item);
@@ -164,12 +186,12 @@ const FolderViewer = () => {
       },
     );
   };
-  // TODO: Sftp uploadZ
+
   const handleDelete = async (item: FileInfo | null) => {
     if (!sshClient || !item) return;
     const command = `rm -r ${item.filePath}`;
     console.log(`Deleting: ${command}`);
-    // TODO: handle delete
+    // TODO: finalize delete
     setFiles(files?.filter((file) => file.filePath !== item.filePath) || []);
     await sshClient.execute('ls', (error) => {
       if (error) {
@@ -205,19 +227,7 @@ const FolderViewer = () => {
 
   const handleDuplicate = async (item: FileInfo) => {
     if (!sshClient || !files) return;
-    let i = 1;
-    const fileNameParts = item.fileName.split('.');
-    const baseName = fileNameParts.slice(0, -1).join('.');
-    const extension =
-      fileNameParts.length > 1
-        ? '.' + fileNameParts[fileNameParts.length - 1]
-        : '';
-    let duplicate = `${baseName}${i}${extension}`;
-
-    while (files.some((file) => file.fileName === duplicate)) {
-      i++;
-      duplicate = `${baseName}${i}${extension}`;
-    }
+    let duplicate = dedupeFileName(item);
     const command = `cp -r ${path}/${item.fileName} ${path}/${duplicate}`;
     console.log(`Duplicating: ${command}`);
     // TODO: finalize duplicate
@@ -243,26 +253,33 @@ const FolderViewer = () => {
     setSearchTab(tab as 'This Folder' | 'All Subfolders');
     if (allFiles.length === 0 && tab === 'All Subfolders') {
       setFilteredFiles([]);
-      const files = await fetchFileInfo(sshClient, true);
-      setAllFiles(files);
+      try {
+        const files = (await Promise.race([
+          fetchFileInfo(sshClient, true),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error('Request timed out')),
+              searchTimeLimit,
+            ),
+          ),
+        ])) as FileInfo[];
+        setAllFiles(files);
+      } catch (error) {
+        setAllFiles([]);
+        setSearchError(
+          'Search timed out, too many files to search through, limit your directory',
+        );
+      }
     }
   };
 
   return (
     <View flexGrow={1}>
-      {path !== '/' && (
-        <>
-          <Spacer size="$2" />
-          <Input
-            width="90%"
-            alignSelf="center"
-            placeholder="Search"
-            value={searchInput}
-            onChangeText={handleSearch}
-          />
-          <Spacer size="$2" />
-        </>
-      )}
+      <SearchBar
+        visible={path !== '/'}
+        searchInput={searchInput}
+        handleSearch={handleSearch}
+      />
       <TabWrapper
         isEnabled={tabsEnabled}
         onTabChange={handleTabChange}
@@ -298,6 +315,7 @@ const FolderViewer = () => {
             onMove={(item) => setCachedFile({ file: item, type: 'move' })}
             onContext={(item) => addRecentFile(item)}
           />
+          {!!searchError && <Text>{searchError}</Text>}
         </ScrollView>
       </TabWrapper>
       {!!compressOpen && (

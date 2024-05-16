@@ -1,9 +1,9 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import HeaderBack from '../../components/header-back';
+import HeaderBack from '../../components/header/header-back';
 import { DarkBlueTheme } from '../../style/theme';
-import DrawerButton from '../../components/drawer-button';
-import { FeatureRequestButton } from '../../components/feature-request-button';
+import DrawerButton from '../../components/header/drawer-button';
+import { FeatureRequestButton } from '../../components/feature-request/feature-request-button';
 
 export {
   // Catch any errors thrown by the Layout component.

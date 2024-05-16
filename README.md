@@ -88,7 +88,7 @@ This is the method being used in `NMSSH`:
 [libssh2_userauth_publickey_frommemory](https://github.com/speam/NMSSH/blob/aca13f6a66ce61fa174b498a6f5d6f7bf63fb9a9/NMSSH-iOS/Libraries/include/libssh2/libssh2.h#L678)
 The implementation is [here](https://github.com/libssh2/libssh2/blob/cba7f97506c1b8e5ff131bbbc57b5796ac634c56/src/userauth.c#L2017) in `libssh2`
 
-TODOs:
+TODO:
 
 - Command run history
-- Siri shortcuts
+- App Intents

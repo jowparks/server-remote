@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import { View, Text, Card, Spinner, XStack, Spacer, ScrollView } from 'tamagui';
 import { FeatureRequestSchema, useAirtable } from '../../contexts/airtable';
 import { ArrowBigUp } from '@tamagui/lucide-icons';
-import TransparentButton from '../../components/transparent-button';
+import TransparentButton from '../../components/general/transparent-button';
 import { useHeader } from '../../contexts/header';
-import FeatureRequestModal from '../../components/feature-request-modal';
+import FeatureRequestModal from '../../components/feature-request/feature-request-modal';
 
 export type FeatureRequestProps = {
   onPress: (feature: FeatureRequestSchema) => void;

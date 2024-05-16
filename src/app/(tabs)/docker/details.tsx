@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { ScrollView, View, Text, Spinner } from 'tamagui';
 import { useDocker } from '../../../contexts/docker';
-import JsonViewer from '../../../components/json';
+import JsonViewer from '../../../components/containers/json';
 import { useSsh } from '../../../contexts/ssh';
 import { DockerContainer, DockerInspectCommand } from '../../../typing/docker';
 

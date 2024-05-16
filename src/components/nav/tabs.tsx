@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs, Separator, SizableText, View, TabsContentProps } from 'tamagui';
-import { DarkBlueTheme } from '../style/theme';
+import { DarkBlueTheme } from '../../style/theme';
 
 export type TabWrapperProps = {
   children: React.ReactNode;

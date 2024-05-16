@@ -3,7 +3,6 @@ import { View, Text, XStack, Switch, Spacer } from 'tamagui';
 import { useBiometrics } from '../../contexts/biometrics';
 
 export default function App() {
-  // TODO: why do we need 90% on text items rather than container, won't work on container
   const { biometricsEnabled, setBiometricsEnabled } = useBiometrics();
   return (
     <View

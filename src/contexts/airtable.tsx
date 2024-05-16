@@ -7,6 +7,8 @@ import React, {
 } from 'react';
 import Airtable from 'airtable';
 import { storage } from '../storage/mmkv';
+import semver from 'semver';
+import packageJson from '../../package.json';
 
 export interface FeatureRequestSchema {
   _table: {
@@ -45,6 +47,8 @@ interface AirtableContextProps {
   voteOnFeature: (id: string) => void;
   unvoteOnFeature: (id: string) => void;
   requestFeature: (name: string) => void;
+  updateRequired: boolean | null;
+  checkUpdateRequired: () => Promise<void>;
 }
 
 const AirtableContext = createContext<AirtableContextProps | undefined>(
@@ -54,6 +58,8 @@ const AirtableContext = createContext<AirtableContextProps | undefined>(
 export function AirtableProvider({ children }: { children: ReactNode }) {
   const [features, setFeatures] = useState<FeatureRequestSchema[]>([]);
   const [votedFeatureIds, setVotedFeatureIds] = useState<string[]>([]);
+  const [updateRequired, setUpdateRequired] = useState<boolean | null>(null);
+
   const votedFeatureIdsStore = 'votedFeatureIds_arr'; // key for the local storage
 
   useEffect(() => {
@@ -161,6 +167,17 @@ export function AirtableProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const checkUpdateRequired = async () => {
+    const rawVersion = packageJson.version;
+    const currentVersion = rawVersion.split('-')[0]; // Remove any build metadata or pre-release suffix
+
+    const rows = await base.table('UpdateVersion').select().all();
+    const minVersion = rows[0].fields.Version;
+    if (semver.lt(currentVersion, minVersion)) {
+      setUpdateRequired(true);
+    }
+  };
+
   return (
     <AirtableContext.Provider
       value={{
@@ -170,6 +187,8 @@ export function AirtableProvider({ children }: { children: ReactNode }) {
         voteOnFeature,
         unvoteOnFeature,
         requestFeature,
+        updateRequired,
+        checkUpdateRequired,
       }}
     >
       {children}

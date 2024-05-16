@@ -55,6 +55,7 @@
     "react-native-svg": "^14.1.0",
     "react-native-web": "^0.19.10",
     "react-native-xml2js": "^1.0.3",
+    "semver": "^7.6.2",
     "tamagui": "^1.91.3"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { ScrollView, View } from 'tamagui';
+import { ScrollView, Spacer, View } from 'tamagui';
 import React from 'react';
 
 import { Separator, Spinner, YGroup } from 'tamagui';
@@ -8,7 +8,7 @@ import { parseDockerContainerPs } from '../../../util/docker/util';
 import { DockerPs, DockerPsCommand } from '../../../typing/docker';
 import { useRouter } from 'expo-router';
 import { useDocker } from '../../../contexts/docker';
-import ContainerCard from '../../../components/container-card';
+import ContainerCard from '../../../components/containers/container-card';
 
 export default function DockerScreen() {
   return (
@@ -102,6 +102,7 @@ function DockerList() {
     <Spinner size="large" alignItems="center" />
   ) : (
     <View flex={1} width={'90%'}>
+      <Spacer size="$2" />
       <ScrollView>
         <YGroup
           alignSelf="center"
@@ -112,7 +113,6 @@ function DockerList() {
         >
           <YGroup.Item>
             {containers.map((container, index) => (
-              // TODO max width needed for text or it will push buttons off the screen
               <ContainerCard
                 key={container.ID}
                 name={container.Image?.split('/').pop() || 'N/A'}

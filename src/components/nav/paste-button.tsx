@@ -1,9 +1,9 @@
 import { ClipboardPaste, FolderOutput } from '@tamagui/lucide-icons';
 import { Button } from 'tamagui';
-import { useFiles } from '../contexts/files';
+import { useFiles } from '../../contexts/files';
 import React from 'react';
-import { useHeader } from '../contexts/header';
-import TransparentButton from './transparent-button';
+import { useHeader } from '../../contexts/header';
+import TransparentButton from '../transparent-button';
 
 export function PasteButton() {
   const { cachedFile, currentFolder } = useFiles();

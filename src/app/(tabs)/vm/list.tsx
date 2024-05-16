@@ -1,8 +1,8 @@
-import { ScrollView, Separator, Spinner, View, YGroup } from 'tamagui';
+import { ScrollView, Separator, Spacer, Spinner, View, YGroup } from 'tamagui';
 import React, { useEffect, useState } from 'react';
 import { useSsh } from '../../../contexts/ssh';
 import { parseVirshDumpXML } from '../../../util/vm/util';
-import ContainerCard from '../../../components/container-card';
+import ContainerCard from '../../../components/containers/container-card';
 import { useVms } from '../../../contexts/vm';
 import { VirshVm } from '../../../typing/virsh';
 import { useRouter } from 'expo-router';
@@ -123,6 +123,7 @@ function VmListScreen() {
     <Spinner size="large" />
   ) : (
     <View flex={1} width={'90%'}>
+      <Spacer size="$2" />
       <ScrollView>
         <YGroup
           alignSelf="center"

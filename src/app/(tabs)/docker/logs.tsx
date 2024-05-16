@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Logs from '../../../components/logs';
+import Logs from '../../../components/containers/logs';
 import { useDocker } from '../../../contexts/docker';
 import { Spinner } from 'tamagui';
 

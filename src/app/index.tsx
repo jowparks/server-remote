@@ -3,7 +3,7 @@ import { Plus } from '@tamagui/lucide-icons';
 import { Button, ScrollView, Spacer, View } from 'tamagui';
 import ServerModal from './add-server/modal';
 import { getItem, setItem } from '../storage/secure';
-import ServerCard from '../components/server-card';
+import ServerCard from '../components/containers/server-card';
 import { router } from 'expo-router';
 import { useSsh } from '../contexts/ssh';
 import { Server, hostname } from '../typing/server';

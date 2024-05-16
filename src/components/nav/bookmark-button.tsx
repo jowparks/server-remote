@@ -1,8 +1,8 @@
 import { Bookmark, BookmarkCheck } from '@tamagui/lucide-icons';
 import React, { useEffect, useState } from 'react';
 import { Button } from 'tamagui';
-import { useFiles } from '../contexts/files';
-import TransparentButton from './transparent-button';
+import { useFiles } from '../../contexts/files';
+import TransparentButton from '../general/transparent-button';
 
 export function BookmarkButton() {
   const { currentFolder } = useFiles();

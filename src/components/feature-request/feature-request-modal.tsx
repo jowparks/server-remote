@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Input, View, Sheet, XStack, TextArea } from 'tamagui';
-import { DarkBlueTheme } from '../style/theme';
+import { DarkBlueTheme } from '../../style/theme';
 
 export type FeatureRequestModalProps = {
   open: boolean;

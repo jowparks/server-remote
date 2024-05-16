@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Sheet, XStack, Text, View } from 'tamagui';
 import SSHClient from '@jowparks/react-native-ssh-sftp';
-import LabeledInput from '../../components/labeled-input';
+import LabeledInput from '../../components/general/labeled-input';
 import { Server } from '../../typing/server';
 import { DarkBlueTheme } from '../../style/theme';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, View, Text } from 'tamagui';
 import { useVms } from '../../../contexts/vm';
-import JsonViewer from '../../../components/json';
+import JsonViewer from '../../../components/containers/json';
 
 export default function JsonScreen() {
   const { currentVmName, vms } = useVms();

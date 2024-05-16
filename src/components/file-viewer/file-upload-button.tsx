@@ -1,10 +1,10 @@
 import { Upload } from '@tamagui/lucide-icons';
 import { Button } from 'tamagui';
 import React from 'react';
-import { useFiles } from '../contexts/files';
-import { useSsh } from '../contexts/ssh';
+import { useFiles } from '../../contexts/files';
+import { useSsh } from '../../contexts/ssh';
 import DocumentPicker from 'react-native-document-picker';
-import TransparentButton from './transparent-button';
+import TransparentButton from '../transparent-button';
 
 export default function UploadButton() {
   const { sshClient } = useSsh();

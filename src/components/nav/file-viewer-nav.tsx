@@ -4,10 +4,10 @@ import ContextMenuView, {
   ContextMenuAction,
   ContextMenuOnPressNativeEvent,
 } from 'react-native-context-menu-view';
-import TransparentButton from './transparent-button';
-import { useHeader } from '../contexts/header';
-import { useFiles } from '../contexts/files';
-import { useSsh } from '../contexts/ssh';
+import TransparentButton from '../general/transparent-button';
+import { useHeader } from '../../contexts/header';
+import { useFiles } from '../../contexts/files';
+import { useSsh } from '../../contexts/ssh';
 import DocumentPicker from 'react-native-document-picker';
 import { NativeSyntheticEvent } from 'react-native';
 

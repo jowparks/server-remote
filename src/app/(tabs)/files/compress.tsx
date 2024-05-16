@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, Button, RadioGroup, YStack, Slider, Sheet } from 'tamagui';
-import { RadioGroupItemWithLabel } from '../../../components/radio';
-import { CheckboxWithLabel } from '../../../components/checkbox-labeled';
+import { RadioGroupItemWithLabel } from '../../../components/general/radio';
+import { CheckboxWithLabel } from '../../../components/general/checkbox-labeled';
 import { DarkBlueTheme } from '../../../style/theme';
-import LabeledInput from '../../../components/labeled-input';
+import LabeledInput from '../../../components/general/labeled-input';
 import { FileInfo } from '../../../util/files/util';
 
 export enum CompressionFormats {

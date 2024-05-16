@@ -15,14 +15,15 @@ import { FilesProvider } from '../contexts/files';
 import { ThemeProvider } from '@react-navigation/native';
 import { DarkBlueTheme } from '../style/theme';
 import Drawer from 'expo-router/drawer';
-import DrawerButton from '../components/drawer-button';
+import DrawerButton from '../components/header/drawer-button';
 import { Server, Settings, Wand2 } from '@tamagui/lucide-icons';
 import { HeaderProvider } from '../contexts/header';
 import { BiometricsProvider } from '../contexts/biometrics';
 import { AuthenticationProvider } from '../contexts/authentication';
 import { Appearance } from 'react-native';
-import Login from '../components/login';
+import Login from '../components/overlays/login';
 import { AirtableProvider } from '../contexts/airtable';
+import UpdateRequired from '../components/overlays/update-required';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -53,7 +54,6 @@ export default function RootLayout() {
 
 // TODO: add force update overlay for day zero, read entry from airtable
 Appearance.setColorScheme('dark');
-// TODO: add root view for block on require update
 function RootLayoutNav() {
   // const colorScheme = useColorScheme();
   const { left, top, right } = useSafeAreaInsets();
@@ -78,6 +78,7 @@ function RootLayoutNav() {
                         />
                         <AuthenticationProvider>
                           <Login />
+                          <UpdateRequired />
                           <Drawer
                             screenOptions={{
                               drawerActiveBackgroundColor:

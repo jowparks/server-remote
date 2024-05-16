@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useSsh } from '../contexts/ssh';
+import { useSsh } from '../../contexts/ssh';
 import { View, Text } from 'tamagui';
 import { ScrollView } from 'react-native';
 
@@ -54,7 +54,6 @@ export default function Logs({ command, refreshCommand }: LogsProps) {
       layoutMeasurement.height + contentOffset.y >= contentSize.height;
     setIsAtEnd(isAtEnd);
   };
-  // TODO make text selectable
   return (
     <View flex={1}>
       <ScrollView
@@ -65,7 +64,9 @@ export default function Logs({ command, refreshCommand }: LogsProps) {
         onScroll={handleScroll}
         scrollEventThrottle={400}
       >
-        <Text color={'white'}>{logs}</Text>
+        <Text color={'white'} selectable>
+          {logs}
+        </Text>
       </ScrollView>
     </View>
   );
