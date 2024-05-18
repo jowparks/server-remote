@@ -1,8 +1,11 @@
 import * as SecureStore from 'expo-secure-store';
 import { Server } from '../typing/server';
 
+export enum StorageKeys {
+  servers = 'servers',
+}
 interface StorageItems {
-  servers: Server[];
+  [StorageKeys.servers]: Server[];
 }
 
 export async function setItem<K extends keyof StorageItems>(

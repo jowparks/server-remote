@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Sheet, XStack, Text, View } from 'tamagui';
+import { Button, Sheet, XStack, Text, View, YStack, Spacer } from 'tamagui';
 import SSHClient from '@jowparks/react-native-ssh-sftp';
 import LabeledInput from '../../components/general/labeled-input';
 import { Server } from '../../typing/server';
@@ -38,46 +38,55 @@ export default function ServerModal({
     onOpenChange(false);
   };
 
-  // TODO better handling of making keyboard disappear
   const handleTestConnection = async () => {
     console.log('Testing connection', serverDetails);
     if (!serverDetails.password && !serverDetails.key) {
-      // TODO handle validation errors in fields
-      console.log('No password or key');
       return;
     }
-    if (serverDetails.password) {
-      const client = await SSHClient.connectWithPassword(
-        serverDetails.host,
-        serverDetails.port,
-        serverDetails.user,
-        serverDetails.password,
-        (err, _) => {
-          if (err) {
-            //TODO better handling/display of error
-            setTestResult('Fail: ' + err);
-          } else {
-            setTestResult('Success');
-          }
-        },
-      );
-    }
-    if (serverDetails.key) {
-      await SSHClient.connectWithKey(
-        serverDetails.host,
-        serverDetails.port,
-        serverDetails.user,
-        serverDetails.key,
-        serverDetails.publicKey,
-        serverDetails.keyPassphrase,
-        (err, _) => {
-          if (err) {
-            setTestResult('Fail: ' + err);
-          } else {
-            setTestResult('Success');
-          }
-        },
-      );
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject('Fail: Timeout after 5 seconds'), 5000),
+    );
+
+    const connectionPromise = new Promise(async (resolve, reject) => {
+      if (serverDetails.password) {
+        await SSHClient.connectWithPassword(
+          serverDetails.host,
+          serverDetails.port,
+          serverDetails.user,
+          serverDetails.password,
+          (err, _) => {
+            if (err) {
+              reject('Fail: ' + err);
+            } else {
+              setTestResult('Success');
+            }
+          },
+        );
+      }
+      if (serverDetails.key) {
+        await SSHClient.connectWithKey(
+          serverDetails.host,
+          serverDetails.port,
+          serverDetails.user,
+          serverDetails.key,
+          serverDetails.publicKey,
+          serverDetails.keyPassphrase,
+          (err, _) => {
+            if (err) {
+              reject('Fail: ' + err);
+            } else {
+              setTestResult('Success');
+            }
+          },
+        );
+      }
+    });
+
+    try {
+      await Promise.race([connectionPromise, timeoutPromise]);
+    } catch (error) {
+      setTestResult(error);
     }
   };
 
@@ -200,21 +209,33 @@ export default function ServerModal({
               }
             /> */}
           </View>
-          <XStack alignItems="center" justifyContent="flex-end" gap="$2">
+          <YStack>
+            <XStack
+              alignItems="center"
+              justifyContent="flex-end"
+              gap="$2"
+              paddingRight="10%"
+            >
+              <Button onPress={async () => handleTestConnection()} size="$4">
+                Test
+              </Button>
+              <Button onPress={() => handleAddServer()} size="$4">
+                Submit
+              </Button>
+            </XStack>
+            <Spacer size="$2" />
             {!!testResult && (
-              <Text
-                style={{ color: testResult == 'Success' ? 'green' : 'red' }}
-              >
-                {testResult}
-              </Text>
+              <View alignItems="center" alignContent="center" width="100%">
+                <Text
+                  style={{ color: testResult == 'Success' ? 'green' : 'red' }}
+                  width="90%"
+                  textAlign="center"
+                >
+                  {testResult}
+                </Text>
+              </View>
             )}
-            <Button onPress={async () => handleTestConnection()} size="$4">
-              Test
-            </Button>
-            <Button onPress={() => handleAddServer()} size="$4">
-              Submit
-            </Button>
-          </XStack>
+          </YStack>
         </Sheet.Frame>
       </Sheet>
     </>

@@ -3,7 +3,7 @@ import { YGroup, Separator, ListItem, Spinner } from 'tamagui';
 import { ChevronRight } from '@tamagui/lucide-icons';
 
 import ContextMenuView from 'react-native-context-menu-view';
-import { FileInfo } from '../../util/files/util';
+import { FileInfo } from '../../util/files';
 
 enum FileContext {
   GetInfo = 'Get Info',

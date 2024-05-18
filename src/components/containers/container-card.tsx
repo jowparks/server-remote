@@ -1,13 +1,13 @@
 import { Pause, Play, RefreshCcw, Square } from '@tamagui/lucide-icons';
 import React, { useEffect } from 'react';
 import {
-  Button,
   Text,
   ListItem,
   Paragraph,
   XStack,
   YStack,
   View,
+  Image,
 } from 'tamagui';
 import TransparentButton from '../general/transparent-button';
 
@@ -19,6 +19,7 @@ type ContainerCardProps = {
   paused: boolean;
   stopped: boolean;
   listItemStyle?: React.CSSProperties;
+  iconUrl: string;
   onCardPress: () => void;
   onStart: () => void;
   onStop: () => void;
@@ -34,6 +35,7 @@ export default function ContainerCard(props: ContainerCardProps) {
     paused,
     stopped,
     listItemStyle,
+    iconUrl,
     onCardPress,
     onStart,
     onStop,
@@ -56,11 +58,19 @@ export default function ContainerCard(props: ContainerCardProps) {
       style={listItemStyle}
     >
       <XStack alignItems="center" justifyContent="space-between" width="100%">
-        <View width="65%">
-          <YStack>
-            <Text fontSize={16}>{name}</Text>
-            <Paragraph theme="alt2">{subheading}</Paragraph>
-          </YStack>
+        <View width="50%">
+          <XStack alignItems="center" gap="$2">
+            <Image
+              source={{ uri: iconUrl }}
+              style={{ width: 30, height: 30 }}
+            />
+            <YStack>
+              <Text fontSize={14}>{name}</Text>
+              <Paragraph theme="alt2" fontSize={12}>
+                {subheading}
+              </Paragraph>
+            </YStack>
+          </XStack>
         </View>
         <XStack>
           <TransparentButton

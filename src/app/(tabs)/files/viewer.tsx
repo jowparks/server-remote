@@ -4,7 +4,7 @@ import { debounce } from 'lodash';
 import { useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
-import { FileInfo, findPaths } from '../../../util/files/util';
+import { FileInfo, findPaths } from '../../../util/files';
 import { useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
 import InfoModal from './info';

@@ -2,22 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Plus } from '@tamagui/lucide-icons';
 import { Button, ScrollView, Spacer, View } from 'tamagui';
 import ServerModal from './add-server/modal';
-import { getItem, setItem } from '../storage/secure';
+import { StorageKeys, getItem, setItem } from '../storage/secure';
 import ServerCard from '../components/containers/server-card';
 import { router } from 'expo-router';
 import { useSsh } from '../contexts/ssh';
 import { Server, hostname } from '../typing/server';
 import { useFiles } from '../contexts/files';
+import Alert from '../components/general/alert';
 
 export default function ServerSelectScreen() {
   const { sshServer, setSshServer } = useSsh();
   const { setHostName } = useFiles();
   const [servers, setServers] = useState<Server[]>([]);
   const [serverModalOpen, setServerModalOpen] = useState(false);
+  const [deleteServer, setDeleteServer] = useState<Server | null>(null);
 
   useEffect(() => {
     // Load servers from AsyncStorage
-    getItem('servers').then((data) => {
+    getItem(StorageKeys.servers).then((data) => {
       if (data) {
         setServers(data);
       }
@@ -26,19 +28,19 @@ export default function ServerSelectScreen() {
 
   const addServer = (server: Server) => {
     const newServers = [...servers, server];
-    setItem('servers', newServers);
+    setItem(StorageKeys.servers, newServers);
     setServers(newServers);
   };
 
   const removeServer = (server: Server) => {
     const newServers = servers.filter((s) => s !== server);
-    setItem('servers', newServers);
+    setItem(StorageKeys.servers, newServers);
     setServers(newServers);
   };
 
   const updateServer = (server: Server) => {
     const newServers = servers.map((s) => (s === sshServer ? server : s));
-    setItem('servers', newServers);
+    setItem(StorageKeys.servers, newServers);
     setServers(newServers);
   };
 
@@ -67,7 +69,7 @@ export default function ServerSelectScreen() {
             key={index}
             server={server}
             onEdit={(server) => handleServerEdit(server)}
-            onDelete={(server) => removeServer(server)}
+            onDelete={(server) => setDeleteServer(server)}
             onPress={(server) => handleServerPress(server)}
           />
         ))}
@@ -87,6 +89,18 @@ export default function ServerSelectScreen() {
             onSaveServer={(server) =>
               sshServer ? updateServer(server) : addServer(server)
             }
+          />
+        )}
+        {!!deleteServer && (
+          <Alert
+            title="WARNING: This action cannot be undone!"
+            description={`Are you sure you want to delete ${deleteServer.name}?`}
+            open={!!deleteServer}
+            onOk={() => {
+              removeServer(deleteServer);
+              setDeleteServer(null);
+            }}
+            onCancel={() => setDeleteServer(null)}
           />
         )}
       </View>

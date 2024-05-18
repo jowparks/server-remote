@@ -4,7 +4,7 @@ import { RadioGroupItemWithLabel } from '../../../components/general/radio';
 import { CheckboxWithLabel } from '../../../components/general/checkbox-labeled';
 import { DarkBlueTheme } from '../../../style/theme';
 import LabeledInput from '../../../components/general/labeled-input';
-import { FileInfo } from '../../../util/files/util';
+import { FileInfo } from '../../../util/files';
 
 export enum CompressionFormats {
   Zip = '.zip',

@@ -10,7 +10,7 @@ import {
 } from 'tamagui';
 import { useRouter } from 'expo-router';
 import { useFiles } from '../../../contexts/files';
-import { FileInfo } from '../../../util/files/util';
+import { FileInfo } from '../../../util/files';
 import ContextMenuView from 'react-native-context-menu-view';
 
 export default function PathsView() {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { FileInfo } from '../util/files/util';
+import { FileInfo } from '../util/files';
 
 interface HeaderContextProps {
   pasteLocation: FileInfo | null;

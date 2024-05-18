@@ -1,6 +1,6 @@
 import React from 'react';
 import { ListItem, Separator, View, YGroup, Text, Sheet } from 'tamagui';
-import { FileInfo, fileInfoKeyMap } from '../../../util/files/util';
+import { FileInfo, fileInfoKeyMap } from '../../../util/files';
 import { DarkBlueTheme } from '../../../style/theme';
 
 export type InfoScreenProps = {

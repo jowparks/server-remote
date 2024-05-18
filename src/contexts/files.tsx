@@ -5,7 +5,7 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import { FileInfo } from '../util/files/util';
+import { FileInfo } from '../util/files';
 import { storage } from '../storage/mmkv';
 
 export interface CachedFile {

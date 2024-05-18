@@ -4,7 +4,7 @@ import React from 'react';
 import { Separator, Spinner, YGroup } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
 import { useEffect, useState } from 'react';
-import { parseDockerContainerPs } from '../../../util/docker/util';
+import { iconFromLabels, processDockerPs } from '../../../util/docker';
 import { DockerPs, DockerPsCommand } from '../../../typing/docker';
 import { useRouter } from 'expo-router';
 import { useDocker } from '../../../contexts/docker';
@@ -33,7 +33,7 @@ function DockerList() {
       const parsedContainers: DockerPs[] = lines
         ?.map((line) => {
           try {
-            return parseDockerContainerPs(JSON.parse(line));
+            return processDockerPs(line);
           } catch (error) {
             console.error(error);
             return null;
@@ -120,6 +120,7 @@ function DockerList() {
                 running={container.State === 'running'}
                 paused={container.State === 'paused'}
                 stopped={container.State === 'exited'}
+                iconUrl={container.IconUrl} // Add this line
                 onCardPress={() => {
                   setCurrentContainerId(container.ID || null);
                   router.navigate('(tabs)/docker/menu');

@@ -1,11 +1,12 @@
 import { ScrollView, Separator, Spacer, Spinner, View, YGroup } from 'tamagui';
 import React, { useEffect, useState } from 'react';
 import { useSsh } from '../../../contexts/ssh';
-import { parseVirshDumpXML } from '../../../util/vm/util';
+import { parseVirshDumpXML } from '../../../util/vm';
 import ContainerCard from '../../../components/containers/container-card';
 import { useVms } from '../../../contexts/vm';
 import { VirshVm } from '../../../typing/virsh';
 import { useRouter } from 'expo-router';
+import images from '../../../icons';
 
 export default function VmList() {
   return (
@@ -145,6 +146,10 @@ function VmListScreen() {
                   vm.state === 'crashed' ||
                   vm.state === 'in shutdown' ||
                   vm.state === 'dying'
+                }
+                iconUrl={
+                  images[vm.domain.metadata[0].vmtemplate[0].$.icon] ??
+                  images['default.png']
                 }
                 onCardPress={() => {
                   setCurrentVmName(vm.domain.name[0]);

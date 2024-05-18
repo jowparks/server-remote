@@ -192,14 +192,18 @@ export type DockerContainer = {
   };
 };
 
-export const DockerPsCommand = `docker ps -a --format '{"ID": "{{.ID}}", "Name": "{{.Names}}", "Status": "{{.Status}}", "State": "{{.State}}", "Image": "{{.Image}}"}'`;
-
+export const DockerPsCommand = `docker ps -a --format '{"ID": "{{.ID}}", "Name": "{{.Names}}", "Status": "{{.Status}}", "State": "{{.State}}", "Image": "{{.Image}}", "Labels": "{{.Labels}}"}'`;
 export const DockerInspectCommand = (containerId: string) =>
   `docker inspect ${containerId}`;
+
+export type DockerLabel = { [key: string]: string };
+
 export interface DockerPs {
   ID: string;
   Image: string;
   Name: string;
   Status: string;
   State: string;
+  Labels: DockerLabel;
+  IconUrl: string;
 }

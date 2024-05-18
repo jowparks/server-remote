@@ -31,6 +31,7 @@ const JsonNode: React.FC<JsonNodeProps> = ({
     setIsOpen(detailsExpanded);
   }, [detailsExpanded]);
 
+  // TODO: wrapping of VM text looks funny
   const WrapperComponent = isObject || isArray ? TouchableOpacity : View;
   const wrapperProps = isObject || isArray ? { onPress: handlePress } : {};
   return (
