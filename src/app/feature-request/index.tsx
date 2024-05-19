@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, Text, Card, Spinner, XStack, Spacer, ScrollView } from 'tamagui';
+import { View, Text, Card, XStack, Spacer, ScrollView } from 'tamagui';
 import { FeatureRequestSchema, useAirtable } from '../../contexts/airtable';
 import { ArrowBigUp } from '@tamagui/lucide-icons';
 import TransparentButton from '../../components/general/transparent-button';
 import { useHeader } from '../../contexts/header';
 import FeatureRequestModal from '../../components/feature-request/feature-request-modal';
+import Spin from '../../components/general/spinner';
 
 export type FeatureRequestProps = {
   onPress: (feature: FeatureRequestSchema) => void;
@@ -34,7 +35,7 @@ export default function FeatureRequest({ onPress }: FeatureRequestProps) {
   };
 
   return features.length == 0 ? (
-    <Spinner />
+    <Spin />
   ) : (
     <View flex={1} width={'90%'} alignSelf="center">
       <ScrollView>

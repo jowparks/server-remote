@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Logs from '../../../components/containers/logs';
-import { Spinner } from 'tamagui';
 import { useVms } from '../../../contexts/vm';
+import Spin from '../../../components/general/spinner';
 
 export default function LogsScreen() {
   const { currentVmName, vms } = useVms();
@@ -12,5 +12,5 @@ export default function LogsScreen() {
     if (!name) return;
     setCommand(`cat "/var/log/libvirt/qemu/${name}.log"`);
   }, [currentVmName]);
-  return command ? <Logs command={command} /> : <Spinner />;
+  return command ? <Logs command={command} /> : <Spin />;
 }

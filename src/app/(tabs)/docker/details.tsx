@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { ScrollView, View, Text, Spinner } from 'tamagui';
+import { ScrollView, View, Text } from 'tamagui';
 import { useDocker } from '../../../contexts/docker';
 import JsonViewer from '../../../components/containers/json';
 import { useSsh } from '../../../contexts/ssh';
 import { DockerContainer, DockerInspectCommand } from '../../../typing/docker';
+import Spin from '../../../components/general/spinner';
 
 export default function JsonScreen() {
   const { currentContainerId } = useDocker();
@@ -35,7 +36,7 @@ export default function JsonScreen() {
     return () => clearInterval(intervalId);
   }, [currentContainerId, sshClient]);
 
-  if (!container) return <Spinner />;
+  if (!container) return <Spin />;
   return (
     <View flex={1} width={'100%'} alignItems="center">
       <ScrollView>

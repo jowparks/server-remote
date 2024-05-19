@@ -1,14 +1,15 @@
 import { ScrollView, Spacer, View } from 'tamagui';
 import React from 'react';
 
-import { Separator, Spinner, YGroup } from 'tamagui';
+import { Separator, YGroup } from 'tamagui';
 import { useSsh } from '../../../contexts/ssh';
 import { useEffect, useState } from 'react';
-import { iconFromLabels, processDockerPs } from '../../../util/docker';
+import { processDockerPs } from '../../../util/docker';
 import { DockerPs, DockerPsCommand } from '../../../typing/docker';
 import { useRouter } from 'expo-router';
 import { useDocker } from '../../../contexts/docker';
 import ContainerCard from '../../../components/containers/container-card';
+import Spin from '../../../components/general/spinner';
 
 export default function DockerScreen() {
   return (
@@ -108,7 +109,7 @@ function DockerList() {
   };
 
   return !loaded ? (
-    <Spinner size="large" alignItems="center" />
+    <Spin />
   ) : (
     <View flex={1} width={'90%'}>
       <Spacer size="$2" />

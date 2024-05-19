@@ -1,9 +1,10 @@
 import React, { useRef } from 'react';
-import { YGroup, Separator, ListItem, Spinner } from 'tamagui';
+import { YGroup, Separator, ListItem } from 'tamagui';
 import { ChevronRight } from '@tamagui/lucide-icons';
 
 import ContextMenuView from 'react-native-context-menu-view';
 import { FileInfo } from '../../util/files';
+import Spin from '../general/spinner';
 
 enum FileContext {
   GetInfo = 'Get Info',
@@ -55,7 +56,7 @@ export default function FileList({
   const pressOutTimer = useRef(0);
 
   return loading || !files ? (
-    <Spinner />
+    <Spin />
   ) : (
     <YGroup
       alignSelf="center"

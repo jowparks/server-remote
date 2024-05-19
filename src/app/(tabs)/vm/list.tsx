@@ -7,6 +7,7 @@ import { useVms } from '../../../contexts/vm';
 import { VirshVm } from '../../../typing/virsh';
 import { useRouter } from 'expo-router';
 import images from '../../../icons';
+import Spin from '../../../components/general/spinner';
 
 export default function VmList() {
   return (
@@ -131,7 +132,7 @@ function VmListScreen() {
   };
 
   return !loaded ? (
-    <Spinner size="large" />
+    <Spin />
   ) : (
     <View flex={1} width={'90%'}>
       <Spacer size="$2" />

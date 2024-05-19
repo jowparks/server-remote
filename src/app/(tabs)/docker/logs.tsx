@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Logs from '../../../components/containers/logs';
 import { useDocker } from '../../../contexts/docker';
-import { Spinner } from 'tamagui';
+import Spin from '../../../components/general/spinner';
 
 export default function LogsScreen() {
   const { currentContainerId, containers } = useDocker();
@@ -16,6 +16,6 @@ export default function LogsScreen() {
   return command && refreshCommand ? (
     <Logs command={command} refreshCommand={refreshCommand} />
   ) : (
-    <Spinner />
+    <Spin />
   );
 }
