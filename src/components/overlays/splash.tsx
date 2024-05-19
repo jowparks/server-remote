@@ -1,5 +1,4 @@
 import { StyleSheet, View } from 'react-native';
-import { Text } from 'tamagui';
 import React from 'react';
 
 const styles = StyleSheet.create({
@@ -16,15 +15,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export type SplashProps = {
-  text: string;
-};
-
-export default function Splash({ text }: SplashProps) {
+export default function Splash({ children }) {
   // TODO: make this splash screen nice
-  return (
-    <View style={styles.fullScreen}>
-      <Text>{text}</Text>
-    </View>
-  );
+  return <View style={styles.fullScreen}>{children}</View>;
 }

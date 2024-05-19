@@ -1,4 +1,4 @@
-import { Pause, Play, RefreshCcw, Square } from '@tamagui/lucide-icons';
+import { Bomb, Pause, Play, RefreshCcw, Square } from '@tamagui/lucide-icons';
 import React, { useEffect } from 'react';
 import {
   Text,
@@ -11,7 +11,6 @@ import {
 } from 'tamagui';
 import TransparentButton from '../general/transparent-button';
 
-// TODO add icon props for container (either image or url)
 type ContainerCardProps = {
   name: string;
   subheading: string;
@@ -23,6 +22,7 @@ type ContainerCardProps = {
   onCardPress: () => void;
   onStart: () => void;
   onStop: () => void;
+  onForceStop: () => void;
   onRestart: () => void;
   onPause: () => void;
 };
@@ -39,6 +39,7 @@ export default function ContainerCard(props: ContainerCardProps) {
     onCardPress,
     onStart,
     onStop,
+    onForceStop,
     onRestart,
     onPause,
   } = props;
@@ -58,7 +59,7 @@ export default function ContainerCard(props: ContainerCardProps) {
       style={listItemStyle}
     >
       <XStack alignItems="center" justifyContent="space-between" width="100%">
-        <View width="50%">
+        <View width="50%" marginLeft={-10}>
           <XStack alignItems="center" gap="$2">
             <Image
               source={{ uri: iconUrl }}
@@ -72,7 +73,7 @@ export default function ContainerCard(props: ContainerCardProps) {
             </YStack>
           </XStack>
         </View>
-        <XStack>
+        <XStack marginRight={-10}>
           <TransparentButton
             style={{ padding: 1 }}
             onPress={() => {
@@ -97,6 +98,15 @@ export default function ContainerCard(props: ContainerCardProps) {
             style={{ padding: 1 }}
             onPress={() => {
               setDisabled(true);
+              onRestart();
+            }}
+          >
+            <RefreshCcw maxWidth={16} />
+          </TransparentButton>
+          <TransparentButton
+            style={{ padding: 1 }}
+            onPress={() => {
+              setDisabled(true);
               onStop();
             }}
             disabled={stopped}
@@ -107,10 +117,11 @@ export default function ContainerCard(props: ContainerCardProps) {
             style={{ padding: 1 }}
             onPress={() => {
               setDisabled(true);
-              onRestart();
+              onForceStop();
             }}
+            disabled={stopped}
           >
-            <RefreshCcw maxWidth={16} />
+            <Bomb maxWidth={16} opacity={stopped ? 0.5 : 1} />
           </TransparentButton>
         </XStack>
       </XStack>

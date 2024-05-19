@@ -1,6 +1,5 @@
 export type VirshVm = { state: string } & VirshVmDumpXML;
 
-// TODO get rid of domain heading
 export type VirshVmDumpXML = {
   domain: {
     $: {

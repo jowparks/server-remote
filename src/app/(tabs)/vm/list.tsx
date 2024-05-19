@@ -62,11 +62,21 @@ function VmListScreen() {
     return () => clearInterval(intervalId);
   }, [sshClient, trigger]);
 
-  // TODO handle force stop
   const stopVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
       ?.execute(`virsh shutdown "${vm.domain.name[0]}"`)
+      .then((response) => {
+        console.log(response);
+        setTrigger((prev) => !prev);
+      })
+      .catch((error) => console.log(error));
+  };
+
+  const forceStopVm = (vm: VirshVm) => {
+    setTrigger((prev) => !prev);
+    sshClient
+      ?.execute(`virsh destroy "${vm.domain.name[0]}"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -161,6 +171,7 @@ function VmListScreen() {
                 onPause={() => saveVm(vm)}
                 onRestart={() => restartVm(vm)}
                 onStop={() => stopVm(vm)}
+                onForceStop={() => forceStopVm(vm)}
                 listItemStyle={{
                   borderTopLeftRadius: index === 0 ? 10 : 0,
                   borderTopRightRadius: index === 0 ? 10 : 0,

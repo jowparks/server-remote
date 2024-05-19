@@ -62,6 +62,15 @@ function DockerList() {
       .catch((error) => console.log(error));
   };
 
+  const forceStopContainer = (container: DockerPs) => {
+    sshClient
+      ?.execute(`docker kill ${container.ID}`)
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((error) => console.log(error));
+  };
+
   const startContainer = (container: DockerPs) => {
     sshClient
       ?.execute(`docker start ${container.ID}`)
@@ -133,6 +142,7 @@ function DockerList() {
                 onPause={() => pauseContainer(container)}
                 onRestart={() => restartContainer(container)}
                 onStop={() => stopContainer(container)}
+                onForceStop={() => forceStopContainer(container)}
                 listItemStyle={{
                   borderTopLeftRadius: index === 0 ? 10 : 0,
                   borderTopRightRadius: index === 0 ? 10 : 0,
