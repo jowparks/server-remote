@@ -13,7 +13,7 @@ export default function App() {
     >
       <Spacer size={'$4'} />
       <XStack justifyContent="space-between" width={'100%'}>
-        <Text>Lockscreen</Text>
+        <Text>Biometric Login Enabled</Text>
         <View>
           <Switch
             size={'$3'}

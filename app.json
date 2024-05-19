@@ -29,7 +29,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "app.reflect.serverremote"
     },
     "web": {
       "favicon": "./assets/favicon.png"
