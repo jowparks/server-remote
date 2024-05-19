@@ -50,6 +50,7 @@ const FolderViewer = () => {
   const [searchInput, setSearchInput] = useState('');
   const [searchError, setSearchError] = useState('');
   const [tabsEnabled, setTabsEnabled] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
 
   useEffect(() => {
     let tab = searchTab;
@@ -174,17 +175,22 @@ const FolderViewer = () => {
     const targetPath = decodeURI(directory.uri.replace('file://', ''));
     const originatingFile = `${path}/${item.fileName}`;
     console.log(`Downloading from: ${originatingFile} to ${targetPath}`);
-    await sshClient.sftpDownload(
-      originatingFile,
-      targetPath,
-      (error, response) => {
-        if (error) {
-          console.warn('Download failed:', error);
-        } else {
-          console.log('Download successful: ', response);
-        }
-      },
-    );
+    sshClient.sftpLs(path);
+    try {
+      await sshClient.sftpDownload(
+        originatingFile,
+        targetPath,
+        (error, response) => {
+          if (error) {
+            throw error;
+          } else {
+            console.log('Download successful: ', response);
+          }
+        },
+      );
+    } catch (error) {
+      setDownloadError(true);
+    }
   };
 
   const handleDelete = async (item: FileInfo | null) => {
@@ -342,6 +348,16 @@ const FolderViewer = () => {
             setDeleteOpen(false);
           }}
           onCancel={() => setDeleteOpen(false)}
+        />
+      )}
+      {!!downloadError && (
+        <Alert
+          title="Download failed"
+          description={`Currently download only works on files less than 5MB, we are working on fixing that!`}
+          open={downloadError}
+          onOk={() => {
+            setDownloadError(false);
+          }}
         />
       )}
       {!!renameOpen && (

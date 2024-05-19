@@ -1,7 +1,7 @@
 import { parseString } from 'react-native-xml2js';
-import { VirshVMDumpXML } from '../typing/virsh';
+import { VirshVmDumpXML } from '../typing/virsh';
 
-export async function parseVirshDumpXML(raw: string): Promise<VirshVMDumpXML> {
+export async function parseVirshDumpXML(raw: string): Promise<VirshVmDumpXML> {
   return new Promise((resolve, reject) =>
     parseString(raw, (err, result) => {
       if (err) {

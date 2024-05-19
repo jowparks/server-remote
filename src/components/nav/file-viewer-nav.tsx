@@ -10,6 +10,7 @@ import { useFiles } from '../../contexts/files';
 import { useSsh } from '../../contexts/ssh';
 import DocumentPicker from 'react-native-document-picker';
 import { NativeSyntheticEvent } from 'react-native';
+import Alert from '../general/alert';
 
 enum NavOptions {
   Paste = 'Paste',
@@ -31,6 +32,7 @@ export default function FileViewerNav() {
 
   const [bookmarked, setBoomarked] = useState(false);
   const [actions, setActions] = useState<ContextMenuAction[]>([]);
+  const [uploadError, setUploadError] = useState(false);
 
   useEffect(() => {
     if (currentFolder) {
@@ -70,17 +72,21 @@ export default function FileViewerNav() {
       if (!file?.uri) return;
       const uploadFile = decodeURI(file.uri.replace('file://', ''));
       console.log(`Upload from: ${uploadFile} to ${currentFolder.filePath}`);
-      await sshClient.sftpUpload(
-        uploadFile,
-        currentFolder.filePath,
-        (error, response) => {
-          if (error) {
-            console.warn('Upload failed:', error);
-          } else {
-            console.log('Upload successful: ', response);
-          }
-        },
-      );
+      try {
+        await sshClient.sftpUpload(
+          uploadFile,
+          currentFolder.filePath,
+          (error, response) => {
+            if (error) {
+              throw error;
+            } else {
+              console.log('Upload successful: ', response);
+            }
+          },
+        );
+      } catch (error) {
+        setUploadError(true);
+      }
     };
     upload();
   }
@@ -127,6 +133,16 @@ export default function FileViewerNav() {
       <TransparentButton>
         <MoreHorizontal />
       </TransparentButton>
+      {!!uploadError && (
+        <Alert
+          title="Upload failed"
+          description={`Currently upload only works on files less than 5MB, we are working on fixing that!`}
+          open={uploadError}
+          onOk={() => {
+            setUploadError(false);
+          }}
+        />
+      )}
     </ContextMenuView>
   );
 }

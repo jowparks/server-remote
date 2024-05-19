@@ -5,7 +5,7 @@ export type AlertProps = {
   title: string;
   description: string;
   onOk: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
   open?: boolean;
   children?: React.ReactNode;
   danger?: boolean;
@@ -60,10 +60,11 @@ export default function Alert({
 
             <AlertDialog.Description>{description}</AlertDialog.Description>
             <XStack space="$3" justifyContent="flex-end">
-              <AlertDialog.Cancel onPress={onCancel} asChild>
-                <Button>{cancelText}</Button>
-              </AlertDialog.Cancel>
-
+              {!!onCancel && (
+                <AlertDialog.Cancel onPress={onCancel} asChild>
+                  <Button>{cancelText}</Button>
+                </AlertDialog.Cancel>
+              )}
               <AlertDialog.Action onPress={onOk} asChild>
                 <Button theme="active">{okText}</Button>
               </AlertDialog.Action>

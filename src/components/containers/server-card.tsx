@@ -43,7 +43,6 @@ export default function ServerCard(props: ServerCardProps) {
         transform: [{ scale: scaleValue }],
       }}
     >
-      {/* TODO handle verify delete */}
       <ContextMenuView
         actions={[
           { title: 'Edit', systemIcon: 'pencil' },

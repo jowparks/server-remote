@@ -52,7 +52,6 @@ export default function RootLayout() {
   return <RootLayoutNav />;
 }
 
-// TODO: add force update overlay for day zero, read entry from airtable
 Appearance.setColorScheme('dark');
 function RootLayoutNav() {
   // const colorScheme = useColorScheme();

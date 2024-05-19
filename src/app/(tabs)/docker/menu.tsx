@@ -1,11 +1,12 @@
 import { Link } from 'expo-router';
 import React from 'react';
-import { ListItem, Separator, View, YGroup } from 'tamagui';
+import { ListItem, Separator, Spacer, View, YGroup } from 'tamagui';
 
 export default function MenuScreen() {
   return (
-    <View flex={1} alignItems="center" padding={'$4'}>
-      <YGroup alignSelf="center" width={'90%'} size="$5">
+    <View flex={1} width="90%" alignItems="center" alignSelf="center">
+      <Spacer size="$4" />
+      <YGroup flexGrow={1} alignSelf="center" size="$5">
         <YGroup.Item>
           <Link href="/(tabs)/docker/details">
             <ListItem
