@@ -31,7 +31,6 @@ const JsonNode: React.FC<JsonNodeProps> = ({
     setIsOpen(detailsExpanded);
   }, [detailsExpanded]);
 
-  // TODO: wrapping of VM text looks funny
   const WrapperComponent = isObject || isArray ? TouchableOpacity : View;
   const wrapperProps = isObject || isArray ? { onPress: handlePress } : {};
   return (
@@ -55,33 +54,33 @@ const JsonNode: React.FC<JsonNodeProps> = ({
         ) : null}
       </WrapperComponent>
       {isOpen &&
-        (isObject ? (
-          Object.keys(data)
-            .sort()
-            .map((key) => (
-              <JsonNode
-                key={key}
-                name={key}
-                data={data[key]}
-                level={level + 1}
-                renderKey={renderKey}
-                renderValue={renderValue}
-              />
-            ))
-        ) : isArray ? (
-          data.map((item, index) => (
-            <JsonNode
-              key={index}
-              name={index.toString()}
-              data={item}
-              level={level + 1}
-              renderKey={renderKey}
-              renderValue={renderValue}
-            />
-          ))
-        ) : (
-          <Content content={data} renderer={renderValue} />
-        ))}
+        (isObject
+          ? Object.keys(data)
+              .sort()
+              .map((key) => (
+                <JsonNode
+                  key={key}
+                  name={key}
+                  data={data[key]}
+                  level={level + 1}
+                  renderKey={renderKey}
+                  renderValue={renderValue}
+                  renderArrayLabel={renderArrayLabel}
+                />
+              ))
+          : isArray
+            ? data.map((item, index) => (
+                <JsonNode
+                  key={index}
+                  name={index.toString()}
+                  data={item}
+                  level={level + 1}
+                  renderKey={renderKey}
+                  renderValue={renderValue}
+                  renderArrayLabel={renderArrayLabel}
+                />
+              ))
+            : null)}
     </View>
   );
 };
@@ -125,6 +124,7 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
   renderValue,
   renderArrayLabel,
 }) => {
+  console.log(JSON.stringify(data, null, 2));
   return (
     <ScrollView>
       {Object.keys(data)

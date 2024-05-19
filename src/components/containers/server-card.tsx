@@ -35,7 +35,6 @@ export default function ServerCard(props: ServerCardProps) {
   };
 
   return (
-    // TODO handle context menu closes, item scales to zero rather than normal size, which creates odd animation
     <Animated.View
       style={{
         marginBottom: 20,

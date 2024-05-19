@@ -105,8 +105,7 @@ const FolderViewer = () => {
       const deduped = dedupeFileName(cachedFile.file);
       const command = `${baseCommand} ${cachedFile.file.filePath} ${path}/${deduped}`;
       console.log(`Pasting: ${command}`);
-      // TODO: finalize paste
-      await sshClient.execute('ls', (error) => {
+      await sshClient.execute(command, (error) => {
         if (error) {
           console.warn('Pasting failed:', error);
         } else {
@@ -195,11 +194,9 @@ const FolderViewer = () => {
 
   const handleDelete = async (item: FileInfo | null) => {
     if (!sshClient || !item) return;
-    const command = `rm -r ${item.filePath}`;
-    console.log(`Deleting: ${command}`);
-    // TODO: finalize delete
+    const command = `rm -r${item.fileType === 'd' ? 'f' : ''} ${item.filePath}`;
     setFiles(files?.filter((file) => file.filePath !== item.filePath) || []);
-    await sshClient.execute('ls', (error) => {
+    await sshClient.execute(command, (error) => {
       if (error) {
         console.warn('Delete failed:', error);
       } else {
@@ -212,9 +209,7 @@ const FolderViewer = () => {
   const handleRename = async (item: FileInfo | null, newName: string) => {
     if (!sshClient || !item || !newName) return;
     const command = `mv ${item.filePath} ${path}/${newName}`;
-    console.log(`Renaming: ${command}`);
-    // TODO: finalize rename
-    await sshClient.execute('ls', (error) => {
+    await sshClient.execute(command, (error) => {
       if (error) {
         console.warn('Rename failed:', error);
       } else {
@@ -235,9 +230,7 @@ const FolderViewer = () => {
     if (!sshClient || !files) return;
     let duplicate = dedupeFileName(item);
     const command = `cp -r ${path}/${item.fileName} ${path}/${duplicate}`;
-    console.log(`Duplicating: ${command}`);
-    // TODO: finalize duplicate
-    await sshClient.execute('ls', (error) => {
+    await sshClient.execute(command, (error) => {
       if (error) {
         console.warn('Duplicate failed:', error);
       } else {
