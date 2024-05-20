@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#121B2C',
+    backgroundColor: '#020F1D',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 100000000000,

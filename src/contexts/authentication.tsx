@@ -9,13 +9,17 @@ import { useBiometrics } from '../contexts/biometrics';
 import { AppState } from 'react-native';
 
 // Create a new context
-const AuthenticationContext = createContext({ authenticated: false });
+const AuthenticationContext = createContext({
+  authenticated: false,
+  triggerAuth: () => {},
+});
 
 export const useAuthentication = () => useContext(AuthenticationContext);
 
 export const AuthenticationProvider = ({ children }) => {
   const { biometricsEnabled, promptBiometrics } = useBiometrics();
   const [authenticated, setAuthenticated] = useState(false);
+  const [triggerAuthentication, setTriggerAuthentication] = useState(false);
   const background = useRef(false);
 
   useEffect(() => {
@@ -51,10 +55,15 @@ export const AuthenticationProvider = ({ children }) => {
       }
     };
     authenticate();
-  }, [biometricsEnabled, authenticated]);
+  }, [biometricsEnabled, authenticated, triggerAuthentication]);
 
   return (
-    <AuthenticationContext.Provider value={{ authenticated }}>
+    <AuthenticationContext.Provider
+      value={{
+        authenticated,
+        triggerAuth: () => setTriggerAuthentication(!triggerAuthentication),
+      }}
+    >
       {children}
     </AuthenticationContext.Provider>
   );
