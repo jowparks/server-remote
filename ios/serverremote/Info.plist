@@ -27,7 +27,6 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>Server Remote</string>
           <string>app.reflect.serverremote</string>
         </array>
       </dict>
