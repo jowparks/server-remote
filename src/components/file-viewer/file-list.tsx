@@ -18,7 +18,6 @@ enum FileContext {
 }
 
 interface FileListProps {
-  loading: boolean;
   files: FileInfo[] | null;
   folder: FileInfo | null;
   displayAsPath: boolean;
@@ -36,7 +35,6 @@ interface FileListProps {
 }
 
 export default function FileList({
-  loading,
   files,
   folder,
   displayAsPath,
@@ -55,7 +53,7 @@ export default function FileList({
   const pressTimer = useRef(0);
   const pressOutTimer = useRef(0);
 
-  return loading || !files ? (
+  return !files || files?.length === 0 ? (
     <Spin />
   ) : (
     <YGroup

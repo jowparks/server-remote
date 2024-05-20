@@ -43,7 +43,7 @@ export interface FeatureRequestSchema {
 interface AirtableContextProps {
   features: FeatureRequestSchema[];
   votedFeatureIds: string[] | undefined;
-  fetchFeatures: () => void;
+  fetchFeatures: () => Promise<FeatureRequestSchema[]>;
   voteOnFeature: (id: string) => void;
   unvoteOnFeature: (id: string) => void;
   requestFeature: (name: string) => void;
@@ -74,33 +74,38 @@ export function AirtableProvider({ children }: { children: ReactNode }) {
       'pat0n7V7OLcNUPHgr.09b737a86f41068f6ee9c6bf10468e4a3d7c7caa16765d2197be5387b0b288a0',
   }).base('appPEYjOAp8x8h7Ku');
 
-  const fetchFeatures = () => {
-    base
-      .table('Feature Requests')
-      .select()
-      .eachPage(
-        (records, fetchNextPage) => {
-          const response = records as unknown as FeatureRequestSchema[];
-          const prevFeatures = features.filter(
-            (typedRecord) =>
-              !response.some(
-                (feature) => feature.fields.Name === typedRecord.fields.Name,
-              ),
-          );
-          setFeatures(
-            [...prevFeatures, ...response].sort(
-              (a, b) => b.fields.Votes - a.fields.Votes,
-            ),
-          );
-          fetchNextPage();
-        },
-        (err) => {
-          if (err) {
-            console.error(err);
-            return;
-          }
-        },
-      );
+  const fetchFeatures = (): Promise<FeatureRequestSchema[]> => {
+    return new Promise((resolve, reject) => {
+      const allFeatures: FeatureRequestSchema[] = [];
+
+      base
+        .table('Feature Requests')
+        .select()
+        .eachPage(
+          (records, fetchNextPage) => {
+            const response = records as unknown as FeatureRequestSchema[];
+            const prevFeatures = allFeatures.filter(
+              (typedRecord) =>
+                !response.some(
+                  (feature) => feature.fields.Name === typedRecord.fields.Name,
+                ),
+            );
+            allFeatures.push(
+              ...prevFeatures,
+              ...response.sort((a, b) => b.fields.Votes - a.fields.Votes),
+            );
+            fetchNextPage();
+          },
+          (err) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(allFeatures);
+            setFeatures(allFeatures);
+          },
+        );
+    });
   };
 
   const voteOnFeature = (id: string) => {

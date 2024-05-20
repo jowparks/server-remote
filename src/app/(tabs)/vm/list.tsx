@@ -1,13 +1,13 @@
 import { ScrollView, Separator, Spacer, Spinner, View, YGroup } from 'tamagui';
 import React, { useEffect, useState } from 'react';
 import { useSsh } from '../../../contexts/ssh';
-import { parseVirshDumpXML } from '../../../util/vm';
 import ContainerCard from '../../../components/containers/container-card';
 import { useVms } from '../../../contexts/vm';
 import { VirshVm } from '../../../typing/virsh';
 import { useRouter } from 'expo-router';
 import images from '../../../icons';
 import Spin from '../../../components/general/spinner';
+import { RefreshControl } from 'react-native';
 
 export default function VmList() {
   return (
@@ -19,49 +19,24 @@ export default function VmList() {
 
 function VmListScreen() {
   const { sshClient } = useSsh();
-  const { vms, setVms, setCurrentVmName } = useVms();
+  const { vms, retrieveVms, setCurrentVmName } = useVms();
   const [loaded, setLoaded] = useState(false);
   const [trigger, setTrigger] = useState(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
   const router = useRouter();
 
   useEffect(() => {
     const fetchVms = async () => {
       if (!sshClient) return;
-      const response = await sshClient.execute('virsh list --all --name');
-      const names = response?.split('\n').filter(Boolean);
-      if (!names) return;
-      const vmXMLStrings = await Promise.all(
-        names.map((name) => {
-          return sshClient.execute(`virsh dumpxml "${name}"`);
-        }),
-      );
-      const vmXMLs = await Promise.all(
-        vmXMLStrings.map((xml) => {
-          return parseVirshDumpXML(xml);
-        }),
-      );
-      const states = await Promise.all(
-        names.map(async (name) => {
-          const state = await sshClient.execute(`virsh domstate "${name}"`);
-          return {
-            name: name,
-            state: state.trim(),
-          };
-        }),
-      );
-      const vms: VirshVm[] = vmXMLs.map((vm) => {
-        const stateObj = states.find(
-          (state) => state.name === vm.domain.name[0],
-        );
-        return { ...vm, state: stateObj?.state || '' };
-      });
-      setVms(vms);
+      await retrieveVms();
       setLoaded(true);
+      setRefreshing(false);
     };
     fetchVms();
     const intervalId = setInterval(fetchVms, 5000);
     return () => clearInterval(intervalId);
-  }, [sshClient, trigger]);
+  }, [sshClient, trigger, triggerRefresh]);
 
   const stopVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
@@ -136,7 +111,17 @@ function VmListScreen() {
   ) : (
     <View flex={1} width={'90%'}>
       <Spacer size="$2" />
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              setTriggerRefresh(!triggerRefresh);
+            }}
+          />
+        }
+      >
         <YGroup
           alignSelf="center"
           bordered

@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { useDocker } from '../../../contexts/docker';
 import ContainerCard from '../../../components/containers/container-card';
 import Spin from '../../../components/general/spinner';
+import { RefreshControl } from 'react-native';
 
 export default function DockerScreen() {
   return (
@@ -22,6 +23,8 @@ export default function DockerScreen() {
 function DockerList() {
   const { sshClient } = useSsh();
   const { containers, setContainers, setCurrentContainerId } = useDocker();
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
   const [loaded, setLoaded] = useState(false);
 
   const router = useRouter();
@@ -43,6 +46,7 @@ function DockerList() {
         .filter(Boolean) as DockerPs[];
       setContainers(parsedContainers);
       setLoaded(true);
+      setRefreshing(false);
     };
     // Call fetchContainers immediately
     fetchContainers();
@@ -52,7 +56,7 @@ function DockerList() {
 
     // Clear the interval when the component is unmounted or sshClient changes
     return () => clearInterval(intervalId);
-  }, [sshClient]);
+  }, [sshClient, triggerRefresh]);
 
   const stopContainer = (container: DockerPs) => {
     sshClient
@@ -63,6 +67,7 @@ function DockerList() {
       .catch((error) => console.log(error));
   };
 
+  // TODO handle these catches
   const forceStopContainer = (container: DockerPs) => {
     sshClient
       ?.execute(`docker kill ${container.ID}`)
@@ -113,7 +118,17 @@ function DockerList() {
   ) : (
     <View flex={1} width={'90%'}>
       <Spacer size="$2" />
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setTriggerRefresh(!triggerRefresh);
+              setRefreshing(true);
+            }}
+          />
+        }
+      >
         <YGroup
           alignSelf="center"
           bordered

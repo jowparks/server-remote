@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Card, XStack, Spacer, ScrollView } from 'tamagui';
 import { FeatureRequestSchema, useAirtable } from '../../contexts/airtable';
 import { ArrowBigUp } from '@tamagui/lucide-icons';
@@ -6,6 +6,7 @@ import TransparentButton from '../../components/general/transparent-button';
 import { useHeader } from '../../contexts/header';
 import FeatureRequestModal from '../../components/feature-request/feature-request-modal';
 import Spin from '../../components/general/spinner';
+import { RefreshControl } from 'react-native';
 
 export type FeatureRequestProps = {
   onPress: (feature: FeatureRequestSchema) => void;
@@ -21,10 +22,15 @@ export default function FeatureRequest({ onPress }: FeatureRequestProps) {
     requestFeature,
   } = useAirtable();
   const { featureRequested, setFeatureRequested } = useHeader();
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchFeatures();
-  }, []);
+    (async () => {
+      await fetchFeatures();
+      setRefreshing(false);
+    })();
+  }, [triggerRefresh]);
 
   const handleVote = (feature: FeatureRequestSchema) => {
     if (votedFeatureIds?.includes(feature.id)) {
@@ -38,7 +44,17 @@ export default function FeatureRequest({ onPress }: FeatureRequestProps) {
     <Spin />
   ) : (
     <View flex={1} width={'90%'} alignSelf="center">
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              setTriggerRefresh(!triggerRefresh);
+            }}
+          />
+        }
+      >
         {features.map((feature) => (
           <View key={feature.fields.Name}>
             <Spacer size="$2" />

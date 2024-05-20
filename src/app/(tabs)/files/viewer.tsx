@@ -15,6 +15,7 @@ import { useHeader } from '../../../contexts/header';
 import TabWrapper from '../../../components/nav/tabs';
 import SSHClient from '@jowparks/react-native-ssh-sftp';
 import SearchBar from '../../../components/general/search-bar';
+import { RefreshControl } from 'react-native';
 
 const FolderViewer = () => {
   const searchTimeLimit = 7000;
@@ -51,6 +52,8 @@ const FolderViewer = () => {
   const [searchError, setSearchError] = useState('');
   const [tabsEnabled, setTabsEnabled] = useState(false);
   const [downloadError, setDownloadError] = useState(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
 
   useEffect(() => {
     let tab = searchTab;
@@ -92,8 +95,11 @@ const FolderViewer = () => {
     // don't want files reloading when moving between screens
     if (path !== params.path) return;
     if (!sshClient) return;
-    fetchFileInfo(sshClient, false).then((files) => setFiles(files));
-  }, [path]);
+    fetchFileInfo(sshClient, false).then((files) => {
+      setFiles(files);
+      setRefreshing(false);
+    });
+  }, [path, sshClient, triggerRefresh]);
 
   useEffect(() => {
     // don't want files reloading when moving between screens
@@ -122,9 +128,7 @@ const FolderViewer = () => {
   }, [pasteLocation]);
 
   const fetchFileInfo = async (sshClient: SSHClient, findAll: boolean) => {
-    setLoading(true);
     const files = await findPaths(sshClient, path, findAll);
-    setLoading(false);
     return files;
   };
 
@@ -226,6 +230,7 @@ const FolderViewer = () => {
     setRenameOpen(false);
   };
 
+  // TODO toast these console.log errors
   const handleDuplicate = async (item: FileInfo) => {
     if (!sshClient || !files) return;
     let duplicate = dedupeFileName(item);
@@ -284,9 +289,18 @@ const FolderViewer = () => {
         onTabChange={handleTabChange}
         tabs={['This Folder', 'All Subfolders']}
       >
-        <ScrollView width="100%">
+        <ScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                setTriggerRefresh(!triggerRefresh);
+              }}
+            />
+          }
+        >
           <FileList
-            loading={loading}
             files={filteredFiles ?? files}
             folder={folder}
             displayAsPath={tabsEnabled && searchTab === 'All Subfolders'}
