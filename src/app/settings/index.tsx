@@ -7,7 +7,7 @@ export default function SettingsScreen() {
   return (
     <View flex={1} width={'90%'} alignItems="center" alignSelf="center">
       <ScrollView width="100%">
-        <Spacer size="$2" />
+        <Spacer size="4%" />
         <YGroup size="$5" width="100%" separator={<Separator />}>
           <YGroup.Item>
             <Link href="/settings/info">

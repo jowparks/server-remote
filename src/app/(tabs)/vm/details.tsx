@@ -20,7 +20,7 @@ export default function JsonScreen() {
   if (!vm) {
     return (
       <>
-        <Spacer size="$2" />
+        <Spacer size="4%" />
         <Text alignSelf="center">VM not found</Text>
       </>
     );

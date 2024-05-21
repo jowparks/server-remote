@@ -110,7 +110,7 @@ function VmListScreen() {
     <Spin />
   ) : (
     <View flex={1} width={'90%'}>
-      <Spacer size="$2" />
+      <Spacer size="4%" />
       <ScrollView
         refreshControl={
           <RefreshControl

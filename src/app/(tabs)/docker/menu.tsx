@@ -5,7 +5,7 @@ import { ListItem, Separator, Spacer, View, YGroup } from 'tamagui';
 export default function MenuScreen() {
   return (
     <View flex={1} width="90%" alignItems="center" alignSelf="center">
-      <Spacer size="$4" />
+      <Spacer size="4%" />
       <YGroup flexGrow={1} alignSelf="center" size="$5">
         <YGroup.Item>
           <Link href="/(tabs)/docker/details">

@@ -44,6 +44,7 @@ export default function FeatureRequest({ onPress }: FeatureRequestProps) {
     <Spin />
   ) : (
     <View flex={1} width={'90%'} alignSelf="center">
+      <Spacer size="2%" />
       <ScrollView
         refreshControl={
           <RefreshControl

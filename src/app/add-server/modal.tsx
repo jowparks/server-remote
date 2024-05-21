@@ -223,7 +223,7 @@ export default function ServerModal({
                 Submit
               </Button>
             </XStack>
-            <Spacer size="$2" />
+            <Spacer size="4%" />
             {!!testResult && (
               <View alignItems="center" alignContent="center" width="100%">
                 <Text
