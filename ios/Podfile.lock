@@ -1127,6 +1127,8 @@ PODS:
   - SocketRocket (0.6.1)
   - SPAlert (4.2.0)
   - SPIndicator (1.6.4)
+  - SshModule (1.0.0):
+    - ExpoModulesCore
   - Yoga (1.14.0)
 
 DEPENDENCIES:
@@ -1204,6 +1206,7 @@ DEPENDENCIES:
   - RNScreens (from `../node_modules/react-native-screens`)
   - "RNSSHClient (from `../node_modules/@jowparks/react-native-ssh-sftp`)"
   - RNSVG (from `../node_modules/react-native-svg`)
+  - SshModule (from `../modules/ssh-module/ios`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -1361,6 +1364,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@jowparks/react-native-ssh-sftp"
   RNSVG:
     :path: "../node_modules/react-native-svg"
+  SshModule:
+    :path: "../modules/ssh-module/ios"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -1448,6 +1453,7 @@ SPEC CHECKSUMS:
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   SPAlert: 735da1f16a887e294719217572ce1f936d8c8782
   SPIndicator: 93e0a4fb23de51294ac48e874c0f081a5e293e4f
+  SshModule: 0f3898cbcd0a3098922c57a8d533d50b89025846
   Yoga: 1b901a6d6eeba4e8a2e8f308f708691cdb5db312
 
 PODFILE CHECKSUM: 7e231d59a44a8101c1f7965c601b19ea38576931
