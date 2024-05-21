@@ -40,7 +40,6 @@ end
 target 'serverremote' do
   use_expo_modules!
   config = use_native_modules!
-  pod 'NMSSH', :git => 'https://github.com/speam/NMSSH.git', :commit => 'aca13f6a66ce61fa174b498a6f5d6f7bf63fb9a9'
 
   use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
   use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']

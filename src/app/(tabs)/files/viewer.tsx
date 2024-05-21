@@ -13,7 +13,6 @@ import FileList from '../../../components/file-viewer/file-list';
 import RenameModal from '../../../components/file-viewer/rename';
 import { useHeader } from '../../../contexts/header';
 import TabWrapper from '../../../components/nav/tabs';
-import SSHClient from '@jowparks/react-native-ssh-sftp';
 import SearchBar from '../../../components/general/search-bar';
 import { RefreshControl } from 'react-native';
 
@@ -127,7 +126,7 @@ const FolderViewer = () => {
     copy();
   }, [pasteLocation]);
 
-  const fetchFileInfo = async (sshClient: SSHClient, findAll: boolean) => {
+  const fetchFileInfo = async (sshClient: unknown, findAll: boolean) => {
     const files = await findPaths(sshClient, path, findAll);
     return files;
   };

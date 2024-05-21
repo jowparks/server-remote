@@ -17,7 +17,13 @@ export default function ServerSelectScreen() {
   const [servers, setServers] = useState<Server[]>([]);
   const [serverModalOpen, setServerModalOpen] = useState(false);
   const [deleteServer, setDeleteServer] = useState<Server | null>(null);
-  console.log(testRust(1, 1));
+  console.log('foo');
+  (async () => {
+    console.log('bar');
+    const a = await testRust(1, 2);
+    console.log('baz');
+    console.log(a);
+  })();
 
   useEffect(() => {
     // Load servers from AsyncStorage

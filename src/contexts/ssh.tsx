@@ -1,4 +1,3 @@
-import SSHClient from '@jowparks/react-native-ssh-sftp';
 import React, {
   createContext,
   useState,
@@ -8,6 +7,11 @@ import React, {
 } from 'react';
 import { Server } from '../typing/server';
 
+type SSHClient = any;
+const SSHClient = {
+  connectWithPassword: (a, b, c, d, e) => {},
+  connectWithKey: (a, b, c, d, e, f, g) => {},
+};
 // Create the context
 interface SshContextValue {
   sshServer: Server | null;

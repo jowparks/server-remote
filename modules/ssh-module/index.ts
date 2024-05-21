@@ -28,7 +28,7 @@ export function addChangeListener(
   return emitter.addListener<ChangeEventPayload>('onChange', listener);
 }
 
-export function testRust(num1: number, num2: number): number {
+export async function testRust(num1: number, num2: number): Promise<number> {
   return SshModule.testRust(num1, num2);
 }
 
