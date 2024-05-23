@@ -9,7 +9,7 @@ import { useSsh } from '../contexts/ssh';
 import { Server, hostname } from '../typing/server';
 import { useFiles } from '../contexts/files';
 import Alert from '../components/general/alert';
-import { testRust } from '../../modules/ssh-module';
+import { connect, testRust } from '../../modules/ssh-module';
 
 export default function ServerSelectScreen() {
   const { sshServer, setSshServer } = useSsh();
@@ -25,6 +25,11 @@ export default function ServerSelectScreen() {
     console.log(a);
   })();
 
+  (async () => {
+    console.log('c');
+    await connect('root', 'test', '192.168.1.51:22');
+    console.log('con');
+  })();
   useEffect(() => {
     // Load servers from AsyncStorage
     getItem(StorageKeys.servers).then((data) => {

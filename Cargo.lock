@@ -1422,6 +1422,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "jni",
+ "once_cell",
  "russh",
  "russh-keys",
  "termion",

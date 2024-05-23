@@ -60,17 +60,19 @@ fn test_rust(num1: u64, num2: u64) -> u64 {
 /// Run this example with:
 /// cargo run --all-features --example client_exec_interactive -- -k <private key path> <host> <command>
 ///
-use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
 
 use anyhow::Result;
 use async_trait::async_trait;
+use once_cell::sync::Lazy;
 use russh::*;
 use russh_keys::*;
 use tokio::io::AsyncWriteExt;
-use tokio::net::ToSocketAddrs;
+use tokio::runtime::Runtime;
+
+static TOKIO_RUNTIME: Lazy<Runtime> = Lazy::new(|| Runtime::new().unwrap());
 
 // #[tokio::main]
 // async fn main() -> Result<()> {
@@ -141,25 +143,42 @@ pub struct Session {
 
 #[uniffi::export]
 async fn connect(user: String, password: String, addrs: String) -> Result<Session, EnumError> {
-    let config = client::Config {
-        inactivity_timeout: Some(Duration::from_secs(5)),
-        ..<_>::default()
-    };
+    println!("1 Connecting to {}", addrs);
+    TOKIO_RUNTIME.block_on(async {
+        let config = client::Config {
+            inactivity_timeout: Some(Duration::from_secs(5)),
+            ..<_>::default()
+        };
 
-    let config = Arc::new(config);
-    let sh = Client {};
+        let config = Arc::new(config);
+        let sh = Client {};
 
-    let mut session = client::connect(config, addrs, sh).await?;
+        println!("2 Connecting to {}", addrs);
+        let mut session =
+            client::connect(config, addrs, sh)
+                .await
+                .map_err(|e| EnumError::Oops {
+                    msg: format!("Failed to connect: {}", e),
+                })?;
 
-    let auth_res = session.authenticate_password(user, password).await?;
+        println!("3 Connecting to {}", "foo");
+        let auth_res = session
+            .authenticate_password(user, password)
+            .await
+            .map_err(|e| EnumError::Oops {
+                msg: format!("Failed to authenticate: {}", e),
+            })?;
 
-    if !auth_res {
-        return Err(EnumError::Oops {
-            msg: String::from("Authentication with password failed"),
-        });
-    }
-    Ok(Session {
-        session: Arc::new(Mutex::new(session)),
+        println!("4 Connecting to {}", "foo");
+        if !auth_res {
+            return Err(EnumError::Oops {
+                msg: String::from("Authentication with password failed"),
+            });
+        }
+        println!("5 Connecting to {}", "foo");
+        Ok(Session {
+            session: Arc::new(Mutex::new(session)),
+        })
     })
 }
 
