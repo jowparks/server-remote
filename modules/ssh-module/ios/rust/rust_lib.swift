@@ -297,19 +297,6 @@ private func uniffiCheckCallStatus(
 // Public interface members begin here.
 
 
-fileprivate struct FfiConverterUInt32: FfiConverterPrimitive {
-    typealias FfiType = UInt32
-    typealias SwiftType = UInt32
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt32 {
-        return try lift(readInt(&buf))
-    }
-
-    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
-        writeInt(&buf, lower(value))
-    }
-}
-
 fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
     typealias FfiType = UInt64
     typealias SwiftType = UInt64
@@ -386,9 +373,9 @@ fileprivate struct FfiConverterData: FfiConverterRustBuffer {
  */
 public protocol SessionProtocol : AnyObject {
     
-    func call(command: String) async throws  -> UInt32
-    
     func close() async throws 
+    
+    func exec(command: String) async throws  -> String
     
 }
 
@@ -420,23 +407,6 @@ public class Session:
 
     
     
-    public func call(command: String) async throws  -> UInt32 {
-        return try  await uniffiRustCallAsync(
-            rustFutureFunc: {
-                uniffi_rust_lib_fn_method_session_call(
-                    self.uniffiClonePointer(),
-                    FfiConverterString.lower(command)
-                )
-            },
-            pollFunc: ffi_rust_lib_rust_future_poll_u32,
-            completeFunc: ffi_rust_lib_rust_future_complete_u32,
-            freeFunc: ffi_rust_lib_rust_future_free_u32,
-            liftFunc: FfiConverterUInt32.lift,
-            errorHandler: FfiConverterTypeEnumError.lift
-        )
-    }
-
-    
     public func close() async throws  {
         return try  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -448,6 +418,23 @@ public class Session:
             completeFunc: ffi_rust_lib_rust_future_complete_void,
             freeFunc: ffi_rust_lib_rust_future_free_void,
             liftFunc: { $0 },
+            errorHandler: FfiConverterTypeEnumError.lift
+        )
+    }
+
+    
+    public func exec(command: String) async throws  -> String {
+        return try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_rust_lib_fn_method_session_exec(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(command)
+                )
+            },
+            pollFunc: ffi_rust_lib_rust_future_poll_rust_buffer,
+            completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
+            freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterString.lift,
             errorHandler: FfiConverterTypeEnumError.lift
         )
     }
@@ -990,10 +977,10 @@ private var initializationResult: InitializationResult {
     if (uniffi_rust_lib_checksum_func_test_rust() != 48329) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_call() != 12187) {
+    if (uniffi_rust_lib_checksum_method_session_close() != 16336) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_close() != 16336) {
+    if (uniffi_rust_lib_checksum_method_session_exec() != 31113) {
         return InitializationResult.apiChecksumMismatch
     }
 

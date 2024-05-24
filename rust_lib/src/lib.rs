@@ -184,35 +184,36 @@ async fn connect(user: String, password: String, addrs: String) -> Result<Sessio
 
 #[uniffi::export]
 impl Session {
-    async fn call(&self, command: &str) -> Result<u32, EnumError> {
-        let session = self.session.lock().await;
-        let mut channel = session.channel_open_session().await?;
-        channel.exec(true, command).await?;
+    async fn exec(&self, command: &str) -> Result<String, EnumError> {
+        TOKIO_RUNTIME.block_on(async {
+            let session = self.session.lock().await;
+            let mut channel = session.channel_open_session().await?;
+            channel.exec(true, command).await?;
 
-        let mut code = None;
-        // save channel msg data to string
-        let mut output: Vec<u8> = Vec::new();
+            // save channel msg data to string
+            let mut output: Vec<u8> = Vec::new();
 
-        loop {
-            // There's an event available on the session channel
-            let Some(msg) = channel.wait().await else {
-                break;
-            };
-            match msg {
-                // Write data to the terminal
-                ChannelMsg::Data { ref data } => {
-                    // add data to vec using std::io::Write
-                    output.write_all(data).await?;
+            loop {
+                // There's an event available on the session channel
+                let Some(msg) = channel.wait().await else {
+                    break;
+                };
+                match msg {
+                    // Write data to the terminal
+                    ChannelMsg::Data { ref data } => {
+                        // add data to vec using std::io::Write
+                        output.write_all(data).await?;
+                    }
+                    _ => {}
                 }
-                // The command has returned an exit code
-                ChannelMsg::ExitStatus { exit_status } => {
-                    code = Some(exit_status);
-                    // cannot leave the loop immediately, there might still be more data to receive
-                }
-                _ => {}
             }
-        }
-        Ok(code.expect("program did not exit cleanly"))
+
+            let output_str = match String::from_utf8(output) {
+                Ok(v) => v,
+                Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+            };
+            Ok(output_str)
+        })
     }
 
     async fn close(&self) -> Result<(), EnumError> {

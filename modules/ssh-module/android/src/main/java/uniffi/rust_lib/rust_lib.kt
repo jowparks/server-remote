@@ -395,9 +395,9 @@ internal interface UniffiLib : Library {
     ): Pointer
     fun uniffi_rust_lib_fn_free_session(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_rust_lib_fn_method_session_call(`ptr`: Pointer,`command`: RustBuffer.ByValue,
-    ): Pointer
     fun uniffi_rust_lib_fn_method_session_close(`ptr`: Pointer,
+    ): Pointer
+    fun uniffi_rust_lib_fn_method_session_exec(`ptr`: Pointer,`command`: RustBuffer.ByValue,
     ): Pointer
     fun uniffi_rust_lib_fn_func_connect(`user`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`addrs`: RustBuffer.ByValue,
     ): Pointer
@@ -519,9 +519,9 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_rust_lib_checksum_func_test_rust(
     ): Short
-    fun uniffi_rust_lib_checksum_method_session_call(
-    ): Short
     fun uniffi_rust_lib_checksum_method_session_close(
+    ): Short
+    fun uniffi_rust_lib_checksum_method_session_exec(
     ): Short
     fun ffi_rust_lib_uniffi_contract_version(
     ): Int
@@ -546,10 +546,10 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_rust_lib_checksum_func_test_rust() != 48329.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_rust_lib_checksum_method_session_call() != 12187.toShort()) {
+    if (lib.uniffi_rust_lib_checksum_method_session_close() != 16336.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_rust_lib_checksum_method_session_close() != 16336.toShort()) {
+    if (lib.uniffi_rust_lib_checksum_method_session_exec() != 31113.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -629,26 +629,6 @@ inline fun <T : Disposable?, R> T.use(block: (T) -> R) =
             // swallow
         }
     }
-
-public object FfiConverterUInt: FfiConverter<UInt, Int> {
-    override fun lift(value: Int): UInt {
-        return value.toUInt()
-    }
-
-    override fun read(buf: ByteBuffer): UInt {
-        return lift(buf.getInt())
-    }
-
-    override fun lower(value: UInt): Int {
-        return value.toInt()
-    }
-
-    override fun allocationSize(value: UInt) = 4
-
-    override fun write(value: UInt, buf: ByteBuffer) {
-        buf.putInt(value.toInt())
-    }
-}
 
 public object FfiConverterULong: FfiConverter<ULong, Long> {
     override fun lift(value: Long): ULong {
@@ -979,9 +959,9 @@ object NoPointer
  */
 public interface SessionInterface {
     
-    suspend fun `call`(`command`: String): UInt
-    
     suspend fun `close`()
+    
+    suspend fun `exec`(`command`: String): String
     
     companion object
 }
@@ -1028,26 +1008,6 @@ open class Session : FFIObject, SessionInterface {
     
     @Throws(EnumException::class)
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `call`(`command`: String) : UInt {
-        return uniffiRustCallAsync(
-            callWithPointer { thisPtr ->
-                UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_call(
-                    thisPtr,
-                    FfiConverterString.lower(`command`),
-                )
-            },
-            { future, callback, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_poll_u32(future, callback, continuation) },
-            { future, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_complete_u32(future, continuation) },
-            { future -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_free_u32(future) },
-            // lift function
-            { FfiConverterUInt.lift(it) },
-            // Error FFI converter
-            EnumException.ErrorHandler,
-        )
-    }
-    
-    @Throws(EnumException::class)
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
     override suspend fun `close`() {
         return uniffiRustCallAsync(
             callWithPointer { thisPtr ->
@@ -1062,6 +1022,26 @@ open class Session : FFIObject, SessionInterface {
             // lift function
             { Unit },
             
+            // Error FFI converter
+            EnumException.ErrorHandler,
+        )
+    }
+    
+    @Throws(EnumException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `exec`(`command`: String) : String {
+        return uniffiRustCallAsync(
+            callWithPointer { thisPtr ->
+                UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_exec(
+                    thisPtr,
+                    FfiConverterString.lower(`command`),
+                )
+            },
+            { future, callback, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_poll_rust_buffer(future, callback, continuation) },
+            { future, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_complete_rust_buffer(future, continuation) },
+            { future -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_free_rust_buffer(future) },
+            // lift function
+            { FfiConverterString.lift(it) },
             // Error FFI converter
             EnumException.ErrorHandler,
         )

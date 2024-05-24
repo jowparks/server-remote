@@ -34,5 +34,12 @@ public class SshModule: Module {
     AsyncFunction("connect") { (user: String, password: String, addrs: String) async throws -> Void in
       self.session = try await connect(user: user, password: password, addrs: addrs)
     }
+
+    AsyncFunction("exec") { (command: String) async throws -> String in
+        guard let session = self.session else {
+            throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
+        }
+        return try await session.exec(command: command)
+    }
   }
 }

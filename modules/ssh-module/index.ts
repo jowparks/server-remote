@@ -42,4 +42,8 @@ export async function connect(
     .catch((err) => console.error('Error using SshModule.connect:', err));
 }
 
+export async function exec(command: string): Promise<string> {
+  return await SshModule.exec(command);
+}
+
 export { ChangeEventPayload };
