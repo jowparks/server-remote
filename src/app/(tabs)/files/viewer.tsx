@@ -110,13 +110,7 @@ const FolderViewer = () => {
       const deduped = dedupeFileName(cachedFile.file);
       const command = `${baseCommand} ${cachedFile.file.filePath} ${path}/${deduped}`;
       console.log(`Pasting: ${command}`);
-      await sshClient.execute(command, (error) => {
-        if (error) {
-          console.warn('Pasting failed:', error);
-        } else {
-          console.log('Pasting successful');
-        }
-      });
+      await sshClient.exec(command);
       setFiles([
         ...files,
         { ...cachedFile.file, filePath: `${path}/${cachedFile.file.fileName}` },
@@ -199,26 +193,14 @@ const FolderViewer = () => {
     if (!sshClient || !item) return;
     const command = `rm -r${item.fileType === 'd' ? 'f' : ''} ${item.filePath}`;
     setFiles(files?.filter((file) => file.filePath !== item.filePath) || []);
-    await sshClient.execute(command, (error) => {
-      if (error) {
-        console.warn('Delete failed:', error);
-      } else {
-        console.log('Delete successful');
-      }
-    });
+    await sshClient.exec(command);
   };
 
   // Add this function to handle the renaming process
   const handleRename = async (item: FileInfo | null, newName: string) => {
     if (!sshClient || !item || !newName) return;
     const command = `mv ${item.filePath} ${path}/${newName}`;
-    await sshClient.execute(command, (error) => {
-      if (error) {
-        console.warn('Rename failed:', error);
-      } else {
-        console.log('Rename successful');
-      }
-    });
+    await sshClient.exec(command);
     setFiles(
       files?.map((file) =>
         file.filePath === item.filePath
@@ -234,13 +216,7 @@ const FolderViewer = () => {
     if (!sshClient || !files) return;
     let duplicate = dedupeFileName(item);
     const command = `cp -r ${path}/${item.fileName} ${path}/${duplicate}`;
-    await sshClient.execute(command, (error) => {
-      if (error) {
-        console.warn('Duplicate failed:', error);
-      } else {
-        console.log('Duplicate successful');
-      }
-    });
+    await sshClient.exec(command);
     setFiles([
       ...(files || []),
       { ...item, fileName: duplicate, filePath: `${path}/${duplicate}` },

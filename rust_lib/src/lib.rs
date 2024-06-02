@@ -56,6 +56,7 @@ fn test_rust(num1: u64, num2: u64) -> u64 {
 //     }
 // }
 
+use std::collections::{HashMap, VecDeque};
 ///
 /// Run this example with:
 /// cargo run --all-features --example client_exec_interactive -- -k <private key path> <host> <command>
@@ -69,7 +70,6 @@ use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use russh::*;
 use russh_keys::*;
-use tokio::io::AsyncWriteExt;
 use tokio::runtime::Runtime;
 
 static TOKIO_RUNTIME: Lazy<Runtime> = Lazy::new(|| Runtime::new().unwrap());
@@ -139,6 +139,7 @@ impl client::Handler for Client {
 #[derive(uniffi::Object)]
 pub struct Session {
     session: Arc<Mutex<client::Handle<Client>>>,
+    output: Arc<Mutex<HashMap<String, VecDeque<String>>>>,
 }
 
 #[uniffi::export]
@@ -178,20 +179,22 @@ async fn connect(user: String, password: String, addrs: String) -> Result<Sessio
         println!("5 Connecting to {}", "foo");
         Ok(Session {
             session: Arc::new(Mutex::new(session)),
+            output: Arc::new(Mutex::new(HashMap::new())),
         })
     })
 }
 
 #[uniffi::export]
 impl Session {
-    async fn exec(&self, command: &str) -> Result<String, EnumError> {
+    async fn exec(&self, command_id: &str, command: &str) -> Result<String, EnumError> {
         TOKIO_RUNTIME.block_on(async {
+            let mut return_code = String::new();
             let session = self.session.lock().await;
             let mut channel = session.channel_open_session().await?;
             channel.exec(true, command).await?;
 
             // save channel msg data to string
-            let mut output: Vec<u8> = Vec::new();
+            // let mut output: Vec<u8> = Vec::new();
 
             loop {
                 // There's an event available on the session channel
@@ -201,19 +204,38 @@ impl Session {
                 match msg {
                     // Write data to the terminal
                     ChannelMsg::Data { ref data } => {
-                        // add data to vec using std::io::Write
-                        output.write_all(data).await?;
+                        let data_str = String::from_utf8(data.to_vec()).unwrap();
+                        let mut session_output = self.output.lock().await;
+                        session_output
+                            .entry(command_id.to_string())
+                            .or_insert_with(VecDeque::new)
+                            .push_back(data_str);
+                        // output.write_all(data).await?;
                     }
-                    _ => {}
+
+                    ChannelMsg::ExitStatus { exit_status } => {
+                        return_code = format!("{}", exit_status);
+                        break;
+                    }
+                    _ => {
+                        // println!("Unhandled message: {:?}", msg);
+                    }
                 }
             }
 
-            let output_str = match String::from_utf8(output) {
-                Ok(v) => v,
-                Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-            };
-            Ok(output_str)
+            // let output_str = match String::from_utf8(output) {
+            //     Ok(v) => v,
+            //     Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+            // };
+            Ok(return_code)
         })
+    }
+
+    async fn read_output(&self, command_id: &str) -> Option<String> {
+        let mut output = self.output.lock().await;
+        output
+            .get_mut(command_id)
+            .and_then(|queue| queue.pop_front())
     }
 
     async fn close(&self) -> Result<(), EnumError> {

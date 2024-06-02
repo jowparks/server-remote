@@ -20,7 +20,7 @@ public class SshModule: Module {
     ])
 
     // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+    Events("exec")
 
     // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
     Function("hello") {
@@ -35,11 +35,32 @@ public class SshModule: Module {
       self.session = try await connect(user: user, password: password, addrs: addrs)
     }
 
-    AsyncFunction("exec") { (command: String) async throws -> String in
+    AsyncFunction("exec") { (commandId: String, command: String) async throws -> String in
         guard let session = self.session else {
             throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
         }
-        return try await session.exec(command: command)
+        
+        @Sendable func getData() async {
+            while let data = await session.readOutput(commandId: commandId) {
+                self.sendEvent("exec", ["commandId": commandId, "data": data])
+            }
+        }
+
+        let task = Task {
+          do {
+            while true {
+                await getData()
+            }
+          }
+        }
+
+        let returnCode = try await session.exec(commandId: commandId, command: command)
+        task.cancel()
+        // get any final data
+        await getData()
+        self.sendEvent("exec", ["commandId": commandId, "data": "eventingComplete"])
+        
+        return returnCode
     }
   }
 }

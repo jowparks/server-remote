@@ -375,7 +375,9 @@ public protocol SessionProtocol : AnyObject {
     
     func close() async throws 
     
-    func exec(command: String) async throws  -> String
+    func exec(commandId: String, command: String) async throws  -> String
+    
+    func readOutput(commandId: String) async  -> String?
     
 }
 
@@ -423,11 +425,12 @@ public class Session:
     }
 
     
-    public func exec(command: String) async throws  -> String {
+    public func exec(commandId: String, command: String) async throws  -> String {
         return try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_rust_lib_fn_method_session_exec(
                     self.uniffiClonePointer(),
+                    FfiConverterString.lower(commandId),
                     FfiConverterString.lower(command)
                 )
             },
@@ -436,6 +439,24 @@ public class Session:
             freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
             liftFunc: FfiConverterString.lift,
             errorHandler: FfiConverterTypeEnumError.lift
+        )
+    }
+
+    
+    public func readOutput(commandId: String) async  -> String? {
+        return try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_rust_lib_fn_method_session_read_output(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(commandId)
+                )
+            },
+            pollFunc: ffi_rust_lib_rust_future_poll_rust_buffer,
+            completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
+            freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionString.lift,
+            errorHandler: nil
+            
         )
     }
 
@@ -849,6 +870,27 @@ extension EnumError: Equatable, Hashable {}
 
 extension EnumError: Error { }
 
+fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
+    typealias SwiftType = String?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterString.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterString.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
 fileprivate struct FfiConverterSequenceTypeWitnessNode: FfiConverterRustBuffer {
     typealias SwiftType = [WitnessNode]
 
@@ -980,7 +1022,10 @@ private var initializationResult: InitializationResult {
     if (uniffi_rust_lib_checksum_method_session_close() != 16336) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_exec() != 31113) {
+    if (uniffi_rust_lib_checksum_method_session_exec() != 51110) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rust_lib_checksum_method_session_read_output() != 27283) {
         return InitializationResult.apiChecksumMismatch
     }
 

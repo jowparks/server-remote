@@ -32,7 +32,7 @@ function DockerList() {
   useEffect(() => {
     const fetchContainers = async () => {
       if (!sshClient) return;
-      const response = await sshClient.execute(DockerPsCommand);
+      const response = await sshClient.exec(DockerPsCommand);
       const lines = response?.split('\n').filter(Boolean);
       const parsedContainers: DockerPs[] = lines
         ?.map((line) => {
@@ -60,7 +60,7 @@ function DockerList() {
 
   const stopContainer = (container: DockerPs) => {
     sshClient
-      ?.execute(`docker stop ${container.ID}`)
+      ?.exec(`docker stop ${container.ID}`)
       .then((response) => {
         console.log(response);
       })
@@ -70,7 +70,7 @@ function DockerList() {
   // TODO handle these catches
   const forceStopContainer = (container: DockerPs) => {
     sshClient
-      ?.execute(`docker kill ${container.ID}`)
+      ?.exec(`docker kill ${container.ID}`)
       .then((response) => {
         console.log(response);
       })
@@ -79,7 +79,7 @@ function DockerList() {
 
   const startContainer = (container: DockerPs) => {
     sshClient
-      ?.execute(`docker start ${container.ID}`)
+      ?.exec(`docker start ${container.ID}`)
       .then((response) => {
         console.log(response);
       })
@@ -88,7 +88,7 @@ function DockerList() {
 
   const restartContainer = (container: DockerPs) => {
     sshClient
-      ?.execute(`docker restart ${container.ID}`)
+      ?.exec(`docker restart ${container.ID}`)
       .then((response) => {
         console.log(response);
       })
@@ -97,7 +97,7 @@ function DockerList() {
 
   const pauseContainer = (container: DockerPs) => {
     sshClient
-      ?.execute(`docker pause ${container.ID}`)
+      ?.exec(`docker pause ${container.ID}`)
       .then((response) => {
         console.log(response);
       })
@@ -106,7 +106,7 @@ function DockerList() {
 
   const unpauseContainer = (container: DockerPs) => {
     sshClient
-      ?.execute(`docker unpause ${container.ID}`)
+      ?.exec(`docker unpause ${container.ID}`)
       .then((response) => {
         console.log(response);
       })

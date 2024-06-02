@@ -41,7 +41,7 @@ function VmListScreen() {
   const stopVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.execute(`virsh shutdown "${vm.domain.name[0]}"`)
+      ?.exec(`virsh shutdown "${vm.domain.name[0]}"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -52,7 +52,7 @@ function VmListScreen() {
   const forceStopVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.execute(`virsh destroy "${vm.domain.name[0]}"`)
+      ?.exec(`virsh destroy "${vm.domain.name[0]}"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -63,7 +63,7 @@ function VmListScreen() {
   const startVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.execute(`virsh start "${vm.domain.name[0]}"`)
+      ?.exec(`virsh start "${vm.domain.name[0]}"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -74,7 +74,7 @@ function VmListScreen() {
   const restartVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.execute(`virsh reboot "${vm.domain.name[0]}"`)
+      ?.exec(`virsh reboot "${vm.domain.name[0]}"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -85,9 +85,7 @@ function VmListScreen() {
   const saveVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.execute(
-        `virsh save "${vm.domain.name[0]}" "${vm.domain.name[0]}.state"`,
-      )
+      ?.exec(`virsh save "${vm.domain.name[0]}" "${vm.domain.name[0]}.state"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -98,7 +96,7 @@ function VmListScreen() {
   const restoreVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.execute(`virsh restore "${vm.domain.name[0]}.state"`)
+      ?.exec(`virsh restore "${vm.domain.name[0]}.state"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);

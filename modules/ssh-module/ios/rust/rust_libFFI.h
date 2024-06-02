@@ -57,7 +57,9 @@ void uniffi_rust_lib_fn_free_session(void*_Nonnull ptr, RustCallStatus *_Nonnull
 );
 void* _Nonnull uniffi_rust_lib_fn_method_session_close(void*_Nonnull ptr
 );
-void* _Nonnull uniffi_rust_lib_fn_method_session_exec(void*_Nonnull ptr, RustBuffer command
+void* _Nonnull uniffi_rust_lib_fn_method_session_exec(void*_Nonnull ptr, RustBuffer command_id, RustBuffer command
+);
+void* _Nonnull uniffi_rust_lib_fn_method_session_read_output(void*_Nonnull ptr, RustBuffer command_id
 );
 void* _Nonnull uniffi_rust_lib_fn_func_connect(RustBuffer user, RustBuffer password, RustBuffer addrs
 );
@@ -185,6 +187,9 @@ uint16_t uniffi_rust_lib_checksum_method_session_close(void
     
 );
 uint16_t uniffi_rust_lib_checksum_method_session_exec(void
+    
+);
+uint16_t uniffi_rust_lib_checksum_method_session_read_output(void
     
 );
 uint32_t ffi_rust_lib_uniffi_contract_version(void

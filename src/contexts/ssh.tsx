@@ -6,13 +6,15 @@ import React, {
   ReactNode,
 } from 'react';
 import { Server } from '../typing/server';
-import { connect, exec } from '../../modules/ssh-module';
+import { ExecParams, connect, exec } from '../../modules/ssh-module';
 
-type SSHClient = any;
-const SSHClient = {
-  connectWithPassword: (a, b, c, d, e) => {},
-  connectWithKey: (a, b, c, d, e, f, g) => {},
+export type SSHClient = {
+  // waits until command is done, returns all of response
+  exec: (command: string) => Promise<string>;
+  // uses onData, onError, onComplete to handle response as it comes in
+  execAsync: (params: ExecParams) => Promise<string>;
 };
+
 // Create the context
 interface SshContextValue {
   sshServer: Server | null;
@@ -27,53 +29,75 @@ const SshContext = createContext<SshContextValue>({
 
 // Create the provider component
 export function SshProvider({ children }: { children: ReactNode }) {
+  const [sshClient, setSshClient] = useState<SSHClient | null>(null);
   const [server, setSshServer] = useState<Server | null>(null);
-  const [sshClient, setSSHClient] = useState<SSHClient | null>(null);
 
   useEffect(() => {
-    let client: SSHClient | null = null;
     if (!server || (!server.password && !server.key)) {
       return;
     }
     const connectToServer = async () => {
+      setSshClient(null);
       if (server && !!server.password) {
         (async () => {
-          console.log('c');
           await connect(
             server.user,
             server.password ?? '',
             `${server.host}:${server.port}`,
           );
-          console.log('password connected');
-          const output = await exec('ls /');
-          console.log(output);
-          console.log('password executed');
+          const sshClient: SSHClient = {
+            exec: execInner,
+            execAsync: execInnerAsync,
+          };
+          setSshClient(sshClient);
         })();
       }
       if (server && server.key) {
-        client = await SSHClient.connectWithKey(
-          server.host,
-          server.port,
-          server.user,
-          server.key,
-          server.publicKey,
-          server.keyPassphrase,
-          (err, _) => {
-            if (err) {
-              console.log('Fail: ' + err.message);
-            } else {
-              console.log('Success');
-            }
-          },
-        );
+        //
       }
     };
 
     connectToServer();
   }, [server]);
 
+  const execInner = async (command: string) => {
+    if (!server) {
+      throw new Error('Not connected to a server');
+    }
+    let response = '';
+    return new Promise<string>((resolve, reject) => {
+      exec({
+        command,
+        onData: (data) => {
+          console.log('data', data);
+          response += data;
+        },
+        onError: (error) => {
+          reject(error);
+        },
+        onComplete: () => {
+          console.log('complete', response);
+          resolve(response);
+        },
+      });
+    });
+  };
+
+  const execInnerAsync = async (params: ExecParams) => {
+    if (!server) {
+      throw new Error('Not connected to a server');
+    }
+    return exec(params);
+  };
+
   return (
-    <SshContext.Provider value={{ sshServer: server, setSshServer, sshClient }}>
+    <SshContext.Provider
+      value={{
+        sshServer: server,
+        setSshServer,
+        sshClient,
+      }}
+    >
       {children}
     </SshContext.Provider>
   );

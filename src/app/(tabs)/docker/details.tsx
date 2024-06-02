@@ -18,7 +18,7 @@ export default function JsonScreen() {
   useEffect(() => {
     const inspect = async () => {
       if (!sshClient || !currentContainerId) return;
-      const response = await sshClient.execute(
+      const response = await sshClient.exec(
         DockerInspectCommand(currentContainerId),
       );
       try {

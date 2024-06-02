@@ -70,7 +70,7 @@ export async function findPaths(
 ) {
   const cmd = fileCommand(path, findAll);
   console.log('finding paths:', cmd);
-  const response = await sshClient.execute(cmd);
+  const response = await sshClient.exec(cmd);
   const lines = response?.split('\n').filter((line) => line !== '');
   if (!lines) return [];
   const files = lines
