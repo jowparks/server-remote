@@ -13,6 +13,11 @@ export type SSHClient = {
   exec: (command: string) => Promise<string>;
   // uses onData, onError, onComplete to handle response as it comes in
   execAsync: (params: ExecParams) => Promise<string>;
+  sftpDownload: (
+    remotePath: string,
+    localPath: string,
+    onError: (error) => void,
+  ) => Promise<void>;
 };
 
 // Create the context
@@ -48,6 +53,7 @@ export function SshProvider({ children }: { children: ReactNode }) {
           const sshClient: SSHClient = {
             exec: execInner,
             execAsync: execInnerAsync,
+            sftpDownload: async (remotePath, localPath, onError) => {},
           };
           setSshClient(sshClient);
         })();
@@ -65,21 +71,17 @@ export function SshProvider({ children }: { children: ReactNode }) {
       throw new Error('Not connected to a server');
     }
     let response = '';
-    return new Promise<string>((resolve, reject) => {
-      exec({
+    return new Promise<string>(async (resolve, reject) => {
+      await exec({
         command,
         onData: (data) => {
-          console.log('data', data);
           response += data;
         },
         onError: (error) => {
           reject(error);
         },
-        onComplete: () => {
-          console.log('complete', response);
-          resolve(response);
-        },
       });
+      resolve(response);
     });
   };
 

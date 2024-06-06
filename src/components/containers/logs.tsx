@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSsh } from '../../contexts/ssh';
 import { View, Text } from 'tamagui';
 import { ScrollView } from 'react-native';
+import { useFocusedEffect } from '../../util/focused-effect';
 
 export type LogsProps = {
   command: string;
@@ -14,7 +15,7 @@ export default function Logs({ command, refreshCommand }: LogsProps) {
   const scrollViewRef = useRef<ScrollView>(null);
   const [isAtEnd, setIsAtEnd] = useState(true);
 
-  useEffect(() => {
+  useFocusedEffect(() => {
     async function fetchLogs() {
       if (!sshClient) return;
       const response = await sshClient.exec(command);
@@ -25,7 +26,7 @@ export default function Logs({ command, refreshCommand }: LogsProps) {
     fetchLogs();
   }, []);
 
-  useEffect(() => {
+  useFocusedEffect(() => {
     const fetchLogs = async () => {
       if (!sshClient) return;
       if (refreshCommand) {

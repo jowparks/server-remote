@@ -6,11 +6,12 @@ import { useSsh } from '../../../contexts/ssh';
 import { useEffect, useState } from 'react';
 import { processDockerPs } from '../../../util/docker';
 import { DockerPs, DockerPsCommand } from '../../../typing/docker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useDocker } from '../../../contexts/docker';
 import ContainerCard from '../../../components/containers/container-card';
 import Spin from '../../../components/general/spinner';
 import { RefreshControl } from 'react-native';
+import { useFocusedEffect } from '../../../util/focused-effect';
 
 export default function DockerScreen() {
   return (
@@ -25,13 +26,17 @@ function DockerList() {
   const { containers, setContainers, setCurrentContainerId } = useDocker();
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
+  const navigation = useNavigation();
+  const focused = navigation.isFocused();
+
   const [loaded, setLoaded] = useState(false);
 
   const router = useRouter();
 
-  useEffect(() => {
+  useFocusedEffect(() => {
     const fetchContainers = async () => {
       if (!sshClient) return;
+      if (!focused) return;
       const response = await sshClient.exec(DockerPsCommand);
       const lines = response?.split('\n').filter(Boolean);
       const parsedContainers: DockerPs[] = lines

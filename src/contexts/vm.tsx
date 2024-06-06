@@ -47,7 +47,7 @@ export function VmProvider({ children }: { children: ReactNode }) {
         };
       }),
     );
-    const vms: VirshVm[] = vmXMLs.map((vm) => {
+    const vms: VirshVm[] = vmXMLs.filter(Boolean).map((vm) => {
       const stateObj = states.find((state) => state.name === vm.domain.name[0]);
       return { ...vm, state: stateObj?.state || '' };
     });

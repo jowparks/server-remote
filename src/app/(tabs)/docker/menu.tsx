@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
 import React from 'react';
-import { ListItem, Separator, Spacer, View, YGroup } from 'tamagui';
+import { ListItem, Spacer, View, YGroup } from 'tamagui';
 
 export default function MenuScreen() {
   return (

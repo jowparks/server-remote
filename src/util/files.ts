@@ -1,3 +1,5 @@
+import { SSHClient } from '../contexts/ssh';
+
 export function fileCommand(path: string, findAll: boolean) {
   return `find "${path}" ${findAll ? '' : '-maxdepth 1'} -printf '%M,%n,%u.%g,%s,%AY-%Am-%Ad %AH:%AM:%AS,%TY-%Tm-%Td %TH:%TM:%TS,%p,%y,%l\n'`;
 }
@@ -62,20 +64,35 @@ export function formatBytes(bytes: number, decimals = 2) {
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
-
-export async function findPaths(
-  sshClient: any,
+export function findPaths(
+  sshClient: SSHClient,
   path: string,
   findAll: boolean,
-) {
-  const cmd = fileCommand(path, findAll);
-  console.log('finding paths:', cmd);
-  const response = await sshClient.exec(cmd);
-  const lines = response?.split('\n').filter((line) => line !== '');
-  if (!lines) return [];
-  const files = lines
-    .map(parseFileInfo)
-    .filter((file) => file.filePath !== path)
-    .sort((a, b) => a.filePath.localeCompare(b.filePath));
-  return files;
+  handleFiles: (files: FileInfo[]) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const cmd = fileCommand(path, findAll);
+    console.log('finding paths:', cmd);
+
+    sshClient.execAsync({
+      command: cmd,
+      onData: (data) => {
+        const lines = data.split('\n').filter((line) => line !== '');
+        if (!lines) return;
+        const files = lines
+          .map(parseFileInfo)
+          .filter((file) => file.filePath !== path)
+          .sort((a, b) => a.filePath.localeCompare(b.filePath));
+        handleFiles(files);
+      },
+      onError: (error) => {
+        console.error('Error finding paths:', error);
+        reject(error);
+      },
+      onComplete: () => {
+        console.log('Completed finding paths');
+        resolve();
+      },
+    });
+  });
 }

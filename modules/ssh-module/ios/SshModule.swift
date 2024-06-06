@@ -32,7 +32,7 @@ public class SshModule: Module {
     }
 
     AsyncFunction("connect") { (user: String, password: String, addrs: String) async throws -> Void in
-      self.session = try await connect(user: user, password: password, addrs: addrs)
+      self.session = try connect(user: user, password: password, addrs: addrs)
     }
 
     AsyncFunction("exec") { (commandId: String, command: String) async throws -> String in
@@ -40,27 +40,47 @@ public class SshModule: Module {
             throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
         }
         
+        let isCompleted = IsCompleted()
+
         @Sendable func getData() async {
-            while let data = await session.readOutput(commandId: commandId) {
+            while let data = session.readOutput(commandId: commandId) {
                 self.sendEvent("exec", ["commandId": commandId, "data": data])
             }
         }
 
         let task = Task {
-          do {
             while true {
+                let isCompleted = await isCompleted.get()
+                if isCompleted {
+                    break
+                }
+                try await Task.sleep(nanoseconds: 100_000_000) // Sleep for 100ms
                 await getData()
             }
-          }
         }
-
-        let returnCode = try await session.exec(commandId: commandId, command: command)
-        task.cancel()
-        // get any final data
-        await getData()
-        self.sendEvent("exec", ["commandId": commandId, "data": "eventingComplete"])
         
-        return returnCode
+        do {
+            let returnCode = try session.exec(commandId: commandId, command: command)
+            await isCompleted.set(true)
+            try await task.value
+            await getData()
+            self.sendEvent("exec", ["commandId": commandId, "data": "eventingComplete"])
+            
+            return returnCode
+        } catch {
+            print("exec error: "+String(describing: error))
+            throw error
+        }
     }
   }
+}
+
+actor IsCompleted {
+    private var isCompleted = false
+    func get() -> Bool {
+        return isCompleted
+    }
+    func set(_ value: Bool) {
+        isCompleted = value
+    }
 }

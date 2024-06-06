@@ -55,13 +55,13 @@ void*_Nonnull uniffi_rust_lib_fn_clone_session(void*_Nonnull ptr, RustCallStatus
 );
 void uniffi_rust_lib_fn_free_session(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );
-void* _Nonnull uniffi_rust_lib_fn_method_session_close(void*_Nonnull ptr
+void uniffi_rust_lib_fn_method_session_close(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );
-void* _Nonnull uniffi_rust_lib_fn_method_session_exec(void*_Nonnull ptr, RustBuffer command_id, RustBuffer command
+RustBuffer uniffi_rust_lib_fn_method_session_exec(void*_Nonnull ptr, RustBuffer command_id, RustBuffer command, RustCallStatus *_Nonnull out_status
 );
-void* _Nonnull uniffi_rust_lib_fn_method_session_read_output(void*_Nonnull ptr, RustBuffer command_id
+RustBuffer uniffi_rust_lib_fn_method_session_read_output(void*_Nonnull ptr, RustBuffer command_id, RustCallStatus *_Nonnull out_status
 );
-void* _Nonnull uniffi_rust_lib_fn_func_connect(RustBuffer user, RustBuffer password, RustBuffer addrs
+void*_Nonnull uniffi_rust_lib_fn_func_connect(RustBuffer user, RustBuffer password, RustBuffer addrs, RustCallStatus *_Nonnull out_status
 );
 uint64_t uniffi_rust_lib_fn_func_test_rust(uint64_t num1, uint64_t num2, RustCallStatus *_Nonnull out_status
 );

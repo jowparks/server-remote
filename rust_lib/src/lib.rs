@@ -2,8 +2,8 @@ uniffi::setup_scaffolding!();
 
 #[derive(thiserror::Error, uniffi::Error, Debug)]
 pub enum EnumError {
-    #[error("Oops: {msg}")]
-    Oops { msg: String },
+    #[error("Oops: {msg}\n{backtrace}")]
+    Oops { msg: String, backtrace: String },
 }
 
 #[derive(uniffi::Record)]
@@ -56,14 +56,16 @@ fn test_rust(num1: u64, num2: u64) -> u64 {
 //     }
 // }
 
-use std::collections::{HashMap, VecDeque};
+use std::backtrace::Backtrace;
+use std::collections::HashMap;
 ///
 /// Run this example with:
 /// cargo run --all-features --example client_exec_interactive -- -k <private key path> <host> <command>
 ///
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::Mutex;
+use tokio::sync::mpsc::UnboundedReceiver;
+use tokio::sync::{mpsc, Mutex};
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -72,49 +74,7 @@ use russh::*;
 use russh_keys::*;
 use tokio::runtime::Runtime;
 
-static TOKIO_RUNTIME: Lazy<Runtime> = Lazy::new(|| Runtime::new().unwrap());
-
-// #[tokio::main]
-// async fn main() -> Result<()> {
-//     env_logger::builder()
-//         .filter_level(log::LevelFilter::Info)
-//         .init();
-
-//     // CLI options are defined later in this file
-//     let cli = Cli::parse();
-
-//     info!("Connecting to {}:{}", cli.host, cli.port);
-//     info!("Key path: {:?}", cli.private_key);
-//     info!("OpenSSH Certificate path: {:?}", cli.openssh_certificate);
-
-//     // Session is a wrapper around a russh client, defined down below
-//     let mut ssh = Session::connect(
-//         cli.private_key,
-//         cli.username.unwrap_or("root".to_string()),
-//         cli.openssh_certificate,
-//         (cli.host, cli.port),
-//     )
-//     .await?;
-//     info!("Connected");
-
-//     let code = {
-//         // We're using `termion` to put the terminal into raw mode, so that we can
-//         // display the output of interactive applications correctly
-//         let _raw_term = std::io::stdout().into_raw_mode()?;
-//         ssh.call(
-//             &cli.command
-//                 .into_iter()
-//                 .map(|x| shell_escape::escape(x.into())) // arguments are escaped manually since the SSH protocol doesn't support quoting
-//                 .collect::<Vec<_>>()
-//                 .join(" "),
-//         )
-//         .await?
-//     };
-
-//     println!("Exitcode: {:?}", code);
-//     ssh.close().await?;
-//     Ok(())
-// }
+static TOKIO_RUNTIME: Lazy<Arc<Runtime>> = Lazy::new(|| Arc::new(Runtime::new().unwrap()));
 
 struct Client {}
 
@@ -139,17 +99,16 @@ impl client::Handler for Client {
 #[derive(uniffi::Object)]
 pub struct Session {
     session: Arc<Mutex<client::Handle<Client>>>,
-    output: Arc<Mutex<HashMap<String, VecDeque<String>>>>,
+    output: Arc<Mutex<HashMap<String, Arc<Mutex<UnboundedReceiver<String>>>>>>,
 }
 
 #[uniffi::export]
-async fn connect(user: String, password: String, addrs: String) -> Result<Session, EnumError> {
+fn connect(user: String, password: String, addrs: String) -> Result<Arc<Session>, EnumError> {
+    std::env::set_var("RUST_BACKTRACE", "1");
+
     println!("1 Connecting to {}", addrs);
     TOKIO_RUNTIME.block_on(async {
-        let config = client::Config {
-            inactivity_timeout: Some(Duration::from_secs(5)),
-            ..<_>::default()
-        };
+        let config = client::Config { ..<_>::default() };
 
         let config = Arc::new(config);
         let sh = Client {};
@@ -160,97 +119,108 @@ async fn connect(user: String, password: String, addrs: String) -> Result<Sessio
                 .await
                 .map_err(|e| EnumError::Oops {
                     msg: format!("Failed to connect: {}", e),
+                    backtrace: Backtrace::capture().to_string(),
                 })?;
 
-        println!("3 Connecting to {}", "foo");
+        println!("3 Connecting");
         let auth_res = session
             .authenticate_password(user, password)
             .await
             .map_err(|e| EnumError::Oops {
                 msg: format!("Failed to authenticate: {}", e),
+                backtrace: Backtrace::capture().to_string(),
             })?;
 
-        println!("4 Connecting to {}", "foo");
+        println!("4 Connecting");
         if !auth_res {
             return Err(EnumError::Oops {
                 msg: String::from("Authentication with password failed"),
+                backtrace: Backtrace::capture().to_string(),
             });
         }
-        println!("5 Connecting to {}", "foo");
-        Ok(Session {
+        println!("5 Connecting");
+        Ok(Arc::new(Session {
             session: Arc::new(Mutex::new(session)),
             output: Arc::new(Mutex::new(HashMap::new())),
-        })
+        }))
     })
 }
 
 #[uniffi::export]
 impl Session {
-    async fn exec(&self, command_id: &str, command: &str) -> Result<String, EnumError> {
+    fn exec(self: Arc<Self>, command_id: &str, command: &str) -> Result<String, EnumError> {
+        std::env::set_var("RUST_BACKTRACE", "1");
+        // TODO: convert this to spawn potentially instead of needing to block
         TOKIO_RUNTIME.block_on(async {
-            let mut return_code = String::new();
-            let session = self.session.lock().await;
-            let mut channel = session.channel_open_session().await?;
-            channel.exec(true, command).await?;
+            let (tx, rx) = mpsc::unbounded_channel::<String>();
+            {
+                self.output
+                    .lock()
+                    .await
+                    .insert(command_id.to_string(), Arc::new(Mutex::new(rx)));
+            }
 
-            // save channel msg data to string
-            // let mut output: Vec<u8> = Vec::new();
+            let mut channel;
+            {
+                let session = self.session.lock().await;
+                channel = session.channel_open_session().await?;
+            }
+            let mut return_code = String::new();
+
+            channel.exec(true, command).await?;
+            channel.close().await?;
 
             loop {
-                // There's an event available on the session channel
+                // returns None if the channel is closed
                 let Some(msg) = channel.wait().await else {
                     break;
                 };
                 match msg {
-                    // Write data to the terminal
                     ChannelMsg::Data { ref data } => {
                         let data_str = String::from_utf8(data.to_vec()).unwrap();
-                        let mut session_output = self.output.lock().await;
-                        session_output
-                            .entry(command_id.to_string())
-                            .or_insert_with(VecDeque::new)
-                            .push_back(data_str);
-                        // output.write_all(data).await?;
+                        tx.send(data_str)?;
                     }
 
                     ChannelMsg::ExitStatus { exit_status } => {
                         return_code = format!("{}", exit_status);
-                        break;
                     }
                     _ => {
                         // println!("Unhandled message: {:?}", msg);
                     }
                 }
             }
-
-            // let output_str = match String::from_utf8(output) {
-            //     Ok(v) => v,
-            //     Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-            // };
             Ok(return_code)
         })
     }
 
-    async fn read_output(&self, command_id: &str) -> Option<String> {
-        let mut output = self.output.lock().await;
-        output
-            .get_mut(command_id)
-            .and_then(|queue| queue.pop_front())
+    fn read_output(self: Arc<Self>, command_id: &str) -> Option<String> {
+        TOKIO_RUNTIME.block_on(async {
+            let output = self.output.lock().await;
+            let rx = output.get(command_id);
+            if let Some(rx) = rx {
+                rx.lock().await.recv().await
+            } else {
+                None
+            }
+        })
     }
 
-    async fn close(&self) -> Result<(), EnumError> {
-        let session = self.session.lock().await;
-        session
-            .disconnect(Disconnect::ByApplication, "", "English")
-            .await?;
-        Ok(())
+    fn close(self: Arc<Self>) -> Result<(), EnumError> {
+        TOKIO_RUNTIME.block_on(async {
+            let session = self.session.lock().await;
+            session
+                .disconnect(Disconnect::ByApplication, "", "English")
+                .await?;
+            Ok(())
+        })
     }
 }
 
 impl From<russh::Error> for EnumError {
     fn from(error: russh::Error) -> Self {
         EnumError::Oops {
-            msg: format!("{}", error),
+            msg: format!("russh: {}", error),
+            backtrace: Backtrace::capture().to_string(),
         }
     }
 }
@@ -258,7 +228,17 @@ impl From<russh::Error> for EnumError {
 impl From<std::io::Error> for EnumError {
     fn from(error: std::io::Error) -> Self {
         EnumError::Oops {
-            msg: format!("{}", error),
+            msg: format!("std: {}", error),
+            backtrace: Backtrace::capture().to_string(),
+        }
+    }
+}
+
+impl From<tokio::sync::mpsc::error::SendError<String>> for EnumError {
+    fn from(error: tokio::sync::mpsc::error::SendError<String>) -> Self {
+        EnumError::Oops {
+            msg: format!("tokio: {}", error),
+            backtrace: Backtrace::capture().to_string(),
         }
     }
 }

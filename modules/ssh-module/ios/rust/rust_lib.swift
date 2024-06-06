@@ -373,11 +373,11 @@ fileprivate struct FfiConverterData: FfiConverterRustBuffer {
  */
 public protocol SessionProtocol : AnyObject {
     
-    func close() async throws 
+    func close() throws 
     
-    func exec(commandId: String, command: String) async throws  -> String
+    func exec(commandId: String, command: String) throws  -> String
     
-    func readOutput(commandId: String) async  -> String?
+    func readOutput(commandId: String)  -> String?
     
 }
 
@@ -409,58 +409,35 @@ public class Session:
 
     
     
-    public func close() async throws  {
-        return try  await uniffiRustCallAsync(
-            rustFutureFunc: {
-                uniffi_rust_lib_fn_method_session_close(
-                    self.uniffiClonePointer()
-                )
-            },
-            pollFunc: ffi_rust_lib_rust_future_poll_void,
-            completeFunc: ffi_rust_lib_rust_future_complete_void,
-            freeFunc: ffi_rust_lib_rust_future_free_void,
-            liftFunc: { $0 },
-            errorHandler: FfiConverterTypeEnumError.lift
+    public func close() throws  {
+        try 
+    rustCallWithError(FfiConverterTypeEnumError.lift) {
+    uniffi_rust_lib_fn_method_session_close(self.uniffiClonePointer(), $0
+    )
+}
+    }
+    public func exec(commandId: String, command: String) throws  -> String {
+        return try  FfiConverterString.lift(
+            try 
+    rustCallWithError(FfiConverterTypeEnumError.lift) {
+    uniffi_rust_lib_fn_method_session_exec(self.uniffiClonePointer(), 
+        FfiConverterString.lower(commandId),
+        FfiConverterString.lower(command),$0
+    )
+}
         )
     }
-
+    public func readOutput(commandId: String)  -> String? {
+        return try!  FfiConverterOptionString.lift(
+            try! 
+    rustCall() {
     
-    public func exec(commandId: String, command: String) async throws  -> String {
-        return try  await uniffiRustCallAsync(
-            rustFutureFunc: {
-                uniffi_rust_lib_fn_method_session_exec(
-                    self.uniffiClonePointer(),
-                    FfiConverterString.lower(commandId),
-                    FfiConverterString.lower(command)
-                )
-            },
-            pollFunc: ffi_rust_lib_rust_future_poll_rust_buffer,
-            completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
-            freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterString.lift,
-            errorHandler: FfiConverterTypeEnumError.lift
+    uniffi_rust_lib_fn_method_session_read_output(self.uniffiClonePointer(), 
+        FfiConverterString.lower(commandId),$0
+    )
+}
         )
     }
-
-    
-    public func readOutput(commandId: String) async  -> String? {
-        return try!  await uniffiRustCallAsync(
-            rustFutureFunc: {
-                uniffi_rust_lib_fn_method_session_read_output(
-                    self.uniffiClonePointer(),
-                    FfiConverterString.lower(commandId)
-                )
-            },
-            pollFunc: ffi_rust_lib_rust_future_poll_rust_buffer,
-            completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
-            freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionString.lift,
-            errorHandler: nil
-            
-        )
-    }
-
-    
 
 }
 
@@ -823,7 +800,8 @@ public enum EnumError {
     
     
     case Oops(
-        msg: String
+        msg: String, 
+        backtrace: String
     )
 
     fileprivate static func uniffiErrorHandler(_ error: RustBuffer) throws -> Error {
@@ -843,7 +821,8 @@ public struct FfiConverterTypeEnumError: FfiConverterRustBuffer {
 
         
         case 1: return .Oops(
-            msg: try FfiConverterString.read(from: &buf)
+            msg: try FfiConverterString.read(from: &buf), 
+            backtrace: try FfiConverterString.read(from: &buf)
             )
 
          default: throw UniffiInternalError.unexpectedEnumCase
@@ -857,9 +836,10 @@ public struct FfiConverterTypeEnumError: FfiConverterRustBuffer {
 
         
         
-        case let .Oops(msg):
+        case let .Oops(msg,backtrace):
             writeInt(&buf, Int32(1))
             FfiConverterString.write(msg, into: &buf)
+            FfiConverterString.write(backtrace, into: &buf)
             
         }
     }
@@ -912,82 +892,16 @@ fileprivate struct FfiConverterSequenceTypeWitnessNode: FfiConverterRustBuffer {
         return seq
     }
 }
-private let UNIFFI_RUST_FUTURE_POLL_READY: Int8 = 0
-private let UNIFFI_RUST_FUTURE_POLL_MAYBE_READY: Int8 = 1
-
-fileprivate func uniffiRustCallAsync<F, T>(
-    rustFutureFunc: () -> UnsafeMutableRawPointer,
-    pollFunc: (UnsafeMutableRawPointer, @escaping UniFfiRustFutureContinuation, UnsafeMutableRawPointer) -> (),
-    completeFunc: (UnsafeMutableRawPointer, UnsafeMutablePointer<RustCallStatus>) -> F,
-    freeFunc: (UnsafeMutableRawPointer) -> (),
-    liftFunc: (F) throws -> T,
-    errorHandler: ((RustBuffer) throws -> Error)?
-) async throws -> T {
-    // Make sure to call uniffiEnsureInitialized() since future creation doesn't have a
-    // RustCallStatus param, so doesn't use makeRustCall()
-    uniffiEnsureInitialized()
-    let rustFuture = rustFutureFunc()
-    defer {
-        freeFunc(rustFuture)
-    }
-    var pollResult: Int8;
-    repeat {
-        pollResult = await withUnsafeContinuation {
-            pollFunc(rustFuture, uniffiFutureContinuationCallback, ContinuationHolder($0).toOpaque())
-        }
-    } while pollResult != UNIFFI_RUST_FUTURE_POLL_READY
-
-    return try liftFunc(makeRustCall(
-        { completeFunc(rustFuture, $0) },
-        errorHandler: errorHandler
-    ))
+public func connect(user: String, password: String, addrs: String) throws  -> Session {
+    return try  FfiConverterTypeSession.lift(
+        try rustCallWithError(FfiConverterTypeEnumError.lift) {
+    uniffi_rust_lib_fn_func_connect(
+        FfiConverterString.lower(user),
+        FfiConverterString.lower(password),
+        FfiConverterString.lower(addrs),$0)
 }
-
-// Callback handlers for an async calls.  These are invoked by Rust when the future is ready.  They
-// lift the return value or error and resume the suspended function.
-fileprivate func uniffiFutureContinuationCallback(ptr: UnsafeMutableRawPointer, pollResult: Int8) {
-    ContinuationHolder.fromOpaque(ptr).resume(pollResult)
-}
-
-// Wraps UnsafeContinuation in a class so that we can use reference counting when passing it across
-// the FFI
-fileprivate class ContinuationHolder {
-    let continuation: UnsafeContinuation<Int8, Never>
-
-    init(_ continuation: UnsafeContinuation<Int8, Never>) {
-        self.continuation = continuation
-    }
-
-    func resume(_ pollResult: Int8) {
-        self.continuation.resume(returning: pollResult)
-    }
-
-    func toOpaque() -> UnsafeMutableRawPointer {
-        return Unmanaged<ContinuationHolder>.passRetained(self).toOpaque()
-    }
-
-    static func fromOpaque(_ ptr: UnsafeRawPointer) -> ContinuationHolder {
-        return Unmanaged<ContinuationHolder>.fromOpaque(ptr).takeRetainedValue()
-    }
-}
-public func connect(user: String, password: String, addrs: String) async throws  -> Session {
-    return try  await uniffiRustCallAsync(
-        rustFutureFunc: {
-            uniffi_rust_lib_fn_func_connect(
-                FfiConverterString.lower(user),
-                FfiConverterString.lower(password),
-                FfiConverterString.lower(addrs)
-            )
-        },
-        pollFunc: ffi_rust_lib_rust_future_poll_pointer,
-        completeFunc: ffi_rust_lib_rust_future_complete_pointer,
-        freeFunc: ffi_rust_lib_rust_future_free_pointer,
-        liftFunc: FfiConverterTypeSession.lift,
-        errorHandler: FfiConverterTypeEnumError.lift
     )
 }
-
-
 public func testRust(num1: UInt64, num2: UInt64)  -> UInt64 {
     return try!  FfiConverterUInt64.lift(
         try! rustCall() {
@@ -1013,19 +927,19 @@ private var initializationResult: InitializationResult {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
-    if (uniffi_rust_lib_checksum_func_connect() != 42318) {
+    if (uniffi_rust_lib_checksum_func_connect() != 57044) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rust_lib_checksum_func_test_rust() != 48329) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_close() != 16336) {
+    if (uniffi_rust_lib_checksum_method_session_close() != 40540) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_exec() != 51110) {
+    if (uniffi_rust_lib_checksum_method_session_exec() != 27906) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_read_output() != 27283) {
+    if (uniffi_rust_lib_checksum_method_session_read_output() != 14871) {
         return InitializationResult.apiChecksumMismatch
     }
 

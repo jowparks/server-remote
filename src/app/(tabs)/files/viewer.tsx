@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ScrollView, View, Text } from 'tamagui';
 import { debounce } from 'lodash';
-import { useSsh } from '../../../contexts/ssh';
+import { SSHClient, useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
 import { FileInfo, findPaths } from '../../../util/files';
@@ -15,10 +15,9 @@ import { useHeader } from '../../../contexts/header';
 import TabWrapper from '../../../components/nav/tabs';
 import SearchBar from '../../../components/general/search-bar';
 import { RefreshControl } from 'react-native';
+import { useFocusedEffect } from '../../../util/focused-effect';
 
 const FolderViewer = () => {
-  const searchTimeLimit = 7000;
-
   const router = useRouter();
   const params = useLocalSearchParams();
   const navigation = useNavigation();
@@ -92,15 +91,20 @@ const FolderViewer = () => {
 
   useEffect(() => {
     // don't want files reloading when moving between screens
-    if (path !== params.path) return;
-    if (!sshClient) return;
-    fetchFileInfo(sshClient, false).then((files) => {
-      setFiles(files);
+    async function fetchFiles() {
+      if (path !== params.path) return;
+      if (!sshClient) return;
+      setFiles([]);
+      await findPaths(sshClient, path, false, (fs) =>
+        setFiles([...files, ...fs]),
+      );
       setRefreshing(false);
-    });
+      console.log(files.length);
+    }
+    fetchFiles();
   }, [path, sshClient, triggerRefresh]);
 
-  useEffect(() => {
+  useFocusedEffect(() => {
     // don't want files reloading when moving between screens
     if (path !== params.path) return;
     if (!sshClient || !files || !cachedFile) return;
@@ -119,11 +123,6 @@ const FolderViewer = () => {
     };
     copy();
   }, [pasteLocation]);
-
-  const fetchFileInfo = async (sshClient: unknown, findAll: boolean) => {
-    const files = await findPaths(sshClient, path, findAll);
-    return files;
-  };
 
   function dedupeFileName(item: FileInfo) {
     let i = 1;
@@ -171,19 +170,13 @@ const FolderViewer = () => {
     const targetPath = decodeURI(directory.uri.replace('file://', ''));
     const originatingFile = `${path}/${item.fileName}`;
     console.log(`Downloading from: ${originatingFile} to ${targetPath}`);
-    sshClient.sftpLs(path);
+    // sshClient.sftpLs(path);
     try {
-      await sshClient.sftpDownload(
-        originatingFile,
-        targetPath,
-        (error, response) => {
-          if (error) {
-            throw error;
-          } else {
-            console.log('Download successful: ', response);
-          }
-        },
-      );
+      await sshClient.sftpDownload(originatingFile, targetPath, (error) => {
+        if (error) {
+          throw error;
+        }
+      });
     } catch (error) {
       setDownloadError(true);
     }
@@ -230,19 +223,16 @@ const FolderViewer = () => {
   const handleTabChange = async (tab: string) => {
     if (!sshClient) return;
     setSearchTab(tab as 'This Folder' | 'All Subfolders');
+
     if (allFiles.length === 0 && tab === 'All Subfolders') {
       setFilteredFiles([]);
       try {
-        const files = (await Promise.race([
-          fetchFileInfo(sshClient, true),
-          new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error('Request timed out')),
-              searchTimeLimit,
-            ),
-          ),
-        ])) as FileInfo[];
-        setAllFiles(files);
+        if (path !== params.path) return;
+        if (!sshClient) return;
+        setAllFiles([]);
+        await findPaths(sshClient, path, true, (fs) =>
+          setAllFiles((files) => [...files, ...fs]),
+        );
       } catch (error) {
         setAllFiles([]);
         setSearchError(
