@@ -1,7 +1,12 @@
 import { SSHClient } from '../contexts/ssh';
+import uuid from 'react-native-uuid';
 
-export function fileCommand(path: string, findAll: boolean) {
-  return `find "${path}" ${findAll ? '' : '-maxdepth 1'} -printf '%M,%n,%u.%g,%s,%AY-%Am-%Ad %AH:%AM:%AS,%TY-%Tm-%Td %TH:%TM:%TS,%p,%y,%l\n'`;
+export function fileCommand(
+  path: string,
+  findAll: boolean,
+  grep: string | null = null,
+) {
+  return `find "${path}" ${findAll ? '' : '-maxdepth 1'} -printf '%M,%n,%u.%g,%s,%AY-%Am-%Ad %AH:%AM:%AS,%TY-%Tm-%Td %TH:%TM:%TS,%p,%y,%l\n'${grep ? '| grep "' + grep + '"' : ''}`;
 }
 
 export type FileType = 'f' | 'd' | 'l';
@@ -35,22 +40,29 @@ export const fileInfoKeyMap = {
   symlinkTarget: 'Symlink Target',
 };
 
-export function parseFileInfo(line: string): FileInfo {
+export function parseFileInfo(
+  line: string,
+  searchString: string,
+): FileInfo | null {
   const parts = line.split(',');
-
-  return {
-    permissions: parts[0],
-    numHardLinks: parseInt(parts[1]),
-    owner: parts[2].split('.')[0],
-    group: parts[2].split('.')[1],
-    size: formatBytes(parseInt(parts[3])),
-    lastAccessDate: parts[4].split('.')[0],
-    lastModified: parts[5].split('.')[0],
-    filePath: parts[6],
-    fileName: parts[6].split('/').pop() || '',
-    fileType: parts[7] as FileType,
-    symlinkTarget: parts[8] || undefined, // Symlink target can be empty for non-symlink files
-  };
+  try {
+    return {
+      permissions: parts[0],
+      numHardLinks: parseInt(parts[1]),
+      owner: parts[2].split('.')[0],
+      group: parts[2].split('.')[1],
+      size: formatBytes(parseInt(parts[3])),
+      lastAccessDate: parts[4].split('.')[0],
+      lastModified: parts[5].split('.')[0],
+      filePath: parts[6],
+      fileName: parts[6].split('/').pop() || '',
+      fileType: parts[7] as FileType,
+      symlinkTarget: parts[8] || undefined, // Symlink target can be empty for non-symlink files
+      searchString,
+    };
+  } catch (e) {
+    return null;
+  }
 }
 
 export function formatBytes(bytes: number, decimals = 2) {
@@ -68,30 +80,38 @@ export function findPaths(
   sshClient: SSHClient,
   path: string,
   findAll: boolean,
-  handleFiles: (files: FileInfo[]) => void,
+  handleData: (data: string) => void,
+  handleComplete: () => void,
+  signal: AbortSignal | null = null,
+  grep: string | null = null,
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const cmd = fileCommand(path, findAll);
+  // TODO: handle abort more elegantly, should probably close ssh channel
+  return new Promise((resolve) => {
+    const cmd = fileCommand(path, findAll, grep);
     console.log('finding paths:', cmd);
+    const commandId = uuid.v4() as string;
 
     sshClient.execAsync({
       command: cmd,
+      commandId,
       onData: (data) => {
-        const lines = data.split('\n').filter((line) => line !== '');
-        if (!lines) return;
-        const files = lines
-          .map(parseFileInfo)
-          .filter((file) => file.filePath !== path)
-          .sort((a, b) => a.filePath.localeCompare(b.filePath));
-        handleFiles(files);
+        if (signal && signal.aborted) {
+          sshClient.cancel(commandId);
+          resolve();
+          return;
+        }
+        handleData(data);
       },
       onError: (error) => {
-        console.error('Error finding paths:', error);
-        reject(error);
+        console.log('Error finding paths:', error);
+        resolve();
       },
       onComplete: () => {
-        console.log('Completed finding paths');
-        resolve();
+        if (!signal || !signal.aborted) {
+          console.log('Completed finding paths');
+          handleComplete();
+          resolve();
+        }
       },
     });
   });

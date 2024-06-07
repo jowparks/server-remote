@@ -6,13 +6,16 @@ import React, {
   ReactNode,
 } from 'react';
 import { Server } from '../typing/server';
-import { ExecParams, connect, exec } from '../../modules/ssh-module';
+import { ExecParams, cancel, connect, exec } from '../../modules/ssh-module';
+import uuid from 'react-native-uuid';
 
 export type SSHClient = {
   // waits until command is done, returns all of response
   exec: (command: string) => Promise<string>;
   // uses onData, onError, onComplete to handle response as it comes in
   execAsync: (params: ExecParams) => Promise<string>;
+  // cancel a command based on its commandId
+  cancel: (commandId: string) => void;
   sftpDownload: (
     remotePath: string,
     localPath: string,
@@ -53,6 +56,7 @@ export function SshProvider({ children }: { children: ReactNode }) {
           const sshClient: SSHClient = {
             exec: execInner,
             execAsync: execInnerAsync,
+            cancel: cancel,
             sftpDownload: async (remotePath, localPath, onError) => {},
           };
           setSshClient(sshClient);
@@ -66,14 +70,17 @@ export function SshProvider({ children }: { children: ReactNode }) {
     connectToServer();
   }, [server]);
 
+  // TODO make this cancellable too, cleanup this interface relative to SshModule
   const execInner = async (command: string) => {
     if (!server) {
       throw new Error('Not connected to a server');
     }
     let response = '';
+    const commandId = uuid.v4() as string;
     return new Promise<string>(async (resolve, reject) => {
       await exec({
         command,
+        commandId,
         onData: (data) => {
           response += data;
         },

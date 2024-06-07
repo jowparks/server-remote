@@ -6,65 +6,10 @@ pub enum EnumError {
     Oops { msg: String, backtrace: String },
 }
 
-#[derive(uniffi::Record)]
-pub struct WitnessNode {
-    pub side: String,
-    pub hash_of_sibling: Vec<u8>,
-}
-
-#[derive(uniffi::Record)]
-pub struct SpendComponents {
-    pub note: Vec<u8>,
-    pub witness_root_hash: Vec<u8>,
-    pub witness_tree_size: u64,
-    pub witness_auth_path: Vec<WitnessNode>,
-}
-
-#[derive(uniffi::Record)]
-pub struct NoteParams {
-    owner: Vec<u8>,
-    value: u64,
-    memo: Vec<u8>,
-    asset_id: Vec<u8>,
-    sender: Vec<u8>,
-}
-
-#[derive(uniffi::Record)]
-pub struct Key {
-    pub spending_key: String,
-    pub view_key: String,
-    pub incoming_view_key: String,
-    pub outgoing_view_key: String,
-    pub public_address: String,
-    pub proof_authorizing_key: String,
-}
-
-#[uniffi::export]
-fn test_rust(num1: u64, num2: u64) -> u64 {
-    num1 + num2
-}
-
-// #[derive(uniffi::Object)]
-// pub struct NativeNote {
-//     pub(crate) note: Note,
-// }
-
-// #[uniffi::export]
-// impl NativeNote {
-//     pub fn value(&self) -> u64 {
-//         self.note.value()
-//     }
-// }
-
 use std::backtrace::Backtrace;
 use std::collections::HashMap;
-///
-/// Run this example with:
-/// cargo run --all-features --example client_exec_interactive -- -k <private key path> <host> <command>
-///
 use std::sync::Arc;
-use std::time::Duration;
-use tokio::sync::mpsc::UnboundedReceiver;
+use tokio::sync::mpsc::{Sender, UnboundedReceiver};
 use tokio::sync::{mpsc, Mutex};
 
 use anyhow::Result;
@@ -100,6 +45,7 @@ impl client::Handler for Client {
 pub struct Session {
     session: Arc<Mutex<client::Handle<Client>>>,
     output: Arc<Mutex<HashMap<String, Arc<Mutex<UnboundedReceiver<String>>>>>>,
+    cancellation: Arc<Mutex<HashMap<String, Arc<Mutex<Sender<u8>>>>>>,
 }
 
 #[uniffi::export]
@@ -142,37 +88,53 @@ fn connect(user: String, password: String, addrs: String) -> Result<Arc<Session>
         Ok(Arc::new(Session {
             session: Arc::new(Mutex::new(session)),
             output: Arc::new(Mutex::new(HashMap::new())),
+            cancellation: Arc::new(Mutex::new(HashMap::new())),
         }))
     })
 }
 
 #[uniffi::export]
 impl Session {
-    fn exec(self: Arc<Self>, command_id: &str, command: &str) -> Result<String, EnumError> {
+    async fn exec(self: Arc<Self>, command_id: &str, command: &str) -> Result<String, EnumError> {
         std::env::set_var("RUST_BACKTRACE", "1");
         // TODO: convert this to spawn potentially instead of needing to block
-        TOKIO_RUNTIME.block_on(async {
-            let (tx, rx) = mpsc::unbounded_channel::<String>();
-            {
-                self.output
-                    .lock()
-                    .await
-                    .insert(command_id.to_string(), Arc::new(Mutex::new(rx)));
-            }
+        let command_clone = command.to_owned();
+        let command_id_clone = command_id.to_owned();
+        let (cancel_sender, cancel_receiver) = mpsc::channel::<u8>(1);
+        {
+            self.cancellation
+                .lock()
+                .await
+                .insert(command_id.to_string(), Arc::new(Mutex::new(cancel_sender)));
+        }
+        let (tx, rx) = mpsc::unbounded_channel::<String>();
+        {
+            self.output
+                .lock()
+                .await
+                .insert(command_id.to_string(), Arc::new(Mutex::new(rx)));
+        }
 
-            let mut channel;
-            {
-                let session = self.session.lock().await;
-                channel = session.channel_open_session().await?;
-            }
+        let mut channel;
+        {
+            let session = self.session.lock().await;
+            channel = session.channel_open_session().await?;
+        }
+        let handle = TOKIO_RUNTIME.spawn(async move {
             let mut return_code = String::new();
 
-            channel.exec(true, command).await?;
-            channel.close().await?;
+            channel.exec(true, command_clone).await?;
 
             loop {
+                if !cancel_receiver.is_empty() {
+                    channel.close().await?;
+                    drop(cancel_receiver);
+                    println!("Cancelled command {}", command_id_clone);
+                    break;
+                }
                 // returns None if the channel is closed
                 let Some(msg) = channel.wait().await else {
+                    drop(tx);
                     break;
                 };
                 match msg {
@@ -190,19 +152,22 @@ impl Session {
                 }
             }
             Ok(return_code)
-        })
+        });
+        handle.await.unwrap()
     }
 
-    fn read_output(self: Arc<Self>, command_id: &str) -> Option<String> {
-        TOKIO_RUNTIME.block_on(async {
+    async fn read_output(self: Arc<Self>, command_id: &str) -> Option<String> {
+        let command_id = command_id.to_owned();
+        let handle = TOKIO_RUNTIME.spawn(async move {
             let output = self.output.lock().await;
-            let rx = output.get(command_id);
+            let rx = output.get(&command_id);
             if let Some(rx) = rx {
                 rx.lock().await.recv().await
             } else {
                 None
             }
-        })
+        });
+        handle.await.unwrap()
     }
 
     fn close(self: Arc<Self>) -> Result<(), EnumError> {
@@ -213,6 +178,25 @@ impl Session {
                 .await?;
             Ok(())
         })
+    }
+
+    async fn cancel(self: Arc<Self>, command_id: &str) -> Result<(), EnumError> {
+        let command_id = command_id.to_owned();
+        let handle = TOKIO_RUNTIME.spawn(async move {
+            let map = self.cancellation.lock().await;
+            let cancellation = map.get(&command_id);
+            if let Some(cancellation) = cancellation {
+                cancellation.lock().await.send(1).await?;
+                println!("Cancelling command {}", command_id);
+                Ok(())
+            } else {
+                Err(EnumError::Oops {
+                    msg: format!("Command {} not found", command_id),
+                    backtrace: Backtrace::capture().to_string(),
+                })
+            }
+        });
+        handle.await.unwrap()
     }
 }
 
@@ -234,10 +218,10 @@ impl From<std::io::Error> for EnumError {
     }
 }
 
-impl From<tokio::sync::mpsc::error::SendError<String>> for EnumError {
-    fn from(error: tokio::sync::mpsc::error::SendError<String>) -> Self {
+impl<T: std::fmt::Debug> From<tokio::sync::mpsc::error::SendError<T>> for EnumError {
+    fn from(error: tokio::sync::mpsc::error::SendError<T>) -> Self {
         EnumError::Oops {
-            msg: format!("tokio: {}", error),
+            msg: format!("tokio: {:?}", error),
             backtrace: Backtrace::capture().to_string(),
         }
     }

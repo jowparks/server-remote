@@ -55,15 +55,15 @@ void*_Nonnull uniffi_rust_lib_fn_clone_session(void*_Nonnull ptr, RustCallStatus
 );
 void uniffi_rust_lib_fn_free_session(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );
+void* _Nonnull uniffi_rust_lib_fn_method_session_cancel(void*_Nonnull ptr, RustBuffer command_id
+);
 void uniffi_rust_lib_fn_method_session_close(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );
-RustBuffer uniffi_rust_lib_fn_method_session_exec(void*_Nonnull ptr, RustBuffer command_id, RustBuffer command, RustCallStatus *_Nonnull out_status
+void* _Nonnull uniffi_rust_lib_fn_method_session_exec(void*_Nonnull ptr, RustBuffer command_id, RustBuffer command
 );
-RustBuffer uniffi_rust_lib_fn_method_session_read_output(void*_Nonnull ptr, RustBuffer command_id, RustCallStatus *_Nonnull out_status
+void* _Nonnull uniffi_rust_lib_fn_method_session_read_output(void*_Nonnull ptr, RustBuffer command_id
 );
 void*_Nonnull uniffi_rust_lib_fn_func_connect(RustBuffer user, RustBuffer password, RustBuffer addrs, RustCallStatus *_Nonnull out_status
-);
-uint64_t uniffi_rust_lib_fn_func_test_rust(uint64_t num1, uint64_t num2, RustCallStatus *_Nonnull out_status
 );
 RustBuffer ffi_rust_lib_rustbuffer_alloc(int32_t size, RustCallStatus *_Nonnull out_status
 );
@@ -180,7 +180,7 @@ void ffi_rust_lib_rust_future_complete_void(void* _Nonnull handle, RustCallStatu
 uint16_t uniffi_rust_lib_checksum_func_connect(void
     
 );
-uint16_t uniffi_rust_lib_checksum_func_test_rust(void
+uint16_t uniffi_rust_lib_checksum_method_session_cancel(void
     
 );
 uint16_t uniffi_rust_lib_checksum_method_session_close(void

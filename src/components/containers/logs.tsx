@@ -9,6 +9,7 @@ export type LogsProps = {
   refreshCommand?: string;
 };
 
+// TODO should use stream for logs rather than command + refresh
 export default function Logs({ command, refreshCommand }: LogsProps) {
   const { sshClient } = useSsh();
   const [logs, setLogs] = useState<string>('');

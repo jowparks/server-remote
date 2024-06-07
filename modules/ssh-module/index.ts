@@ -1,9 +1,4 @@
-import {
-  NativeModulesProxy,
-  EventEmitter,
-  Subscription,
-} from 'expo-modules-core';
-import uuid from 'react-native-uuid';
+import { EventEmitter, Subscription } from 'expo-modules-core';
 
 // Import the native module. On web, it will be resolved to SshModule.web.ts
 // and on native platforms to SshModule.ts
@@ -39,10 +34,6 @@ export function addExecListener(
   return emitter.addListener<ExecEventPayload>('exec', listener);
 }
 
-export async function testRust(num1: number, num2: number): Promise<number> {
-  return SshModule.testRust(num1, num2);
-}
-
 export async function connect(
   user: string,
   password: string,
@@ -55,6 +46,7 @@ export async function connect(
 
 export type ExecParams = {
   command: string;
+  commandId: string;
   onData: (data: string) => void;
   onError?: (errorCode: string) => void;
   onComplete?: () => void;
@@ -62,11 +54,11 @@ export type ExecParams = {
 
 export async function exec({
   command,
+  commandId,
   onData,
   onError,
   onComplete,
 }: ExecParams): Promise<string> {
-  const commandId = uuid.v4();
   let completed = false;
   const listener = (event: { [key: string]: string }) => {
     if (event['commandId'] === commandId) {
@@ -91,6 +83,10 @@ export async function exec({
   }
   subscription.remove();
   return returnCode;
+}
+
+export function cancel(commandId: string): void {
+  SshModule.cancel(commandId);
 }
 
 export { ChangeEventPayload };

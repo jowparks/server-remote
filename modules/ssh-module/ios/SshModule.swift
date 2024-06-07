@@ -27,10 +27,6 @@ public class SshModule: Module {
       return "Hello world! 👋"
     }
 
-    AsyncFunction("testRust") { (num1: UInt64, num2: UInt64) throws -> UInt64 in
-      return testRust(num1: num1, num2: num2)
-    }
-
     AsyncFunction("connect") { (user: String, password: String, addrs: String) async throws -> Void in
       self.session = try connect(user: user, password: password, addrs: addrs)
     }
@@ -43,7 +39,7 @@ public class SshModule: Module {
         let isCompleted = IsCompleted()
 
         @Sendable func getData() async {
-            while let data = session.readOutput(commandId: commandId) {
+            while let data = await session.readOutput(commandId: commandId) {
                 self.sendEvent("exec", ["commandId": commandId, "data": data])
             }
         }
@@ -60,7 +56,7 @@ public class SshModule: Module {
         }
         
         do {
-            let returnCode = try session.exec(commandId: commandId, command: command)
+            let returnCode = try await session.exec(commandId: commandId, command: command)
             await isCompleted.set(true)
             try await task.value
             await getData()
@@ -72,6 +68,15 @@ public class SshModule: Module {
             throw error
         }
     }
+      
+      AsyncFunction("cancel") { (commandId: String) async throws -> String in
+          guard let session = self.session else {
+              throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
+          }
+          try await session.cancel(commandId: commandId)
+          return "0"
+      }
+
   }
 }
 

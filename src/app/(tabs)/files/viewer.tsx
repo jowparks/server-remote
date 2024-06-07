@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ScrollView, View, Text } from 'tamagui';
-import { debounce } from 'lodash';
-import { SSHClient, useSsh } from '../../../contexts/ssh';
+import React, { useState, useEffect } from 'react';
+import { View, Text } from 'tamagui';
+import { useSsh } from '../../../contexts/ssh';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import DocumentPicker from 'react-native-document-picker';
-import { FileInfo, findPaths } from '../../../util/files';
+import { FileInfo, findPaths, parseFileInfo } from '../../../util/files';
 import { useFiles } from '../../../contexts/files';
 import CompressModal from './compress';
 import InfoModal from './info';
@@ -14,7 +13,6 @@ import RenameModal from '../../../components/file-viewer/rename';
 import { useHeader } from '../../../contexts/header';
 import TabWrapper from '../../../components/nav/tabs';
 import SearchBar from '../../../components/general/search-bar';
-import { RefreshControl } from 'react-native';
 import { useFocusedEffect } from '../../../util/focused-effect';
 
 const FolderViewer = () => {
@@ -33,7 +31,8 @@ const FolderViewer = () => {
   } = useFiles();
 
   const [files, setFiles] = useState<FileInfo[]>([]);
-  const [allFiles, setAllFiles] = useState<FileInfo[]>([]);
+  const [fileLoadingComplete, setFileLoadingComplete] =
+    useState<boolean>(false);
   // for when search is being used
   const [filteredFiles, setFilteredFiles] = useState<FileInfo[]>([]);
   const [folder, setFolder] = useState<FileInfo | null>(null);
@@ -44,7 +43,6 @@ const FolderViewer = () => {
   const [searchTab, setSearchTab] = useState(
     'This Folder' as 'This Folder' | 'All Subfolders',
   );
-  const [loading, setLoading] = useState(true);
   const [renameOpen, setRenameOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [searchError, setSearchError] = useState('');
@@ -53,29 +51,60 @@ const FolderViewer = () => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
 
-  useEffect(() => {
-    let tab = searchTab;
+  useFocusedEffect(() => {
     const zeroLength = searchInput.length === 0;
     setSearchError('');
+    setFilteredFiles([]);
     zeroLength && setSearchTab('This Folder');
     setTabsEnabled(!zeroLength);
+    if (zeroLength) return;
 
-    let localFiles = tab === 'This Folder' ? files : allFiles;
-    const filtered = localFiles
-      .filter((file) =>
-        file.fileName.toLowerCase().includes(searchInput.toLowerCase()),
-      )
-      .map((file) => ({ ...file, searchString: searchInput }));
-    debouncedSetFilteredFiles.cancel();
-    debouncedSetFilteredFiles(filtered);
-  }, [searchInput, files, allFiles, searchTab]);
+    const abortController = new AbortController();
 
-  const debouncedSetFilteredFiles = useCallback(
-    debounce((filteredFiles) => {
-      setFilteredFiles(filteredFiles);
-    }, 300),
-    [],
-  );
+    // TODO this should only trigger once every 300ms IF the user is done typing
+    async function search() {
+      if (!sshClient) return;
+      try {
+        console.log(filteredFiles.length, files.length);
+        setFilteredFiles([]);
+        setFileLoadingComplete(false);
+        let output = '';
+        await findPaths(
+          sshClient,
+          path,
+          searchTab === 'All Subfolders',
+          (data) => {
+            if (abortController.signal.aborted) return;
+            output += data;
+            const files = output
+              .split('\n')
+              .map((line) => parseFileInfo(line, searchInput))
+              .filter((file) => file && file.filePath !== path)
+              .filter(Boolean) as FileInfo[];
+            setFilteredFiles(files);
+          },
+          () => {
+            setFileLoadingComplete(true);
+            console.log('SET COMPLETE');
+          },
+          abortController.signal,
+          searchInput.toLowerCase(),
+        );
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          console.log('Search operation aborted');
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    search();
+
+    return () => {
+      abortController.abort();
+    };
+  }, [searchInput, searchTab]);
 
   useEffect(() => {
     const initialPath = Array.isArray(params.path)
@@ -95,11 +124,24 @@ const FolderViewer = () => {
       if (path !== params.path) return;
       if (!sshClient) return;
       setFiles([]);
-      await findPaths(sshClient, path, false, (fs) =>
-        setFiles([...files, ...fs]),
+      setFileLoadingComplete(false);
+      let output = '';
+      await findPaths(
+        sshClient,
+        path,
+        false,
+        (data) => {
+          output += data;
+          const files = output
+            .split('\n')
+            .map((line) => parseFileInfo(line, ''))
+            .filter((file) => file && file.filePath !== path)
+            .filter(Boolean) as FileInfo[];
+          setFiles(files);
+        },
+        () => setFileLoadingComplete(true),
       );
       setRefreshing(false);
-      console.log(files.length);
     }
     fetchFiles();
   }, [path, sshClient, triggerRefresh]);
@@ -110,7 +152,7 @@ const FolderViewer = () => {
     if (!sshClient || !files || !cachedFile) return;
     const baseCommand = cachedFile.type === 'copy' ? 'cp -r' : 'mv';
 
-    const copy = async () => {
+    const paste = async () => {
       const deduped = dedupeFileName(cachedFile.file);
       const command = `${baseCommand} ${cachedFile.file.filePath} ${path}/${deduped}`;
       console.log(`Pasting: ${command}`);
@@ -121,7 +163,7 @@ const FolderViewer = () => {
       ]);
       setCachedFile(null);
     };
-    copy();
+    paste();
   }, [pasteLocation]);
 
   function dedupeFileName(item: FileInfo) {
@@ -223,23 +265,6 @@ const FolderViewer = () => {
   const handleTabChange = async (tab: string) => {
     if (!sshClient) return;
     setSearchTab(tab as 'This Folder' | 'All Subfolders');
-
-    if (allFiles.length === 0 && tab === 'All Subfolders') {
-      setFilteredFiles([]);
-      try {
-        if (path !== params.path) return;
-        if (!sshClient) return;
-        setAllFiles([]);
-        await findPaths(sshClient, path, true, (fs) =>
-          setAllFiles((files) => [...files, ...fs]),
-        );
-      } catch (error) {
-        setAllFiles([]);
-        setSearchError(
-          'Search timed out, too many files to search through, limit your directory',
-        );
-      }
-    }
   };
 
   return (
@@ -254,47 +279,41 @@ const FolderViewer = () => {
         onTabChange={handleTabChange}
         tabs={['This Folder', 'All Subfolders']}
       >
-        <ScrollView
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => {
-                setRefreshing(true);
-                setTriggerRefresh(!triggerRefresh);
-              }}
-            />
-          }
-        >
-          <FileList
-            files={filteredFiles ?? files}
-            folder={folder}
-            displayAsPath={tabsEnabled && searchTab === 'All Subfolders'}
-            onPress={handlePress}
-            setSelectedFile={setSelectedFile}
-            onInfo={(item) => {
-              setSelectedFile(item);
-              setInfoOpen(true);
-            }}
-            onCompress={(item) => {
-              setSelectedFile(item);
-              setCompressOpen(true);
-            }}
-            onRename={(item) => {
-              setSelectedFile(item);
-              setRenameOpen(true);
-            }}
-            onDuplicate={handleDuplicate}
-            onDeleteOpen={(item) => {
-              setSelectedFile(item);
-              setDeleteOpen(true);
-            }}
-            onDownload={handleDownload}
-            onCopy={(item) => setCachedFile({ file: item, type: 'copy' })}
-            onMove={(item) => setCachedFile({ file: item, type: 'move' })}
-            onContext={(item) => addRecentFile(item)}
-          />
-          {!!searchError && <Text>{searchError}</Text>}
-        </ScrollView>
+        <FileList
+          files={tabsEnabled ? filteredFiles : files}
+          fileLoadingComplete={fileLoadingComplete}
+          folder={folder}
+          displayAsPath={tabsEnabled && searchTab === 'All Subfolders'}
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            setTriggerRefresh(!triggerRefresh);
+          }}
+          onPress={handlePress}
+          setSelectedFile={setSelectedFile}
+          onInfo={(item) => {
+            setSelectedFile(item);
+            setInfoOpen(true);
+          }}
+          onCompress={(item) => {
+            setSelectedFile(item);
+            setCompressOpen(true);
+          }}
+          onRename={(item) => {
+            setSelectedFile(item);
+            setRenameOpen(true);
+          }}
+          onDuplicate={handleDuplicate}
+          onDeleteOpen={(item) => {
+            setSelectedFile(item);
+            setDeleteOpen(true);
+          }}
+          onDownload={handleDownload}
+          onCopy={(item) => setCachedFile({ file: item, type: 'copy' })}
+          onMove={(item) => setCachedFile({ file: item, type: 'move' })}
+          onContext={(item) => addRecentFile(item)}
+        />
+        {!!searchError && <Text>{searchError}</Text>}
       </TabWrapper>
       {!!compressOpen && (
         <CompressModal

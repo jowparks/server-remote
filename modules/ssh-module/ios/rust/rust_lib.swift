@@ -297,19 +297,6 @@ private func uniffiCheckCallStatus(
 // Public interface members begin here.
 
 
-fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
-    typealias FfiType = UInt64
-    typealias SwiftType = UInt64
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt64 {
-        return try lift(readInt(&buf))
-    }
-
-    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
-        writeInt(&buf, lower(value))
-    }
-}
-
 fileprivate struct FfiConverterString: FfiConverter {
     typealias SwiftType = String
     typealias FfiType = RustBuffer
@@ -348,21 +335,6 @@ fileprivate struct FfiConverterString: FfiConverter {
     }
 }
 
-fileprivate struct FfiConverterData: FfiConverterRustBuffer {
-    typealias SwiftType = Data
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Data {
-        let len: Int32 = try readInt(&buf)
-        return Data(try readBytes(&buf, count: Int(len)))
-    }
-
-    public static func write(_ value: Data, into buf: inout [UInt8]) {
-        let len = Int32(value.count)
-        writeInt(&buf, len)
-        writeBytes(&buf, value)
-    }
-}
-
 
 
 
@@ -373,11 +345,13 @@ fileprivate struct FfiConverterData: FfiConverterRustBuffer {
  */
 public protocol SessionProtocol : AnyObject {
     
+    func cancel(commandId: String) async throws 
+    
     func close() throws 
     
-    func exec(commandId: String, command: String) throws  -> String
+    func exec(commandId: String, command: String) async throws  -> String
     
-    func readOutput(commandId: String)  -> String?
+    func readOutput(commandId: String) async  -> String?
     
 }
 
@@ -409,6 +383,23 @@ public class Session:
 
     
     
+    public func cancel(commandId: String) async throws  {
+        return try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_rust_lib_fn_method_session_cancel(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(commandId)
+                )
+            },
+            pollFunc: ffi_rust_lib_rust_future_poll_void,
+            completeFunc: ffi_rust_lib_rust_future_complete_void,
+            freeFunc: ffi_rust_lib_rust_future_free_void,
+            liftFunc: { $0 },
+            errorHandler: FfiConverterTypeEnumError.lift
+        )
+    }
+
+    
     public func close() throws  {
         try 
     rustCallWithError(FfiConverterTypeEnumError.lift) {
@@ -416,28 +407,42 @@ public class Session:
     )
 }
     }
-    public func exec(commandId: String, command: String) throws  -> String {
-        return try  FfiConverterString.lift(
-            try 
-    rustCallWithError(FfiConverterTypeEnumError.lift) {
-    uniffi_rust_lib_fn_method_session_exec(self.uniffiClonePointer(), 
-        FfiConverterString.lower(commandId),
-        FfiConverterString.lower(command),$0
-    )
-}
+    public func exec(commandId: String, command: String) async throws  -> String {
+        return try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_rust_lib_fn_method_session_exec(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(commandId),
+                    FfiConverterString.lower(command)
+                )
+            },
+            pollFunc: ffi_rust_lib_rust_future_poll_rust_buffer,
+            completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
+            freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterString.lift,
+            errorHandler: FfiConverterTypeEnumError.lift
         )
     }
-    public func readOutput(commandId: String)  -> String? {
-        return try!  FfiConverterOptionString.lift(
-            try! 
-    rustCall() {
+
     
-    uniffi_rust_lib_fn_method_session_read_output(self.uniffiClonePointer(), 
-        FfiConverterString.lower(commandId),$0
-    )
-}
+    public func readOutput(commandId: String) async  -> String? {
+        return try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_rust_lib_fn_method_session_read_output(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(commandId)
+                )
+            },
+            pollFunc: ffi_rust_lib_rust_future_poll_rust_buffer,
+            completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
+            freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionString.lift,
+            errorHandler: nil
+            
         )
     }
+
+    
 
 }
 
@@ -479,319 +484,6 @@ public func FfiConverterTypeSession_lift(_ pointer: UnsafeMutableRawPointer) thr
 
 public func FfiConverterTypeSession_lower(_ value: Session) -> UnsafeMutableRawPointer {
     return FfiConverterTypeSession.lower(value)
-}
-
-
-public struct Key {
-    public var spendingKey: String
-    public var viewKey: String
-    public var incomingViewKey: String
-    public var outgoingViewKey: String
-    public var publicAddress: String
-    public var proofAuthorizingKey: String
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(
-        spendingKey: String, 
-        viewKey: String, 
-        incomingViewKey: String, 
-        outgoingViewKey: String, 
-        publicAddress: String, 
-        proofAuthorizingKey: String) {
-        self.spendingKey = spendingKey
-        self.viewKey = viewKey
-        self.incomingViewKey = incomingViewKey
-        self.outgoingViewKey = outgoingViewKey
-        self.publicAddress = publicAddress
-        self.proofAuthorizingKey = proofAuthorizingKey
-    }
-}
-
-
-extension Key: Equatable, Hashable {
-    public static func ==(lhs: Key, rhs: Key) -> Bool {
-        if lhs.spendingKey != rhs.spendingKey {
-            return false
-        }
-        if lhs.viewKey != rhs.viewKey {
-            return false
-        }
-        if lhs.incomingViewKey != rhs.incomingViewKey {
-            return false
-        }
-        if lhs.outgoingViewKey != rhs.outgoingViewKey {
-            return false
-        }
-        if lhs.publicAddress != rhs.publicAddress {
-            return false
-        }
-        if lhs.proofAuthorizingKey != rhs.proofAuthorizingKey {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(spendingKey)
-        hasher.combine(viewKey)
-        hasher.combine(incomingViewKey)
-        hasher.combine(outgoingViewKey)
-        hasher.combine(publicAddress)
-        hasher.combine(proofAuthorizingKey)
-    }
-}
-
-
-public struct FfiConverterTypeKey: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Key {
-        return
-            try Key(
-                spendingKey: FfiConverterString.read(from: &buf), 
-                viewKey: FfiConverterString.read(from: &buf), 
-                incomingViewKey: FfiConverterString.read(from: &buf), 
-                outgoingViewKey: FfiConverterString.read(from: &buf), 
-                publicAddress: FfiConverterString.read(from: &buf), 
-                proofAuthorizingKey: FfiConverterString.read(from: &buf)
-        )
-    }
-
-    public static func write(_ value: Key, into buf: inout [UInt8]) {
-        FfiConverterString.write(value.spendingKey, into: &buf)
-        FfiConverterString.write(value.viewKey, into: &buf)
-        FfiConverterString.write(value.incomingViewKey, into: &buf)
-        FfiConverterString.write(value.outgoingViewKey, into: &buf)
-        FfiConverterString.write(value.publicAddress, into: &buf)
-        FfiConverterString.write(value.proofAuthorizingKey, into: &buf)
-    }
-}
-
-
-public func FfiConverterTypeKey_lift(_ buf: RustBuffer) throws -> Key {
-    return try FfiConverterTypeKey.lift(buf)
-}
-
-public func FfiConverterTypeKey_lower(_ value: Key) -> RustBuffer {
-    return FfiConverterTypeKey.lower(value)
-}
-
-
-public struct NoteParams {
-    public var owner: Data
-    public var value: UInt64
-    public var memo: Data
-    public var assetId: Data
-    public var sender: Data
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(
-        owner: Data, 
-        value: UInt64, 
-        memo: Data, 
-        assetId: Data, 
-        sender: Data) {
-        self.owner = owner
-        self.value = value
-        self.memo = memo
-        self.assetId = assetId
-        self.sender = sender
-    }
-}
-
-
-extension NoteParams: Equatable, Hashable {
-    public static func ==(lhs: NoteParams, rhs: NoteParams) -> Bool {
-        if lhs.owner != rhs.owner {
-            return false
-        }
-        if lhs.value != rhs.value {
-            return false
-        }
-        if lhs.memo != rhs.memo {
-            return false
-        }
-        if lhs.assetId != rhs.assetId {
-            return false
-        }
-        if lhs.sender != rhs.sender {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(owner)
-        hasher.combine(value)
-        hasher.combine(memo)
-        hasher.combine(assetId)
-        hasher.combine(sender)
-    }
-}
-
-
-public struct FfiConverterTypeNoteParams: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> NoteParams {
-        return
-            try NoteParams(
-                owner: FfiConverterData.read(from: &buf), 
-                value: FfiConverterUInt64.read(from: &buf), 
-                memo: FfiConverterData.read(from: &buf), 
-                assetId: FfiConverterData.read(from: &buf), 
-                sender: FfiConverterData.read(from: &buf)
-        )
-    }
-
-    public static func write(_ value: NoteParams, into buf: inout [UInt8]) {
-        FfiConverterData.write(value.owner, into: &buf)
-        FfiConverterUInt64.write(value.value, into: &buf)
-        FfiConverterData.write(value.memo, into: &buf)
-        FfiConverterData.write(value.assetId, into: &buf)
-        FfiConverterData.write(value.sender, into: &buf)
-    }
-}
-
-
-public func FfiConverterTypeNoteParams_lift(_ buf: RustBuffer) throws -> NoteParams {
-    return try FfiConverterTypeNoteParams.lift(buf)
-}
-
-public func FfiConverterTypeNoteParams_lower(_ value: NoteParams) -> RustBuffer {
-    return FfiConverterTypeNoteParams.lower(value)
-}
-
-
-public struct SpendComponents {
-    public var note: Data
-    public var witnessRootHash: Data
-    public var witnessTreeSize: UInt64
-    public var witnessAuthPath: [WitnessNode]
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(
-        note: Data, 
-        witnessRootHash: Data, 
-        witnessTreeSize: UInt64, 
-        witnessAuthPath: [WitnessNode]) {
-        self.note = note
-        self.witnessRootHash = witnessRootHash
-        self.witnessTreeSize = witnessTreeSize
-        self.witnessAuthPath = witnessAuthPath
-    }
-}
-
-
-extension SpendComponents: Equatable, Hashable {
-    public static func ==(lhs: SpendComponents, rhs: SpendComponents) -> Bool {
-        if lhs.note != rhs.note {
-            return false
-        }
-        if lhs.witnessRootHash != rhs.witnessRootHash {
-            return false
-        }
-        if lhs.witnessTreeSize != rhs.witnessTreeSize {
-            return false
-        }
-        if lhs.witnessAuthPath != rhs.witnessAuthPath {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(note)
-        hasher.combine(witnessRootHash)
-        hasher.combine(witnessTreeSize)
-        hasher.combine(witnessAuthPath)
-    }
-}
-
-
-public struct FfiConverterTypeSpendComponents: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SpendComponents {
-        return
-            try SpendComponents(
-                note: FfiConverterData.read(from: &buf), 
-                witnessRootHash: FfiConverterData.read(from: &buf), 
-                witnessTreeSize: FfiConverterUInt64.read(from: &buf), 
-                witnessAuthPath: FfiConverterSequenceTypeWitnessNode.read(from: &buf)
-        )
-    }
-
-    public static func write(_ value: SpendComponents, into buf: inout [UInt8]) {
-        FfiConverterData.write(value.note, into: &buf)
-        FfiConverterData.write(value.witnessRootHash, into: &buf)
-        FfiConverterUInt64.write(value.witnessTreeSize, into: &buf)
-        FfiConverterSequenceTypeWitnessNode.write(value.witnessAuthPath, into: &buf)
-    }
-}
-
-
-public func FfiConverterTypeSpendComponents_lift(_ buf: RustBuffer) throws -> SpendComponents {
-    return try FfiConverterTypeSpendComponents.lift(buf)
-}
-
-public func FfiConverterTypeSpendComponents_lower(_ value: SpendComponents) -> RustBuffer {
-    return FfiConverterTypeSpendComponents.lower(value)
-}
-
-
-public struct WitnessNode {
-    public var side: String
-    public var hashOfSibling: Data
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(
-        side: String, 
-        hashOfSibling: Data) {
-        self.side = side
-        self.hashOfSibling = hashOfSibling
-    }
-}
-
-
-extension WitnessNode: Equatable, Hashable {
-    public static func ==(lhs: WitnessNode, rhs: WitnessNode) -> Bool {
-        if lhs.side != rhs.side {
-            return false
-        }
-        if lhs.hashOfSibling != rhs.hashOfSibling {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(side)
-        hasher.combine(hashOfSibling)
-    }
-}
-
-
-public struct FfiConverterTypeWitnessNode: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> WitnessNode {
-        return
-            try WitnessNode(
-                side: FfiConverterString.read(from: &buf), 
-                hashOfSibling: FfiConverterData.read(from: &buf)
-        )
-    }
-
-    public static func write(_ value: WitnessNode, into buf: inout [UInt8]) {
-        FfiConverterString.write(value.side, into: &buf)
-        FfiConverterData.write(value.hashOfSibling, into: &buf)
-    }
-}
-
-
-public func FfiConverterTypeWitnessNode_lift(_ buf: RustBuffer) throws -> WitnessNode {
-    return try FfiConverterTypeWitnessNode.lift(buf)
-}
-
-public func FfiConverterTypeWitnessNode_lower(_ value: WitnessNode) -> RustBuffer {
-    return FfiConverterTypeWitnessNode.lower(value)
 }
 
 
@@ -870,26 +562,62 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
         }
     }
 }
+private let UNIFFI_RUST_FUTURE_POLL_READY: Int8 = 0
+private let UNIFFI_RUST_FUTURE_POLL_MAYBE_READY: Int8 = 1
 
-fileprivate struct FfiConverterSequenceTypeWitnessNode: FfiConverterRustBuffer {
-    typealias SwiftType = [WitnessNode]
-
-    public static func write(_ value: [WitnessNode], into buf: inout [UInt8]) {
-        let len = Int32(value.count)
-        writeInt(&buf, len)
-        for item in value {
-            FfiConverterTypeWitnessNode.write(item, into: &buf)
+fileprivate func uniffiRustCallAsync<F, T>(
+    rustFutureFunc: () -> UnsafeMutableRawPointer,
+    pollFunc: (UnsafeMutableRawPointer, @escaping UniFfiRustFutureContinuation, UnsafeMutableRawPointer) -> (),
+    completeFunc: (UnsafeMutableRawPointer, UnsafeMutablePointer<RustCallStatus>) -> F,
+    freeFunc: (UnsafeMutableRawPointer) -> (),
+    liftFunc: (F) throws -> T,
+    errorHandler: ((RustBuffer) throws -> Error)?
+) async throws -> T {
+    // Make sure to call uniffiEnsureInitialized() since future creation doesn't have a
+    // RustCallStatus param, so doesn't use makeRustCall()
+    uniffiEnsureInitialized()
+    let rustFuture = rustFutureFunc()
+    defer {
+        freeFunc(rustFuture)
+    }
+    var pollResult: Int8;
+    repeat {
+        pollResult = await withUnsafeContinuation {
+            pollFunc(rustFuture, uniffiFutureContinuationCallback, ContinuationHolder($0).toOpaque())
         }
+    } while pollResult != UNIFFI_RUST_FUTURE_POLL_READY
+
+    return try liftFunc(makeRustCall(
+        { completeFunc(rustFuture, $0) },
+        errorHandler: errorHandler
+    ))
+}
+
+// Callback handlers for an async calls.  These are invoked by Rust when the future is ready.  They
+// lift the return value or error and resume the suspended function.
+fileprivate func uniffiFutureContinuationCallback(ptr: UnsafeMutableRawPointer, pollResult: Int8) {
+    ContinuationHolder.fromOpaque(ptr).resume(pollResult)
+}
+
+// Wraps UnsafeContinuation in a class so that we can use reference counting when passing it across
+// the FFI
+fileprivate class ContinuationHolder {
+    let continuation: UnsafeContinuation<Int8, Never>
+
+    init(_ continuation: UnsafeContinuation<Int8, Never>) {
+        self.continuation = continuation
     }
 
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [WitnessNode] {
-        let len: Int32 = try readInt(&buf)
-        var seq = [WitnessNode]()
-        seq.reserveCapacity(Int(len))
-        for _ in 0 ..< len {
-            seq.append(try FfiConverterTypeWitnessNode.read(from: &buf))
-        }
-        return seq
+    func resume(_ pollResult: Int8) {
+        self.continuation.resume(returning: pollResult)
+    }
+
+    func toOpaque() -> UnsafeMutableRawPointer {
+        return Unmanaged<ContinuationHolder>.passRetained(self).toOpaque()
+    }
+
+    static func fromOpaque(_ ptr: UnsafeRawPointer) -> ContinuationHolder {
+        return Unmanaged<ContinuationHolder>.fromOpaque(ptr).takeRetainedValue()
     }
 }
 public func connect(user: String, password: String, addrs: String) throws  -> Session {
@@ -899,15 +627,6 @@ public func connect(user: String, password: String, addrs: String) throws  -> Se
         FfiConverterString.lower(user),
         FfiConverterString.lower(password),
         FfiConverterString.lower(addrs),$0)
-}
-    )
-}
-public func testRust(num1: UInt64, num2: UInt64)  -> UInt64 {
-    return try!  FfiConverterUInt64.lift(
-        try! rustCall() {
-    uniffi_rust_lib_fn_func_test_rust(
-        FfiConverterUInt64.lower(num1),
-        FfiConverterUInt64.lower(num2),$0)
 }
     )
 }
@@ -930,16 +649,16 @@ private var initializationResult: InitializationResult {
     if (uniffi_rust_lib_checksum_func_connect() != 57044) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_func_test_rust() != 48329) {
+    if (uniffi_rust_lib_checksum_method_session_cancel() != 45725) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rust_lib_checksum_method_session_close() != 40540) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_exec() != 27906) {
+    if (uniffi_rust_lib_checksum_method_session_exec() != 51110) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_read_output() != 14871) {
+    if (uniffi_rust_lib_checksum_method_session_read_output() != 27283) {
         return InitializationResult.apiChecksumMismatch
     }
 
