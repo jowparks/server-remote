@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Logs from '../../../components/containers/logs';
 import { useVms } from '../../../contexts/vm';
 import Spin from '../../../components/general/spinner';
