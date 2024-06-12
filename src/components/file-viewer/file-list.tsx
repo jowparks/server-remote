@@ -65,7 +65,7 @@ export default function FileList({
     // Set debouncedFiles to files after a delay
     const timerId = setTimeout(() => {
       setDebouncedFiles(files || []);
-    }, 100); // Adjust delay as needed
+    }, 300); // Adjust delay as needed
 
     // Clear timeout if files changes before delay is over
     return () => {
@@ -158,10 +158,11 @@ export default function FileList({
     </ContextMenuView>
   );
 
-  if (!files || files?.length === 0) {
+  if (!files || files.length === 0) {
     if (fileLoadingComplete) {
       return <Text alignSelf="center">No Files found</Text>;
     }
+    console.log(files);
     return <Spin />;
   }
 

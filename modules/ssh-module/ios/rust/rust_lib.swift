@@ -297,6 +297,19 @@ private func uniffiCheckCallStatus(
 // Public interface members begin here.
 
 
+fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
+    typealias FfiType = UInt64
+    typealias SwiftType = UInt64
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt64 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
 fileprivate struct FfiConverterString: FfiConverter {
     typealias SwiftType = String
     typealias FfiType = RustBuffer
@@ -349,9 +362,15 @@ public protocol SessionProtocol : AnyObject {
     
     func close() throws 
     
+    func download(transferId: String, remotePath: String, localPath: String) async throws 
+    
     func exec(commandId: String, command: String) async throws  -> String
     
     func readOutput(commandId: String) async  -> String?
+    
+    func transferProgress(transferId: String) async  -> UInt64?
+    
+    func upload(transferId: String, localPath: String, remotePath: String) async throws 
     
 }
 
@@ -407,6 +426,25 @@ public class Session:
     )
 }
     }
+    public func download(transferId: String, remotePath: String, localPath: String) async throws  {
+        return try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_rust_lib_fn_method_session_download(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(transferId),
+                    FfiConverterString.lower(remotePath),
+                    FfiConverterString.lower(localPath)
+                )
+            },
+            pollFunc: ffi_rust_lib_rust_future_poll_void,
+            completeFunc: ffi_rust_lib_rust_future_complete_void,
+            freeFunc: ffi_rust_lib_rust_future_free_void,
+            liftFunc: { $0 },
+            errorHandler: FfiConverterTypeEnumError.lift
+        )
+    }
+
+    
     public func exec(commandId: String, command: String) async throws  -> String {
         return try  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -439,6 +477,43 @@ public class Session:
             liftFunc: FfiConverterOptionString.lift,
             errorHandler: nil
             
+        )
+    }
+
+    
+    public func transferProgress(transferId: String) async  -> UInt64? {
+        return try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_rust_lib_fn_method_session_transfer_progress(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(transferId)
+                )
+            },
+            pollFunc: ffi_rust_lib_rust_future_poll_rust_buffer,
+            completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
+            freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionUInt64.lift,
+            errorHandler: nil
+            
+        )
+    }
+
+    
+    public func upload(transferId: String, localPath: String, remotePath: String) async throws  {
+        return try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_rust_lib_fn_method_session_upload(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(transferId),
+                    FfiConverterString.lower(localPath),
+                    FfiConverterString.lower(remotePath)
+                )
+            },
+            pollFunc: ffi_rust_lib_rust_future_poll_void,
+            completeFunc: ffi_rust_lib_rust_future_complete_void,
+            freeFunc: ffi_rust_lib_rust_future_free_void,
+            liftFunc: { $0 },
+            errorHandler: FfiConverterTypeEnumError.lift
         )
     }
 
@@ -541,6 +616,27 @@ public struct FfiConverterTypeEnumError: FfiConverterRustBuffer {
 extension EnumError: Equatable, Hashable {}
 
 extension EnumError: Error { }
+
+fileprivate struct FfiConverterOptionUInt64: FfiConverterRustBuffer {
+    typealias SwiftType = UInt64?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterUInt64.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterUInt64.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
 
 fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
     typealias SwiftType = String?
@@ -655,10 +751,19 @@ private var initializationResult: InitializationResult {
     if (uniffi_rust_lib_checksum_method_session_close() != 40540) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rust_lib_checksum_method_session_download() != 19901) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rust_lib_checksum_method_session_exec() != 51110) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rust_lib_checksum_method_session_read_output() != 27283) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rust_lib_checksum_method_session_transfer_progress() != 53521) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rust_lib_checksum_method_session_upload() != 64752) {
         return InitializationResult.apiChecksumMismatch
     }
 

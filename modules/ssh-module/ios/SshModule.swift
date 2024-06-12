@@ -76,6 +76,43 @@ public class SshModule: Module {
           try await session.cancel(commandId: commandId)
           return "0"
       }
+      
+      AsyncFunction("download") { (transferId: String, remotePath: String, localPath: String) async throws -> String in
+          guard let session = self.session else {
+              throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
+          }
+          do {
+              print("trying download")
+              print(transferId, remotePath, localPath)
+              try await session.download(transferId: transferId, remotePath: remotePath, localPath: localPath)
+              print("success")
+          } catch {
+              print("download error: "+String(describing: error))
+          }
+          return "0"
+      }
+
+      AsyncFunction("upload") { (transferId: String, localPath: String, remotePath: String) async throws -> String in
+          guard let session = self.session else {
+              throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
+          }
+          do {
+              print("trying upload")
+              print(transferId, remotePath, localPath)
+              try await session.upload(transferId: transferId, localPath: localPath, remotePath: remotePath)
+              print("success")
+          } catch {
+              print("upload error: "+String(describing: error))
+          }
+          return "0"
+      }
+      
+      AsyncFunction("transferProgress") { (transferId: String) async throws -> UInt64? in
+          guard let session = self.session else {
+              throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
+          }
+          return await session.transferProgress(transferId: transferId)
+      }
 
   }
 }

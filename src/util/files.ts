@@ -85,7 +85,6 @@ export function findPaths(
   signal: AbortSignal | null = null,
   grep: string | null = null,
 ): Promise<void> {
-  // TODO: handle abort more elegantly, should probably close ssh channel
   return new Promise((resolve) => {
     const cmd = fileCommand(path, findAll, grep);
     console.log('finding paths:', cmd);
@@ -101,10 +100,6 @@ export function findPaths(
           return;
         }
         handleData(data);
-      },
-      onError: (error) => {
-        console.log('Error finding paths:', error);
-        resolve();
       },
       onComplete: () => {
         if (!signal || !signal.aborted) {

@@ -6,7 +6,15 @@ import React, {
   ReactNode,
 } from 'react';
 import { Server } from '../typing/server';
-import { ExecParams, cancel, connect, exec } from '../../modules/ssh-module';
+import {
+  ExecParams,
+  cancel,
+  connect,
+  download,
+  transferProgress,
+  exec,
+  upload,
+} from '../../modules/ssh-module';
 import uuid from 'react-native-uuid';
 
 export type SSHClient = {
@@ -16,11 +24,20 @@ export type SSHClient = {
   execAsync: (params: ExecParams) => Promise<string>;
   // cancel a command based on its commandId
   cancel: (commandId: string) => void;
-  sftpDownload: (
+  // download a file from the server
+  download: (
+    transferId: string,
     remotePath: string,
     localPath: string,
-    onError: (error) => void,
-  ) => Promise<void>;
+  ) => Promise<string>;
+  // upload a file to the server
+  upload: (
+    transferId: string,
+    localPath: string,
+    remotePath: string,
+  ) => Promise<string>;
+  // get the progress of a download
+  transferProgress: (transferId: string) => Promise<number>;
 };
 
 // Create the context
@@ -56,8 +73,10 @@ export function SshProvider({ children }: { children: ReactNode }) {
           const sshClient: SSHClient = {
             exec: execInner,
             execAsync: execInnerAsync,
-            cancel: cancel,
-            sftpDownload: async (remotePath, localPath, onError) => {},
+            cancel,
+            download,
+            upload,
+            transferProgress,
           };
           setSshClient(sshClient);
         })();
@@ -77,15 +96,15 @@ export function SshProvider({ children }: { children: ReactNode }) {
     }
     let response = '';
     const commandId = uuid.v4() as string;
-    return new Promise<string>(async (resolve, reject) => {
+    return new Promise<string>(async (resolve) => {
       await exec({
         command,
         commandId,
         onData: (data) => {
           response += data;
         },
-        onError: (error) => {
-          reject(error);
+        onComplete: () => {
+          resolve(response);
         },
       });
       resolve(response);

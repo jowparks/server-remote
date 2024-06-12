@@ -48,15 +48,13 @@ export type ExecParams = {
   command: string;
   commandId: string;
   onData: (data: string) => void;
-  onError?: (errorCode: string) => void;
-  onComplete?: () => void;
+  onComplete?: (returnCode: string) => void;
 };
 
 export async function exec({
   command,
   commandId,
   onData,
-  onError,
   onComplete,
 }: ExecParams): Promise<string> {
   let completed = false;
@@ -76,17 +74,33 @@ export async function exec({
   while (!completed) {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  if (returnCode !== '0') {
-    onError ? onError(returnCode) : null;
-  } else {
-    onComplete ? onComplete() : null;
-  }
+  onComplete ? onComplete(returnCode) : null;
   subscription.remove();
   return returnCode;
 }
 
 export function cancel(commandId: string): void {
   SshModule.cancel(commandId);
+}
+
+export async function download(
+  transferId: string,
+  remotePath: string,
+  localPath: string,
+): Promise<string> {
+  return SshModule.download(transferId, remotePath, localPath);
+}
+
+export async function upload(
+  transferId: string,
+  localPath: string,
+  remotePath: string,
+): Promise<string> {
+  return SshModule.upload(transferId, localPath, remotePath);
+}
+
+export async function transferProgress(transferId: string): Promise<number> {
+  return SshModule.transferProgress(transferId);
 }
 
 export { ChangeEventPayload };

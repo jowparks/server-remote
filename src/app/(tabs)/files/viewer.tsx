@@ -14,6 +14,7 @@ import { useHeader } from '../../../contexts/header';
 import TabWrapper from '../../../components/nav/tabs';
 import SearchBar from '../../../components/general/search-bar';
 import { useFocusedEffect } from '../../../util/focused-effect';
+import uuid from 'react-native-uuid';
 
 const FolderViewer = () => {
   const router = useRouter();
@@ -58,6 +59,7 @@ const FolderViewer = () => {
     zeroLength && setSearchTab('This Folder');
     setTabsEnabled(!zeroLength);
     if (zeroLength) return;
+    if (searchInput.length < 3) return;
 
     const abortController = new AbortController();
 
@@ -209,19 +211,22 @@ const FolderViewer = () => {
       presentationStyle: 'pageSheet',
     });
     if (!directory?.uri) return;
-    const targetPath = decodeURI(directory.uri.replace('file://', ''));
+    const targetPath =
+      decodeURI(directory.uri.replace('file://', '')) + item.fileName;
     const originatingFile = `${path}/${item.fileName}`;
     console.log(`Downloading from: ${originatingFile} to ${targetPath}`);
     // sshClient.sftpLs(path);
-    try {
-      await sshClient.sftpDownload(originatingFile, targetPath, (error) => {
-        if (error) {
-          throw error;
-        }
-      });
-    } catch (error) {
-      setDownloadError(true);
-    }
+    const downloadId = uuid.v4() as string;
+    await sshClient.download(downloadId, originatingFile, targetPath);
+    console.log('Download started: ', item.size);
+    // set interval to check download progress
+    // const interval = setInterval(async () => {
+    //   const progress = await sshClient.downloadProgress(downloadId);
+    //   console.log('Download progress:', progress);
+    //   if (progress >= Number(item.size)) {
+    //     clearInterval(interval);
+    //   }
+    // }, 1000);
   };
 
   const handleDelete = async (item: FileInfo | null) => {

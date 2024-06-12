@@ -59,9 +59,15 @@ void* _Nonnull uniffi_rust_lib_fn_method_session_cancel(void*_Nonnull ptr, RustB
 );
 void uniffi_rust_lib_fn_method_session_close(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );
+void* _Nonnull uniffi_rust_lib_fn_method_session_download(void*_Nonnull ptr, RustBuffer transfer_id, RustBuffer remote_path, RustBuffer local_path
+);
 void* _Nonnull uniffi_rust_lib_fn_method_session_exec(void*_Nonnull ptr, RustBuffer command_id, RustBuffer command
 );
 void* _Nonnull uniffi_rust_lib_fn_method_session_read_output(void*_Nonnull ptr, RustBuffer command_id
+);
+void* _Nonnull uniffi_rust_lib_fn_method_session_transfer_progress(void*_Nonnull ptr, RustBuffer transfer_id
+);
+void* _Nonnull uniffi_rust_lib_fn_method_session_upload(void*_Nonnull ptr, RustBuffer transfer_id, RustBuffer local_path, RustBuffer remote_path
 );
 void*_Nonnull uniffi_rust_lib_fn_func_connect(RustBuffer user, RustBuffer password, RustBuffer addrs, RustCallStatus *_Nonnull out_status
 );
@@ -186,10 +192,19 @@ uint16_t uniffi_rust_lib_checksum_method_session_cancel(void
 uint16_t uniffi_rust_lib_checksum_method_session_close(void
     
 );
+uint16_t uniffi_rust_lib_checksum_method_session_download(void
+    
+);
 uint16_t uniffi_rust_lib_checksum_method_session_exec(void
     
 );
 uint16_t uniffi_rust_lib_checksum_method_session_read_output(void
+    
+);
+uint16_t uniffi_rust_lib_checksum_method_session_transfer_progress(void
+    
+);
+uint16_t uniffi_rust_lib_checksum_method_session_upload(void
     
 );
 uint32_t ffi_rust_lib_uniffi_contract_version(void
