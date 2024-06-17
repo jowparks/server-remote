@@ -17,6 +17,7 @@ export interface FileInfo {
   owner: string;
   group: string;
   size: string;
+  bytes: number;
   lastAccessDate: string;
   lastModified: string;
   filePath: string;
@@ -45,13 +46,15 @@ export function parseFileInfo(
   searchString: string,
 ): FileInfo | null {
   const parts = line.split(',');
+  const bytes = parseInt(parts[3]);
   try {
     return {
       permissions: parts[0],
       numHardLinks: parseInt(parts[1]),
       owner: parts[2].split('.')[0],
       group: parts[2].split('.')[1],
-      size: formatBytes(parseInt(parts[3])),
+      size: formatBytes(bytes),
+      bytes,
       lastAccessDate: parts[4].split('.')[0],
       lastModified: parts[5].split('.')[0],
       filePath: parts[6],

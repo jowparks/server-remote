@@ -5,6 +5,7 @@ import { StyleSheet } from 'react-native';
 import DrawerButton from '../../../components/header/drawer-button';
 import HeaderBack from '../../../components/header/header-back';
 import FilesViewerNav from '../../../components/nav/file-viewer-nav';
+import { TransfersDisplay } from '../../../components/nav/transfers';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -27,6 +28,7 @@ function FilesLayoutNav() {
           },
           title: 'Files',
           headerLeft: () => <DrawerButton />,
+          headerRight: () => <TransfersDisplay />,
         }}
       />
       <Stack.Screen
@@ -40,7 +42,7 @@ function FilesLayoutNav() {
           headerBackTitleVisible: false,
           title: 'Files',
           headerLeft: () => <HeaderBack />,
-          headerRight: FilesViewerNav,
+          headerRight: () => <FilesViewerNav />,
         }}
       />
     </Stack>

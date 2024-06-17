@@ -197,20 +197,25 @@ impl Session {
             }
 
             // Create a buffer for the data
-            let mut buffer = [0; 100000];
             let mut local_file = LocalFile::create(local_path).await?;
             let metadata = file.metadata().await?;
             let file_size = metadata.size.unwrap_or(0);
             let mut total_bytes = 0u64;
+
+            // Determine buffer size based on file size, with a minimum of 1MB and a maximum of 100MB
+            let buffer_size = if file_size < 1_000_000 {
+                100_000
+            } else {
+                std::cmp::min(file_size as usize / 10, 100_000_000)
+            };
+            let mut buffer = vec![0; buffer_size];
             // TODO: make this read min(buffer.len(), bytes_left) instead of just buffer.len()
-            println!("RUST: Download starting loop");
             loop {
                 // Read data from the remote file
                 let bytes_left = file_size - total_bytes;
                 let read_size = std::cmp::min(buffer.len(), bytes_left as usize);
 
                 let bytes_read = file.read(&mut buffer[..read_size]).await?;
-                println!("RUST: Downloading {} bytes", bytes_read);
                 // // If no bytes were read, the file is done
                 if bytes_read == 0 {
                     break;

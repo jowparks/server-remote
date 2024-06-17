@@ -24,13 +24,14 @@ export default function PathsView() {
   } = useFiles();
   const router = useRouter();
   useEffect(() => {
-    if (recentFiles.length === 0) {
+    if (recentFiles.filter((file) => file.filePath === '/').length === 0) {
       const mockFileInfo: FileInfo = {
         permissions: 'rw-r--r--',
         numHardLinks: 0,
         owner: 'root',
         group: 'group',
         size: '1024',
+        bytes: 1024,
         lastAccessDate: '2022-01-01T00:00:00Z',
         lastModified: '2022-01-01T00:00:00Z',
         filePath: '/',

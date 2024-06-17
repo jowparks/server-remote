@@ -1118,7 +1118,7 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
-  - RNSVG (14.1.0):
+  - RNSVG (14.2.0):
     - React-Core
   - SocketRocket (0.6.1)
   - SPAlert (4.2.0)
@@ -1431,7 +1431,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: 727b656d5a3fa247aac2c8cc70b8757356066451
   RNReanimated: a954c5b84dc88431f80e1d00f612f13d38e1b5d6
   RNScreens: 77fc79e66b726ee45b091486b348418ee1d792ab
-  RNSVG: ba3e7232f45e34b7b47e74472386cf4e1a676d0a
+  RNSVG: 963a95f1f5d512a13d11ffd50d351c87fb5c6890
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   SPAlert: 735da1f16a887e294719217572ce1f936d8c8782
   SPIndicator: 93e0a4fb23de51294ac48e874c0f081a5e293e4f

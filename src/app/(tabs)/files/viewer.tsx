@@ -15,6 +15,18 @@ import TabWrapper from '../../../components/nav/tabs';
 import SearchBar from '../../../components/general/search-bar';
 import { useFocusedEffect } from '../../../util/focused-effect';
 import uuid from 'react-native-uuid';
+import { useTransfers } from '../../../contexts/transfers';
+
+// TODO
+// Recursive folder download
+// Share sheet
+// SSH prompt
+// Download/resync partial preexisting
+// Unarchive
+// On click file, provide option for file info, Dowload, share
+// Copy/move open new file viewer in modal that allows picking folder
+// Check key extractor of flat list to make sure file rendering is optimized
+// Network discovery
 
 const FolderViewer = () => {
   const router = useRouter();
@@ -22,6 +34,7 @@ const FolderViewer = () => {
   const navigation = useNavigation();
   const { sshClient } = useSsh();
   const { pasteLocation } = useHeader();
+  const { addTransfer } = useTransfers();
   const {
     selectedFile,
     cachedFile,
@@ -215,18 +228,20 @@ const FolderViewer = () => {
       decodeURI(directory.uri.replace('file://', '')) + item.fileName;
     const originatingFile = `${path}/${item.fileName}`;
     console.log(`Downloading from: ${originatingFile} to ${targetPath}`);
+
     // sshClient.sftpLs(path);
     const downloadId = uuid.v4() as string;
-    await sshClient.download(downloadId, originatingFile, targetPath);
     console.log('Download started: ', item.size);
+    addTransfer({
+      id: downloadId,
+      filename: item.fileName,
+      sourcePath: originatingFile,
+      destPath: targetPath,
+      totalBytes: item.bytes,
+      transferredBytes: 0,
+    });
+    await sshClient.download(downloadId, originatingFile, targetPath);
     // set interval to check download progress
-    // const interval = setInterval(async () => {
-    //   const progress = await sshClient.downloadProgress(downloadId);
-    //   console.log('Download progress:', progress);
-    //   if (progress >= Number(item.size)) {
-    //     clearInterval(interval);
-    //   }
-    // }, 1000);
   };
 
   const handleDelete = async (item: FileInfo | null) => {
