@@ -9,7 +9,6 @@ import { useSsh } from '../contexts/ssh';
 import { Server, hostname } from '../typing/server';
 import { useFiles } from '../contexts/files';
 import Alert from '../components/general/alert';
-import { testRust } from '../../modules/ssh-module';
 
 export default function ServerSelectScreen() {
   const { sshServer, setSshServer } = useSsh();
@@ -17,8 +16,6 @@ export default function ServerSelectScreen() {
   const [servers, setServers] = useState<Server[]>([]);
   const [serverModalOpen, setServerModalOpen] = useState(false);
   const [deleteServer, setDeleteServer] = useState<Server | null>(null);
-  console.log(testRust(1, 1));
-
   useEffect(() => {
     // Load servers from AsyncStorage
     getItem(StorageKeys.servers).then((data) => {

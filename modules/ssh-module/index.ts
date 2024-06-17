@@ -1,0 +1,106 @@
+import { EventEmitter, Subscription } from 'expo-modules-core';
+
+// Import the native module. On web, it will be resolved to SshModule.web.ts
+// and on native platforms to SshModule.ts
+import SshModule from './src/SshModule';
+import { ChangeEventPayload } from './src/SshModule.types';
+
+// Get the native constant value.
+export const PI = SshModule.PI;
+
+export function hello(): string {
+  return SshModule.hello();
+}
+
+export async function setValueAsync(value: string) {
+  return await SshModule.setValueAsync(value);
+}
+
+const emitter = new EventEmitter(SshModule);
+
+export function addChangeListener(
+  listener: (event: ChangeEventPayload) => void,
+): Subscription {
+  return emitter.addListener<ChangeEventPayload>('onChange', listener);
+}
+
+export type ExecEventPayload = {
+  [key: string]: string;
+};
+
+export function addExecListener(
+  listener: (event: ExecEventPayload) => void,
+): Subscription {
+  return emitter.addListener<ExecEventPayload>('exec', listener);
+}
+
+export async function connect(
+  user: string,
+  password: string,
+  addrs: string,
+): Promise<void> {
+  await SshModule.connect(user, password, addrs)
+    .then(() => console.log('Connected successfully'))
+    .catch((err) => console.error('Error using SshModule.connect:', err));
+}
+
+export type ExecParams = {
+  command: string;
+  commandId: string;
+  onData: (data: string) => void;
+  onComplete?: (returnCode: string) => void;
+};
+
+export async function exec({
+  command,
+  commandId,
+  onData,
+  onComplete,
+}: ExecParams): Promise<string> {
+  let completed = false;
+  const listener = (event: { [key: string]: string }) => {
+    if (event['commandId'] === commandId) {
+      if (event['data'] === 'eventingComplete') {
+        completed = true;
+      } else {
+        onData(event['data']);
+      }
+    }
+  };
+
+  const subscription = addExecListener(listener);
+
+  const returnCode = await SshModule.exec(commandId, command);
+  while (!completed) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  onComplete ? onComplete(returnCode) : null;
+  subscription.remove();
+  return returnCode;
+}
+
+export function cancel(commandId: string): void {
+  SshModule.cancel(commandId);
+}
+
+export async function download(
+  transferId: string,
+  remotePath: string,
+  localPath: string,
+): Promise<string> {
+  return SshModule.download(transferId, remotePath, localPath);
+}
+
+export async function upload(
+  transferId: string,
+  localPath: string,
+  remotePath: string,
+): Promise<string> {
+  return SshModule.upload(transferId, localPath, remotePath);
+}
+
+export async function transferProgress(transferId: string): Promise<number> {
+  return SshModule.transferProgress(transferId);
+}
+
+export { ChangeEventPayload };

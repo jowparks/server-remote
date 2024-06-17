@@ -1,4 +1,3 @@
-import SSHClient from '@jowparks/react-native-ssh-sftp';
 import React, {
   createContext,
   useState,
@@ -7,6 +6,39 @@ import React, {
   ReactNode,
 } from 'react';
 import { Server } from '../typing/server';
+import {
+  ExecParams,
+  cancel,
+  connect,
+  download,
+  transferProgress,
+  exec,
+  upload,
+} from '../../modules/ssh-module';
+import uuid from 'react-native-uuid';
+
+export type SSHClient = {
+  // waits until command is done, returns all of response
+  exec: (command: string) => Promise<string>;
+  // uses onData, onError, onComplete to handle response as it comes in
+  execAsync: (params: ExecParams) => Promise<string>;
+  // cancel a command based on its commandId
+  cancel: (commandId: string) => void;
+  // download a file from the server
+  download: (
+    transferId: string,
+    remotePath: string,
+    localPath: string,
+  ) => Promise<string>;
+  // upload a file to the server
+  upload: (
+    transferId: string,
+    localPath: string,
+    remotePath: string,
+  ) => Promise<string>;
+  // get the progress of a download
+  transferProgress: (transferId: string) => Promise<number>;
+};
 
 // Create the context
 interface SshContextValue {
@@ -22,76 +54,78 @@ const SshContext = createContext<SshContextValue>({
 
 // Create the provider component
 export function SshProvider({ children }: { children: ReactNode }) {
+  const [sshClient, setSshClient] = useState<SSHClient | null>(null);
   const [server, setSshServer] = useState<Server | null>(null);
-  const [sshClient, setSSHClient] = useState<SSHClient | null>(null);
 
   useEffect(() => {
-    let client: SSHClient | null = null;
     if (!server || (!server.password && !server.key)) {
       return;
     }
     const connectToServer = async () => {
-      if (server && server.password) {
-        client = await SSHClient.connectWithPassword(
-          server.host,
-          server.port,
-          server.user,
-          server.password,
-          (err, _) => {
-            if (err) {
-              console.log(`Fail: ${JSON.stringify(err)}`);
-            }
-          },
-        );
+      setSshClient(null);
+      if (server && !!server.password) {
+        (async () => {
+          await connect(
+            server.user,
+            server.password ?? '',
+            `${server.host}:${server.port}`,
+          );
+          const sshClient: SSHClient = {
+            exec: execInner,
+            execAsync: execInnerAsync,
+            cancel,
+            download,
+            upload,
+            transferProgress,
+          };
+          setSshClient(sshClient);
+        })();
       }
       if (server && server.key) {
-        client = await SSHClient.connectWithKey(
-          server.host,
-          server.port,
-          server.user,
-          server.key,
-          server.publicKey,
-          server.keyPassphrase,
-          (err, _) => {
-            if (err) {
-              console.log('Fail: ' + err.message);
-            } else {
-              console.log('Success');
-            }
-          },
-        );
+        //
       }
-      if (!client) {
-        throw new Error('Failed to connect to server');
-      }
-      // Used for reconnecting on any error
-      // const sshClientProxy = new Proxy(client, {
-      //   get: function (target, prop, receiver) {
-      //     if (typeof target[prop] === 'function') {
-      //       return async function (...args) {
-      //         try {
-      //           return await target[prop].apply(target, args);
-      //         } catch (error) {
-      //           console.error('Error executing command, reconnecting...');
-      //           // Reconnect using the appropriate method
-      //           await connectToServer();
-      //           // Retry the command
-      //           return await target[prop].apply(target, args);
-      //         }
-      //       };
-      //     } else {
-      //       return target[prop];
-      //     }
-      //   },
-      // });
-      setSSHClient(client);
     };
 
     connectToServer();
   }, [server]);
 
+  // TODO make this cancellable too, cleanup this interface relative to SshModule
+  const execInner = async (command: string) => {
+    if (!server) {
+      throw new Error('Not connected to a server');
+    }
+    let response = '';
+    const commandId = uuid.v4() as string;
+    return new Promise<string>(async (resolve) => {
+      await exec({
+        command,
+        commandId,
+        onData: (data) => {
+          response += data;
+        },
+        onComplete: () => {
+          resolve(response);
+        },
+      });
+      resolve(response);
+    });
+  };
+
+  const execInnerAsync = async (params: ExecParams) => {
+    if (!server) {
+      throw new Error('Not connected to a server');
+    }
+    return exec(params);
+  };
+
   return (
-    <SshContext.Provider value={{ sshServer: server, setSshServer, sshClient }}>
+    <SshContext.Provider
+      value={{
+        sshServer: server,
+        setSshServer,
+        sshClient,
+      }}
+    >
       {children}
     </SshContext.Provider>
   );

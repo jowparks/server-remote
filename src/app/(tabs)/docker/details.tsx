@@ -6,6 +6,7 @@ import { useSsh } from '../../../contexts/ssh';
 import { DockerContainer, DockerInspectCommand } from '../../../typing/docker';
 import Spin from '../../../components/general/spinner';
 import { RefreshControl } from 'react-native';
+import { useFocusedEffect } from '../../../util/focused-effect';
 
 export default function JsonScreen() {
   const { currentContainerId } = useDocker();
@@ -15,10 +16,10 @@ export default function JsonScreen() {
   const [container, setContainer] = React.useState<DockerContainer | null>(
     null,
   );
-  useEffect(() => {
+  useFocusedEffect(() => {
     const inspect = async () => {
       if (!sshClient || !currentContainerId) return;
-      const response = await sshClient.execute(
+      const response = await sshClient.exec(
         DockerInspectCommand(currentContainerId),
       );
       try {

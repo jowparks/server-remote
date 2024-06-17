@@ -11,6 +11,9 @@ import { useSsh } from '../../contexts/ssh';
 import DocumentPicker from 'react-native-document-picker';
 import { NativeSyntheticEvent } from 'react-native';
 import Alert from '../general/alert';
+import uuid from 'react-native-uuid';
+import { XStack } from 'tamagui';
+import { TransfersDisplay } from './transfers';
 
 enum NavOptions {
   Paste = 'Paste',
@@ -71,22 +74,10 @@ export default function FileViewerNav() {
       });
       if (!file?.uri) return;
       const uploadFile = decodeURI(file.uri.replace('file://', ''));
-      console.log(`Upload from: ${uploadFile} to ${currentFolder.filePath}`);
-      try {
-        await sshClient.sftpUpload(
-          uploadFile,
-          currentFolder.filePath,
-          (error, response) => {
-            if (error) {
-              throw error;
-            } else {
-              console.log('Upload successful: ', response);
-            }
-          },
-        );
-      } catch (error) {
-        setUploadError(true);
-      }
+      const destinationFile = `${currentFolder.filePath}/${file.name}`;
+      console.log(`Upload from: ${uploadFile} to ${destinationFile}`);
+      const id = uuid.v4() as string;
+      await sshClient.upload(id, uploadFile, destinationFile);
     };
     upload();
   }
@@ -124,25 +115,28 @@ export default function FileViewerNav() {
   }
 
   return (
-    <ContextMenuView
-      actions={actions}
-      dropdownMenuMode={true}
-      onPress={handleContextMenuEvent}
-      previewBackgroundColor="transparent"
-    >
-      <TransparentButton>
-        <MoreHorizontal />
-      </TransparentButton>
-      {!!uploadError && (
-        <Alert
-          title="Upload failed"
-          description={`Currently upload only works on files less than 5MB, we are working on fixing that!`}
-          open={uploadError}
-          onOk={() => {
-            setUploadError(false);
-          }}
-        />
-      )}
-    </ContextMenuView>
+    <XStack alignItems="center">
+      <TransfersDisplay />
+      <ContextMenuView
+        actions={actions}
+        dropdownMenuMode={true}
+        onPress={handleContextMenuEvent}
+        previewBackgroundColor="transparent"
+      >
+        <TransparentButton>
+          <MoreHorizontal />
+        </TransparentButton>
+        {!!uploadError && (
+          <Alert
+            title="Upload failed"
+            description={`Currently upload only works on files less than 5MB, we are working on fixing that!`}
+            open={uploadError}
+            onOk={() => {
+              setUploadError(false);
+            }}
+          />
+        )}
+      </ContextMenuView>
+    </XStack>
   );
 }

@@ -3,6 +3,7 @@ import { ScrollView, View, Text, Spacer } from 'tamagui';
 import { useVms } from '../../../contexts/vm';
 import JsonViewer from '../../../components/containers/json';
 import { RefreshControl } from 'react-native';
+import { useFocusedEffect } from '../../../util/focused-effect';
 
 export default function JsonScreen() {
   const { currentVmName, vms, retrieveVms } = useVms();
@@ -10,7 +11,7 @@ export default function JsonScreen() {
   const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
   let vm = vms.find((c) => c.domain.name[0] === currentVmName);
 
-  useEffect(() => {
+  useFocusedEffect(() => {
     (async () => {
       await retrieveVms();
       setRefreshing(false);

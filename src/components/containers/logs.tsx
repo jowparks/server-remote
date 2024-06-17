@@ -2,11 +2,13 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSsh } from '../../contexts/ssh';
 import { View, Text } from 'tamagui';
 import { ScrollView } from 'react-native';
+import uuid from 'react-native-uuid';
 
 export type LogsProps = {
   command: string;
   refreshCommand?: string;
 };
+// TODO handle rendering only the number of lines visible on page
 
 export default function Logs({ command, refreshCommand }: LogsProps) {
   const { sshClient } = useSsh();
@@ -17,34 +19,40 @@ export default function Logs({ command, refreshCommand }: LogsProps) {
   useEffect(() => {
     async function fetchLogs() {
       if (!sshClient) return;
-      const response = await sshClient.execute(command);
-      setLogs(response);
-      console.log(response);
+      const commandId = uuid.v4() as string;
+      await sshClient.execAsync({
+        command,
+        commandId,
+        onData: (data) => {
+          setLogs((prevLogs) => prevLogs + data);
+        },
+      });
     }
 
-    fetchLogs();
-  }, []);
-
-  useEffect(() => {
-    const fetchLogs = async () => {
+    const refreshLogs = async () => {
       if (!sshClient) return;
       if (refreshCommand) {
-        const response = await sshClient.execute(refreshCommand);
+        const response = await sshClient.exec(refreshCommand);
         setLogs((prevLogs) => prevLogs + response);
       } else {
-        const response = await sshClient.execute(command);
+        const response = await sshClient.exec(command);
         setLogs(response);
       }
     };
 
-    const intervalId = setInterval(fetchLogs, 2000);
+    let intervalId;
+    async function init() {
+      await fetchLogs();
+      intervalId = setInterval(refreshLogs, 2000);
+    }
+    init();
 
-    return () => clearInterval(intervalId); // cleanup on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
     if (isAtEnd) {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
+      scrollViewRef.current?.scrollToEnd({ animated: false });
     }
   }, [logs]);
 
@@ -62,7 +70,7 @@ export default function Logs({ command, refreshCommand }: LogsProps) {
           flexGrow: 1,
         }}
         onScroll={handleScroll}
-        scrollEventThrottle={400}
+        // scrollEventThrottle={400}
       >
         <Text color={'white'} selectable>
           {logs}

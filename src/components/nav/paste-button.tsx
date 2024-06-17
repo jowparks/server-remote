@@ -3,7 +3,7 @@ import { Button } from 'tamagui';
 import { useFiles } from '../../contexts/files';
 import React from 'react';
 import { useHeader } from '../../contexts/header';
-import TransparentButton from '../transparent-button';
+import TransparentButton from '../general/transparent-button';
 
 export function PasteButton() {
   const { cachedFile, currentFolder } = useFiles();

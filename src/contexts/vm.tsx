@@ -25,12 +25,12 @@ export function VmProvider({ children }: { children: ReactNode }) {
 
   const retrieveVms = async () => {
     if (!sshClient) return;
-    const response = await sshClient.execute('virsh list --all --name');
+    const response = await sshClient.exec('virsh list --all --name');
     const names = response?.split('\n').filter(Boolean);
     if (!names) return;
     const vmXMLStrings = await Promise.all(
       names.map((name) => {
-        return sshClient.execute(`virsh dumpxml "${name}"`);
+        return sshClient.exec(`virsh dumpxml "${name}"`);
       }),
     );
     const vmXMLs = await Promise.all(
@@ -40,14 +40,14 @@ export function VmProvider({ children }: { children: ReactNode }) {
     );
     const states = await Promise.all(
       names.map(async (name) => {
-        const state = await sshClient.execute(`virsh domstate "${name}"`);
+        const state = await sshClient.exec(`virsh domstate "${name}"`);
         return {
           name: name,
           state: state.trim(),
         };
       }),
     );
-    const vms: VirshVm[] = vmXMLs.map((vm) => {
+    const vms: VirshVm[] = vmXMLs.filter(Boolean).map((vm) => {
       const stateObj = states.find((state) => state.name === vm.domain.name[0]);
       return { ...vm, state: stateObj?.state || '' };
     });

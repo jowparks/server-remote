@@ -1,6 +1,5 @@
 import { Bookmark, BookmarkCheck } from '@tamagui/lucide-icons';
 import React, { useEffect, useState } from 'react';
-import { Button } from 'tamagui';
 import { useFiles } from '../../contexts/files';
 import TransparentButton from '../general/transparent-button';
 

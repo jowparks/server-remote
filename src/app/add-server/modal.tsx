@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Sheet, XStack, Text, View, YStack, Spacer } from 'tamagui';
-import SSHClient from '@jowparks/react-native-ssh-sftp';
 import LabeledInput from '../../components/general/labeled-input';
 import { Server } from '../../typing/server';
 import { DarkBlueTheme } from '../../style/theme';
@@ -50,36 +49,37 @@ export default function ServerModal({
 
     const connectionPromise = new Promise(async (resolve, reject) => {
       if (serverDetails.password) {
-        await SSHClient.connectWithPassword(
-          serverDetails.host,
-          serverDetails.port,
-          serverDetails.user,
-          serverDetails.password,
-          (err, _) => {
-            if (err) {
-              reject('Fail: ' + err);
-            } else {
-              setTestResult('Success');
-            }
-          },
-        );
+        // co
+        // await SSHClient.connectWithPassword(
+        //   serverDetails.host,
+        //   serverDetails.port,
+        //   serverDetails.user,
+        //   serverDetails.password,
+        //   (err, _) => {
+        //     if (err) {
+        //       reject('Fail: ' + err);
+        //     } else {
+        //       setTestResult('Success');
+        //     }
+        //   },
+        // );
       }
       if (serverDetails.key) {
-        await SSHClient.connectWithKey(
-          serverDetails.host,
-          serverDetails.port,
-          serverDetails.user,
-          serverDetails.key,
-          serverDetails.publicKey,
-          serverDetails.keyPassphrase,
-          (err, _) => {
-            if (err) {
-              reject('Fail: ' + err);
-            } else {
-              setTestResult('Success');
-            }
-          },
-        );
+        // await SSHClient.connectWithKey(
+        //   serverDetails.host,
+        //   serverDetails.port,
+        //   serverDetails.user,
+        //   serverDetails.key,
+        //   serverDetails.publicKey,
+        //   serverDetails.keyPassphrase,
+        //   (err, _) => {
+        //     if (err) {
+        //       reject('Fail: ' + err);
+        //     } else {
+        //       setTestResult('Success');
+        //     }
+        //   },
+        // );
       }
     });
 
