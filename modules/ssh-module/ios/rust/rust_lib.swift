@@ -362,15 +362,13 @@ public protocol SessionProtocol : AnyObject {
     
     func close() throws 
     
-    func download(transferId: String, remotePath: String, localPath: String) async throws 
-    
     func exec(commandId: String, command: String) async throws  -> String
     
     func readOutput(commandId: String) async  -> String?
     
-    func transferProgress(transferId: String) async  -> UInt64?
+    func transfer(transferId: String, sourcePath: String, destinationPath: String, direction: String) async throws 
     
-    func upload(transferId: String, localPath: String, remotePath: String) async throws 
+    func transferProgress(transferId: String) async  -> UInt64?
     
 }
 
@@ -426,25 +424,6 @@ public class Session:
     )
 }
     }
-    public func download(transferId: String, remotePath: String, localPath: String) async throws  {
-        return try  await uniffiRustCallAsync(
-            rustFutureFunc: {
-                uniffi_rust_lib_fn_method_session_download(
-                    self.uniffiClonePointer(),
-                    FfiConverterString.lower(transferId),
-                    FfiConverterString.lower(remotePath),
-                    FfiConverterString.lower(localPath)
-                )
-            },
-            pollFunc: ffi_rust_lib_rust_future_poll_void,
-            completeFunc: ffi_rust_lib_rust_future_complete_void,
-            freeFunc: ffi_rust_lib_rust_future_free_void,
-            liftFunc: { $0 },
-            errorHandler: FfiConverterTypeEnumError.lift
-        )
-    }
-
-    
     public func exec(commandId: String, command: String) async throws  -> String {
         return try  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -481,6 +460,26 @@ public class Session:
     }
 
     
+    public func transfer(transferId: String, sourcePath: String, destinationPath: String, direction: String) async throws  {
+        return try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_rust_lib_fn_method_session_transfer(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(transferId),
+                    FfiConverterString.lower(sourcePath),
+                    FfiConverterString.lower(destinationPath),
+                    FfiConverterString.lower(direction)
+                )
+            },
+            pollFunc: ffi_rust_lib_rust_future_poll_void,
+            completeFunc: ffi_rust_lib_rust_future_complete_void,
+            freeFunc: ffi_rust_lib_rust_future_free_void,
+            liftFunc: { $0 },
+            errorHandler: FfiConverterTypeEnumError.lift
+        )
+    }
+
+    
     public func transferProgress(transferId: String) async  -> UInt64? {
         return try!  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -495,25 +494,6 @@ public class Session:
             liftFunc: FfiConverterOptionUInt64.lift,
             errorHandler: nil
             
-        )
-    }
-
-    
-    public func upload(transferId: String, localPath: String, remotePath: String) async throws  {
-        return try  await uniffiRustCallAsync(
-            rustFutureFunc: {
-                uniffi_rust_lib_fn_method_session_upload(
-                    self.uniffiClonePointer(),
-                    FfiConverterString.lower(transferId),
-                    FfiConverterString.lower(localPath),
-                    FfiConverterString.lower(remotePath)
-                )
-            },
-            pollFunc: ffi_rust_lib_rust_future_poll_void,
-            completeFunc: ffi_rust_lib_rust_future_complete_void,
-            freeFunc: ffi_rust_lib_rust_future_free_void,
-            liftFunc: { $0 },
-            errorHandler: FfiConverterTypeEnumError.lift
         )
     }
 
@@ -751,19 +731,16 @@ private var initializationResult: InitializationResult {
     if (uniffi_rust_lib_checksum_method_session_close() != 40540) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_download() != 19901) {
-        return InitializationResult.apiChecksumMismatch
-    }
     if (uniffi_rust_lib_checksum_method_session_exec() != 51110) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rust_lib_checksum_method_session_read_output() != 27283) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_transfer_progress() != 53521) {
+    if (uniffi_rust_lib_checksum_method_session_transfer() != 49655) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_upload() != 64752) {
+    if (uniffi_rust_lib_checksum_method_session_transfer_progress() != 53521) {
         return InitializationResult.apiChecksumMismatch
     }
 

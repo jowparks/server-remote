@@ -8,6 +8,7 @@ pub enum EnumError {
 
 use std::backtrace::Backtrace;
 use std::collections::HashMap;
+use std::os::unix::fs::MetadataExt;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::mpsc::{Sender, UnboundedReceiver};
@@ -19,11 +20,41 @@ use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use russh::*;
 use russh_keys::*;
+use russh_sftp::client::fs::File as RusshFile;
 use russh_sftp::client::SftpSession;
-use tokio::fs::File as LocalFile;
+use tokio::fs::File as TokioFile;
 use tokio::runtime::Runtime;
 
 static TOKIO_RUNTIME: Lazy<Arc<Runtime>> = Lazy::new(|| Arc::new(Runtime::new().unwrap()));
+
+enum FileType {
+    Russh(RusshFile),
+    Tokio(TokioFile),
+}
+
+impl FileType {
+    async fn file_size(&self) -> Result<u64, EnumError> {
+        match self {
+            FileType::Russh(russh_file) => Ok(russh_file.metadata().await?.size.unwrap_or(0)),
+            FileType::Tokio(tokio_file) => Ok(tokio_file.metadata().await?.size()),
+        }
+    }
+
+    async fn read(&mut self, buf: &mut [u8]) -> Result<usize, EnumError> {
+        match self {
+            FileType::Russh(russh_file) => Ok(russh_file.read(buf).await?),
+            FileType::Tokio(tokio_file) => Ok(tokio_file.read(buf).await?),
+        }
+    }
+
+    async fn write_all(&mut self, buf: &[u8]) -> Result<(), EnumError> {
+        match self {
+            FileType::Russh(russh_file) => russh_file.write_all(buf).await?,
+            FileType::Tokio(tokio_file) => tokio_file.write_all(buf).await?,
+        }
+        Ok(())
+    }
+}
 
 struct Client {}
 
@@ -162,118 +193,59 @@ impl Session {
         handle.await.unwrap()
     }
 
-    // TODO test this and get the paths right for the download in a platform agnostic way (handle paths in ios/android code)
-    async fn download(
+    async fn transfer(
         self: Arc<Self>,
         transfer_id: &str,
-        remote_path: &str,
-        local_path: &str,
+        source_path: &str,
+        destination_path: &str,
+        direction: &str,
     ) -> Result<(), EnumError> {
         let transfer_id = transfer_id.to_owned();
-        let remote_path = remote_path.to_owned();
-        let local_path = local_path.to_owned();
-        println!(
-            "RUST2: Downloading {} {} to {}",
-            transfer_id, remote_path, local_path
-        );
+        let source_path = source_path.to_owned();
+        let destination_path = destination_path.to_owned();
+        let direction = direction.to_owned();
         let handle = TOKIO_RUNTIME.spawn(async move {
             let channel = self.session.lock().await.channel_open_session().await?;
             channel.request_subsystem(true, "sftp").await?;
-            println!("RUST2: sftp sesh");
             let sftp = SftpSession::new(channel.into_stream()).await?;
 
-            println!("RUST: Download starting async");
-            let mut file = sftp.open(remote_path).await?;
-            // print file inof
+            println!(
+                "RUST: Transferring between {} {}",
+                source_path, destination_path
+            );
 
-            // println!("RUST: File metadata: {:?}", metadata);
-            // Open a local file for writin
-
-            // store download id in session with total bytes
-            let (download_sender, download_receiver) = tokio::sync::watch::channel(0u64);
-            {
-                let mut transfer = self.transfer_progress.lock().await;
-                transfer.insert(transfer_id.clone(), Arc::new(Mutex::new(download_receiver)));
-            }
-
-            // Create a buffer for the data
-            let mut local_file = LocalFile::create(local_path).await?;
-            let metadata = file.metadata().await?;
-            let file_size = metadata.size.unwrap_or(0);
-            let mut total_bytes = 0u64;
-
-            // Determine buffer size based on file size, with a minimum of 1MB and a maximum of 100MB
-            let buffer_size = if file_size < 1_000_000 {
-                100_000
+            let mut source_file: FileType;
+            let mut destination_file: FileType;
+            if direction == "upload" {
+                source_file = FileType::Tokio(TokioFile::open(source_path).await?);
+                destination_file = FileType::Russh(sftp.create(destination_path).await?);
             } else {
-                std::cmp::min(file_size as usize / 10, 100_000_000)
-            };
-            let mut buffer = vec![0; buffer_size];
-            // TODO: make this read min(buffer.len(), bytes_left) instead of just buffer.len()
-            loop {
-                // Read data from the remote file
-                let bytes_left = file_size - total_bytes;
-                let read_size = std::cmp::min(buffer.len(), bytes_left as usize);
-
-                let bytes_read = file.read(&mut buffer[..read_size]).await?;
-                // // If no bytes were read, the file is done
-                if bytes_read == 0 {
-                    break;
-                }
-                // Write the data to the local file
-                local_file.write_all(&buffer[..bytes_read]).await?;
-
-                total_bytes += bytes_read as u64;
-                download_sender.send(total_bytes)?;
+                source_file = FileType::Russh(sftp.open(source_path).await?);
+                destination_file = FileType::Tokio(TokioFile::create(destination_path).await?);
             }
-            println!("RUST: Download done");
-
-            Ok(())
-        });
-        handle.await.unwrap()
-    }
-
-    async fn upload(
-        self: Arc<Self>,
-        transfer_id: &str,
-        local_path: &str,
-        remote_path: &str,
-    ) -> Result<(), EnumError> {
-        let transfer_id = transfer_id.to_owned();
-        let remote_path = remote_path.to_owned();
-        let local_path = local_path.to_owned();
-        let handle = TOKIO_RUNTIME.spawn(async move {
-            let channel = self.session.lock().await.channel_open_session().await?;
-            channel.request_subsystem(true, "sftp").await?;
-            let sftp = SftpSession::new(channel.into_stream()).await?;
-
-            println!("RUST: Uploading from {} to {}", local_path, remote_path);
-            let mut file = sftp.create(remote_path).await?;
-            let mut local_file = LocalFile::open(local_path).await?;
-            let metadata = local_file.metadata().await?;
-            let file_size = metadata.len();
+            let file_size = source_file.file_size().await?;
             let mut total_bytes = 0u64;
-            let (upload_sender, upload_receiver) = tokio::sync::watch::channel(0u64);
+            let (transfer_sender, transfer_receiver) = tokio::sync::watch::channel(0u64);
             {
                 let mut transfer = self.transfer_progress.lock().await;
-                transfer.insert(transfer_id.clone(), Arc::new(Mutex::new(upload_receiver)));
+                transfer.insert(transfer_id.clone(), Arc::new(Mutex::new(transfer_receiver)));
             }
 
             let mut buffer = [0; 100000];
-            println!("RUST: Uploading");
+            println!("RUST: Transferring");
             loop {
                 let bytes_left = file_size - total_bytes;
                 let read_size = std::cmp::min(buffer.len(), bytes_left as usize);
 
-                let bytes_read = local_file.read(&mut buffer[..read_size]).await?;
+                let bytes_read = source_file.read(&mut buffer[..read_size]).await?;
                 if bytes_read == 0 {
                     break;
                 }
-                println!("RUST: Uploading {} bytes", bytes_read);
+                // println!("RUST: Transferring {} bytes", bytes_read);
 
-                file.write_all(&buffer[..bytes_read]).await?;
+                destination_file.write_all(&buffer[..bytes_read]).await?;
                 total_bytes += bytes_read as u64;
-                upload_sender.send(total_bytes)?;
+                transfer_sender.send(total_bytes)?;
             }
             Ok(())
         });

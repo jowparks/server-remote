@@ -83,20 +83,13 @@ export function cancel(commandId: string): void {
   SshModule.cancel(commandId);
 }
 
-export async function download(
+export async function transfer(
   transferId: string,
-  remotePath: string,
-  localPath: string,
+  sourcePath: string,
+  destinationPath: string,
+  direction: string,
 ): Promise<string> {
-  return SshModule.download(transferId, remotePath, localPath);
-}
-
-export async function upload(
-  transferId: string,
-  localPath: string,
-  remotePath: string,
-): Promise<string> {
-  return SshModule.upload(transferId, localPath, remotePath);
+  return SshModule.transfer(transferId, sourcePath, destinationPath, direction);
 }
 
 export async function transferProgress(transferId: string): Promise<number> {

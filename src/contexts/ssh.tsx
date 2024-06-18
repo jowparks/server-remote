@@ -10,10 +10,9 @@ import {
   ExecParams,
   cancel,
   connect,
-  download,
   transferProgress,
   exec,
-  upload,
+  transfer,
 } from '../../modules/ssh-module';
 import uuid from 'react-native-uuid';
 
@@ -25,16 +24,11 @@ export type SSHClient = {
   // cancel a command based on its commandId
   cancel: (commandId: string) => void;
   // download a file from the server
-  download: (
+  transfer: (
     transferId: string,
-    remotePath: string,
-    localPath: string,
-  ) => Promise<string>;
-  // upload a file to the server
-  upload: (
-    transferId: string,
-    localPath: string,
-    remotePath: string,
+    sourcePath: string,
+    destinationPath: string,
+    direction: string,
   ) => Promise<string>;
   // get the progress of a download
   transferProgress: (transferId: string) => Promise<number>;
@@ -74,8 +68,7 @@ export function SshProvider({ children }: { children: ReactNode }) {
             exec: execInner,
             execAsync: execInnerAsync,
             cancel,
-            download,
-            upload,
+            transfer,
             transferProgress,
           };
           setSshClient(sshClient);

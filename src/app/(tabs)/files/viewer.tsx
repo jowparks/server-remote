@@ -224,10 +224,10 @@ const FolderViewer = () => {
       presentationStyle: 'pageSheet',
     });
     if (!directory?.uri) return;
-    const targetPath =
+    const destinationPath =
       decodeURI(directory.uri.replace('file://', '')) + item.fileName;
-    const originatingFile = `${path}/${item.fileName}`;
-    console.log(`Downloading from: ${originatingFile} to ${targetPath}`);
+    const sourcePath = `${path}/${item.fileName}`;
+    console.log(`Downloading from: ${sourcePath} to ${destinationPath}`);
 
     // sshClient.sftpLs(path);
     const downloadId = uuid.v4() as string;
@@ -235,12 +235,17 @@ const FolderViewer = () => {
     addTransfer({
       id: downloadId,
       filename: item.fileName,
-      sourcePath: originatingFile,
-      destPath: targetPath,
+      sourcePath: sourcePath,
+      destPath: destinationPath,
       totalBytes: item.bytes,
       transferredBytes: 0,
     });
-    await sshClient.download(downloadId, originatingFile, targetPath);
+    await sshClient.transfer(
+      downloadId,
+      sourcePath,
+      destinationPath,
+      'download',
+    );
     // set interval to check download progress
   };
 

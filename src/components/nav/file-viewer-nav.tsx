@@ -14,6 +14,7 @@ import Alert from '../general/alert';
 import uuid from 'react-native-uuid';
 import { XStack } from 'tamagui';
 import { TransfersDisplay } from './transfers';
+import { useTransfers } from '../../contexts/transfers';
 
 enum NavOptions {
   Paste = 'Paste',
@@ -32,6 +33,7 @@ export default function FileViewerNav() {
     removeBookmarkedFile,
   } = useFiles();
   const { sshClient } = useSsh();
+  const { addTransfer } = useTransfers();
 
   const [bookmarked, setBoomarked] = useState(false);
   const [actions, setActions] = useState<ContextMenuAction[]>([]);
@@ -73,11 +75,19 @@ export default function FileViewerNav() {
         presentationStyle: 'pageSheet',
       });
       if (!file?.uri) return;
-      const uploadFile = decodeURI(file.uri.replace('file://', ''));
-      const destinationFile = `${currentFolder.filePath}/${file.name}`;
-      console.log(`Upload from: ${uploadFile} to ${destinationFile}`);
+      const sourcePath = decodeURI(file.uri.replace('file://', ''));
+      const destinationPath = `${currentFolder.filePath}/${file.name}`;
+      console.log(`Upload from: ${sourcePath} to ${destinationPath}`);
       const id = uuid.v4() as string;
-      await sshClient.upload(id, uploadFile, destinationFile);
+      addTransfer({
+        id: id,
+        filename: file.name || '',
+        sourcePath: sourcePath,
+        destPath: destinationPath,
+        totalBytes: file.size || 0,
+        transferredBytes: 0,
+      });
+      await sshClient.transfer(id, sourcePath, destinationPath, 'upload');
     };
     upload();
   }
