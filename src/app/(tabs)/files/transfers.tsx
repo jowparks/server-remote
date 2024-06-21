@@ -6,15 +6,17 @@ import {
   YGroup,
   Text,
   Sheet,
-  XStack,
   YStack,
   Progress,
   Spacer,
+  XStack,
 } from 'tamagui';
 import { DarkBlueTheme } from '../../../style/theme';
 import { useTransfers } from '../../../contexts/transfers';
-import { ArrowDown, ArrowRight } from '@tamagui/lucide-icons';
 import { formatBytes } from '../../../util/files';
+import TransparentButton from '../../../components/general/transparent-button';
+import { useSsh } from '../../../contexts/ssh';
+import { X } from '@tamagui/lucide-icons';
 
 export type TransferScreenProps = {
   open: boolean;
@@ -25,7 +27,8 @@ export default function TransferScreen({
   open,
   onOpenChange,
 }: TransferScreenProps) {
-  const { transfers } = useTransfers();
+  const { transfers, updateTransfer } = useTransfers();
+  const { sshClient } = useSsh();
   if (!open) return null;
   return (
     <Sheet
@@ -51,30 +54,22 @@ export default function TransferScreen({
           space="$5"
           alignItems="center"
         ></View>
-        <View flex={1} alignItems="center">
-          <YGroup
-            alignSelf="center"
-            bordered
-            width={'90%'}
-            size="$5"
-            separator={<Separator />}
-          >
-            {transfers.map((transfer) => (
-              <YGroup.Item key={transfer.id}>
-                <ListItem
-                  elevate
-                  size="$4"
-                  bordered
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <YStack>
-                    <Text>{transfer.filename}</Text>
-                    <Spacer />
+        <View flex={1} alignSelf="center" alignItems="center" width="90%">
+          {transfers.map((transfer) => (
+            <XStack
+              alignItems="center"
+              justifyContent="space-between"
+              width="100%"
+            >
+              <YStack>
+                <Text>{transfer.filename}</Text>
+                <Spacer />
+                {transfer.status === 'cancelled' ? (
+                  <Text>Cancelled</Text>
+                ) : (
+                  <>
                     <Progress
+                      backgrounded={true}
                       value={
                         (transfer.transferredBytes / transfer.totalBytes) * 100
                       }
@@ -87,11 +82,25 @@ export default function TransferScreen({
                       {' / '}
                       {formatBytes(transfer.totalBytes)}
                     </Text>
-                  </YStack>
-                </ListItem>
-              </YGroup.Item>
-            ))}
-          </YGroup>
+                  </>
+                )}
+              </YStack>
+              {/* TODO remove file on cancel */}
+              {transfer.status !== 'cancelled' && (
+                <TransparentButton
+                  onPress={() => {
+                    sshClient?.cancel(transfer.id);
+                    updateTransfer(transfer.id, {
+                      ...transfer,
+                      status: 'cancelled',
+                    });
+                  }}
+                >
+                  <X />
+                </TransparentButton>
+              )}
+            </XStack>
+          ))}
         </View>
       </Sheet.Frame>
     </Sheet>

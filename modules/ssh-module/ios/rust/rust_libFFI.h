@@ -55,7 +55,7 @@ void*_Nonnull uniffi_rust_lib_fn_clone_session(void*_Nonnull ptr, RustCallStatus
 );
 void uniffi_rust_lib_fn_free_session(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );
-void* _Nonnull uniffi_rust_lib_fn_method_session_cancel(void*_Nonnull ptr, RustBuffer command_id
+void* _Nonnull uniffi_rust_lib_fn_method_session_cancel(void*_Nonnull ptr, RustBuffer id
 );
 void uniffi_rust_lib_fn_method_session_close(void*_Nonnull ptr, RustCallStatus *_Nonnull out_status
 );

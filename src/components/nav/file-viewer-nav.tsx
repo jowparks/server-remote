@@ -86,6 +86,7 @@ export default function FileViewerNav() {
         destPath: destinationPath,
         totalBytes: file.size || 0,
         transferredBytes: 0,
+        status: 'in-progress',
       });
       await sshClient.transfer(id, sourcePath, destinationPath, 'upload');
     };

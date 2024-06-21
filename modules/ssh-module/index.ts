@@ -79,8 +79,8 @@ export async function exec({
   return returnCode;
 }
 
-export function cancel(commandId: string): void {
-  SshModule.cancel(commandId);
+export function cancel(id: string): void {
+  SshModule.cancel(id);
 }
 
 export async function transfer(

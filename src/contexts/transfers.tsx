@@ -10,11 +10,13 @@ type Transfer = {
   destPath: string;
   totalBytes: number;
   transferredBytes: number;
+  status: 'in-progress' | 'complete' | 'error' | 'cancelled';
 };
 
 interface TransferContextType {
   transfers: Transfer[];
   addTransfer: (props: Transfer) => void;
+  updateTransfer: (id: string, transfer: Transfer) => void;
   removeTransfer: (id: string) => void;
 }
 
@@ -53,6 +55,12 @@ export const TransferProvider: React.FC<TransferProviderProps> = ({
     }, 100);
   };
 
+  const updateTransfer = (id: string, transfer: Transfer) => {
+    setTransfers((prevTransfers) =>
+      prevTransfers.map((t) => (t.id === id ? transfer : t)),
+    );
+  };
+
   const removeTransfer = (id: string) => {
     setTransfers((prevTransfers) =>
       prevTransfers.filter((transfer) => transfer.id !== id),
@@ -61,7 +69,7 @@ export const TransferProvider: React.FC<TransferProviderProps> = ({
 
   return (
     <TransferContext.Provider
-      value={{ transfers, addTransfer, removeTransfer }}
+      value={{ transfers, addTransfer, removeTransfer, updateTransfer }}
     >
       {children}
     </TransferContext.Provider>

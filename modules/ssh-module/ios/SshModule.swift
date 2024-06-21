@@ -69,11 +69,11 @@ public class SshModule: Module {
         }
     }
       
-      AsyncFunction("cancel") { (commandId: String) async throws -> String in
+      AsyncFunction("cancel") { (id: String) async throws -> String in
           guard let session = self.session else {
               throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
           }
-          try await session.cancel(commandId: commandId)
+          try await session.cancel(id: id)
           return "0"
       }
       

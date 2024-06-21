@@ -358,7 +358,7 @@ fileprivate struct FfiConverterString: FfiConverter {
  */
 public protocol SessionProtocol : AnyObject {
     
-    func cancel(commandId: String) async throws 
+    func cancel(id: String) async throws 
     
     func close() throws 
     
@@ -400,12 +400,12 @@ public class Session:
 
     
     
-    public func cancel(commandId: String) async throws  {
+    public func cancel(id: String) async throws  {
         return try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_rust_lib_fn_method_session_cancel(
                     self.uniffiClonePointer(),
-                    FfiConverterString.lower(commandId)
+                    FfiConverterString.lower(id)
                 )
             },
             pollFunc: ffi_rust_lib_rust_future_poll_void,
@@ -725,7 +725,7 @@ private var initializationResult: InitializationResult {
     if (uniffi_rust_lib_checksum_func_connect() != 57044) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_cancel() != 45725) {
+    if (uniffi_rust_lib_checksum_method_session_cancel() != 16516) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rust_lib_checksum_method_session_close() != 40540) {

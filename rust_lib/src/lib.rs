@@ -204,6 +204,13 @@ impl Session {
         let source_path = source_path.to_owned();
         let destination_path = destination_path.to_owned();
         let direction = direction.to_owned();
+        let (cancel_sender, cancel_receiver) = mpsc::channel::<u8>(1);
+        {
+            self.cancellation
+                .lock()
+                .await
+                .insert(transfer_id.to_string(), Arc::new(Mutex::new(cancel_sender)));
+        }
         let handle = TOKIO_RUNTIME.spawn(async move {
             let channel = self.session.lock().await.channel_open_session().await?;
             channel.request_subsystem(true, "sftp").await?;
@@ -234,6 +241,12 @@ impl Session {
             let mut buffer = [0; 100000];
             println!("RUST: Transferring");
             loop {
+                if !cancel_receiver.is_empty() {
+                    sftp.close().await?;
+                    drop(cancel_receiver);
+                    println!("Transfer Cancelled {}", transfer_id);
+                    break;
+                }
                 let bytes_left = file_size - total_bytes;
                 let read_size = std::cmp::min(buffer.len(), bytes_left as usize);
 
@@ -290,18 +303,18 @@ impl Session {
         })
     }
 
-    async fn cancel(self: Arc<Self>, command_id: &str) -> Result<(), EnumError> {
-        let command_id = command_id.to_owned();
+    async fn cancel(self: Arc<Self>, id: &str) -> Result<(), EnumError> {
+        let id = id.to_owned();
         let handle = TOKIO_RUNTIME.spawn(async move {
             let map = self.cancellation.lock().await;
-            let cancellation = map.get(&command_id);
+            let cancellation = map.get(&id);
             if let Some(cancellation) = cancellation {
                 cancellation.lock().await.send(1).await?;
-                println!("Cancelling command {}", command_id);
+                println!("Cancelling {}", id);
                 Ok(())
             } else {
                 Err(EnumError::Oops {
-                    msg: format!("Command {} not found", command_id),
+                    msg: format!("ID {} not found", id),
                     backtrace: Backtrace::capture().to_string(),
                 })
             }
