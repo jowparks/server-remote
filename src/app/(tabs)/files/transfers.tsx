@@ -55,52 +55,76 @@ export default function TransferScreen({
           alignItems="center"
         ></View>
         <View flex={1} alignSelf="center" alignItems="center" width="90%">
-          {transfers.map((transfer) => (
-            <XStack
-              alignItems="center"
-              justifyContent="space-between"
-              width="100%"
-            >
-              <YStack>
-                <Text>{transfer.filename}</Text>
-                <Spacer />
-                {transfer.status === 'cancelled' ? (
-                  <Text>Cancelled</Text>
-                ) : (
-                  <>
-                    <Progress
-                      backgrounded={true}
-                      value={
-                        (transfer.transferredBytes / transfer.totalBytes) * 100
-                      }
-                    >
-                      <Progress.Indicator />
-                    </Progress>
-                    <Spacer />
-                    <Text>
-                      {formatBytes(transfer.transferredBytes)}
-                      {' / '}
-                      {formatBytes(transfer.totalBytes)}
-                    </Text>
-                  </>
-                )}
-              </YStack>
-              {/* TODO remove file on cancel */}
-              {transfer.status !== 'cancelled' && (
-                <TransparentButton
-                  onPress={() => {
-                    sshClient?.cancel(transfer.id);
-                    updateTransfer(transfer.id, {
-                      ...transfer,
-                      status: 'cancelled',
-                    });
+          <YGroup
+            alignSelf="center"
+            bordered
+            width={'90%'}
+            size="$5"
+            separator={<Separator />}
+          >
+            {transfers.map((transfer) => (
+              <YGroup.Item key={transfer.id}>
+                <ListItem
+                  elevate
+                  size="$4"
+                  bordered
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
-                  <X />
-                </TransparentButton>
-              )}
-            </XStack>
-          ))}
+                  <XStack
+                    alignItems="center"
+                    justifyContent="space-between"
+                    width="100%"
+                  >
+                    <YStack width={'70%'}>
+                      <Text>{transfer.filename}</Text>
+                      <Spacer />
+                      {transfer.status === 'cancelled' ? (
+                        <Text>Cancelled</Text>
+                      ) : (
+                        <>
+                          <Progress
+                            backgroundColor={DarkBlueTheme.colors.card}
+                            value={
+                              (transfer.transferredBytes /
+                                transfer.totalBytes) *
+                              100
+                            }
+                          >
+                            <Progress.Indicator />
+                          </Progress>
+                          <Spacer />
+                          <Text>
+                            {formatBytes(transfer.transferredBytes)}
+                            {' / '}
+                            {formatBytes(transfer.totalBytes)}
+                          </Text>
+                        </>
+                      )}
+                    </YStack>
+                    {/* TODO remove file on cancel */}
+                    {transfer.status !== 'cancelled' &&
+                      transfer.status !== 'complete' && (
+                        <TransparentButton
+                          onPress={() => {
+                            sshClient?.cancel(transfer.id);
+                            updateTransfer(transfer.id, {
+                              ...transfer,
+                              status: 'cancelled',
+                            });
+                          }}
+                        >
+                          <X />
+                        </TransparentButton>
+                      )}
+                  </XStack>
+                </ListItem>
+              </YGroup.Item>
+            ))}
+          </YGroup>
         </View>
       </Sheet.Frame>
     </Sheet>

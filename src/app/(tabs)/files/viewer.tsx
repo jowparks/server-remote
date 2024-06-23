@@ -239,6 +239,7 @@ const FolderViewer = () => {
       destPath: destinationPath,
       totalBytes: item.bytes,
       transferredBytes: 0,
+      status: 'in-progress',
     });
     await sshClient.transfer(
       downloadId,

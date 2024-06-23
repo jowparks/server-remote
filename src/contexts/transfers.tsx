@@ -1,4 +1,10 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useRef,
+  useEffect,
+} from 'react';
 import { useSsh } from './ssh';
 
 // Define the shape of the context
@@ -35,21 +41,34 @@ export const TransferProvider: React.FC<TransferProviderProps> = ({
 }) => {
   const { sshClient } = useSsh();
   const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const transfersRef = useRef(transfers);
+
+  useEffect(() => {
+    transfersRef.current = transfers;
+  }, [transfers]);
 
   const addTransfer = (transfer: Transfer) => {
-    console.log('adding transfer', transfer);
     setTransfers((prevTransfers) => [...prevTransfers, transfer]);
     if (!sshClient) return;
 
     const interval = setInterval(async () => {
-      const transferredBytes = await sshClient.transferProgress(transfer.id); // replace with your actual function
+      let tf = transfersRef.current.find((t) => t.id === transfer.id);
+      if (!tf) {
+        throw new Error('Transfer not found');
+      }
+      if (tf.status === 'cancelled') {
+        clearInterval(interval);
+        return;
+      }
+      const transferredBytes = await sshClient.transferProgress(tf.id);
       setTransfers((prevTransfers) =>
         prevTransfers.map((t) =>
-          t.filename === transfer.filename ? { ...t, transferredBytes } : t,
+          t.filename === tf.filename ? { ...t, transferredBytes } : t,
         ),
       );
-      console.log(transferredBytes, transfer.totalBytes);
-      if (transferredBytes >= transfer.totalBytes) {
+      console.log(transferredBytes, tf.totalBytes);
+      if (transferredBytes >= tf.totalBytes) {
+        updateTransfer(tf.id, { ...tf, status: 'complete' });
         clearInterval(interval);
       }
     }, 100);

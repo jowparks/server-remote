@@ -1,7 +1,6 @@
 import React, { useState, ReactNode, useEffect } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { Text, View, ScrollView } from 'tamagui';
-import { DarkBlueTheme } from '../../style/theme';
 import { useHeader } from '../../contexts/header';
 
 type JsonNodeProps = {
