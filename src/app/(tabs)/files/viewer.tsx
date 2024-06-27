@@ -212,13 +212,13 @@ const FolderViewer = () => {
     }
   };
 
-  // TODO: download seems to fail with anything bigger than 5MB, might be an issue with new ssh requests being sent at time of download
   const handleDownload = async (item: FileInfo) => {
     if (!item) return;
-    if (item.fileType === 'd') {
-      console.error('Downloading directory not supported');
-      return;
-    }
+    // // TODO: handle directory uploads
+    // if (item.fileType === 'd') {
+    //   console.error('Downloading directory not supported');
+    //   return;
+    // }
     if (!sshClient) return;
     const directory = await DocumentPicker.pickDirectory({
       presentationStyle: 'pageSheet',
@@ -226,7 +226,8 @@ const FolderViewer = () => {
     if (!directory?.uri) return;
     const destinationPath =
       decodeURI(directory.uri.replace('file://', '')) + item.fileName;
-    const sourcePath = `${path}/${item.fileName}`;
+    const sourcePath =
+      item.fileType === 'd' ? item.filePath : `${path}/${item.fileName}`;
     console.log(`Downloading from: ${sourcePath} to ${destinationPath}`);
 
     // sshClient.sftpLs(path);

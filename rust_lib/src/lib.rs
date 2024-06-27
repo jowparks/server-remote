@@ -6,9 +6,12 @@ pub enum EnumError {
     Oops { msg: String, backtrace: String },
 }
 
+use russh_sftp::protocol::FileType as RusshFileType;
 use std::backtrace::Backtrace;
 use std::collections::HashMap;
+use std::future::Future;
 use std::os::unix::fs::MetadataExt;
+use std::pin::Pin;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::mpsc::{Sender, UnboundedReceiver};
@@ -37,6 +40,23 @@ impl FileType {
         match self {
             FileType::Russh(russh_file) => Ok(russh_file.metadata().await?.size.unwrap_or(0)),
             FileType::Tokio(tokio_file) => Ok(tokio_file.metadata().await?.size()),
+        }
+    }
+
+    async fn file_type(&self) -> Result<RusshFileType, EnumError> {
+        match self {
+            FileType::Russh(russh_file) => {
+                let metadata = russh_file.metadata().await?;
+                Ok(metadata.file_type())
+            }
+            FileType::Tokio(tokio_file) => {
+                let metadata = tokio_file.metadata().await?;
+                if metadata.is_dir() {
+                    Ok(RusshFileType::Dir)
+                } else {
+                    Ok(RusshFileType::File)
+                }
+            }
         }
     }
 
@@ -202,6 +222,7 @@ impl Session {
     ) -> Result<(), EnumError> {
         let transfer_id = transfer_id.to_owned();
         let source_path = source_path.to_owned();
+        let source_path_clone = source_path.clone();
         let destination_path = destination_path.to_owned();
         let direction = direction.to_owned();
         let (cancel_sender, cancel_receiver) = mpsc::channel::<u8>(1);
@@ -211,11 +232,13 @@ impl Session {
                 .await
                 .insert(transfer_id.to_string(), Arc::new(Mutex::new(cancel_sender)));
         }
+
         let handle = TOKIO_RUNTIME.spawn(async move {
             let channel = self.session.lock().await.channel_open_session().await?;
             channel.request_subsystem(true, "sftp").await?;
             let sftp = SftpSession::new(channel.into_stream()).await?;
 
+            // TODO: fix error here, seems like it is using //home instead of /home, then test recursive directory with /home folder
             println!(
                 "RUST: Transferring between {} {}",
                 source_path, destination_path
@@ -230,6 +253,16 @@ impl Session {
                 source_file = FileType::Russh(sftp.open(source_path).await?);
                 destination_file = FileType::Tokio(TokioFile::create(destination_path).await?);
             }
+
+            let ft = source_file.file_type().await?;
+            println!("RUST: File type {:?}", ft);
+            if ft == RusshFileType::Dir {
+                let files = self
+                    .list_directory_contents(source_path_clone, direction)
+                    .await?;
+                println!("RUST: Files {:?}", files);
+            }
+
             let file_size = source_file.file_size().await?;
             let mut total_bytes = 0u64;
             let (transfer_sender, transfer_receiver) = tokio::sync::watch::channel(0u64);
@@ -320,6 +353,81 @@ impl Session {
             }
         });
         handle.await.unwrap()
+    }
+}
+
+impl Session {
+    // WARNING: only use this inside existing tokio runtime thread
+    // TODO: handle recursion, handle filepath being full path (add source path to )
+    async fn list_directory_contents(
+        &self,
+        source_path: String,
+        direction: String,
+    ) -> Result<HashMap<String, Vec<String>>, EnumError> {
+        let mut items = HashMap::new();
+        println!("RUST: Listing directory contents of {}", source_path);
+        if direction == "local" {
+            let mut read_dir = tokio::fs::read_dir(&source_path).await?;
+            while let Some(entry) = read_dir.next_entry().await? {
+                let path = entry.path();
+                let metadata = entry.metadata().await?;
+                let file_type = if path.is_dir() { "Dir" } else { "File" };
+                let file_size = metadata.len().to_string();
+
+                items.insert(
+                    source_path.clone() + "/" + &path.to_string_lossy().to_string(),
+                    vec![file_type.to_string(), file_size],
+                );
+                if metadata.file_type().is_dir() {
+                    let sub_items = self
+                        .list_directory_contents_wrapper(
+                            source_path.clone() + "/" + &path.to_string_lossy(),
+                            direction.clone(),
+                        )
+                        .await?;
+                    items.extend(sub_items);
+                }
+            }
+        } else {
+            // Assuming `self.session` and `SftpSession` are defined elsewhere in your code
+            let channel = self.session.lock().await.channel_open_session().await?;
+            channel.request_subsystem(true, "sftp").await?;
+            let sftp = SftpSession::new(channel.into_stream()).await?;
+
+            let readdir = sftp.read_dir(&source_path).await?;
+            for dir_entry in readdir {
+                let file_type = match dir_entry.file_type() {
+                    RusshFileType::File | RusshFileType::Symlink | RusshFileType::Other => "File",
+                    RusshFileType::Dir => "Dir",
+                };
+                let file_size = dir_entry.metadata().size.unwrap_or(0).to_string();
+
+                items.insert(
+                    source_path.clone() + "/" + &dir_entry.file_name().to_owned(),
+                    vec![file_type.to_string(), file_size],
+                );
+                if file_type == "Dir" {
+                    let sub_items = self
+                        .list_directory_contents_wrapper(
+                            source_path.clone() + "/" + &dir_entry.file_name(),
+                            direction.clone(),
+                        )
+                        .await?;
+                    items.extend(sub_items);
+                }
+            }
+        }
+        Ok(items)
+    }
+
+    fn list_directory_contents_wrapper(
+        &self,
+        source_path: String, // Take ownership
+        direction: String,   // Take ownership
+    ) -> Pin<Box<dyn Future<Output = Result<HashMap<String, Vec<String>>, EnumError>> + Send + '_>>
+    {
+        // Now directly pass the owned Strings without referencing them
+        Box::pin(self.list_directory_contents(source_path, direction))
     }
 }
 

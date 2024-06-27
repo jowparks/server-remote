@@ -37,7 +37,6 @@ export default function FileViewerNav() {
 
   const [bookmarked, setBoomarked] = useState(false);
   const [actions, setActions] = useState<ContextMenuAction[]>([]);
-  const [uploadError, setUploadError] = useState(false);
 
   useEffect(() => {
     if (currentFolder) {
@@ -137,16 +136,6 @@ export default function FileViewerNav() {
         <TransparentButton>
           <MoreHorizontal />
         </TransparentButton>
-        {!!uploadError && (
-          <Alert
-            title="Upload failed"
-            description={`Currently upload only works on files less than 5MB, we are working on fixing that!`}
-            open={uploadError}
-            onOk={() => {
-              setUploadError(false);
-            }}
-          />
-        )}
       </ContextMenuView>
     </XStack>
   );
