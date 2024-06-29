@@ -60,14 +60,20 @@ export const TransferProvider: React.FC<TransferProviderProps> = ({
         clearInterval(interval);
         return;
       }
-      const transferredBytes = await sshClient.transferProgress(tf.id);
+      const transferProgress = await sshClient.transferProgress(tf.id);
       setTransfers((prevTransfers) =>
         prevTransfers.map((t) =>
-          t.filename === tf.filename ? { ...t, transferredBytes } : t,
+          t.filename === tf.filename
+            ? {
+                ...t,
+                transferredBytes: transferProgress.transferredBytes,
+                totalBytes: transferProgress.totalBytes,
+              }
+            : t,
         ),
       );
-      console.log(transferredBytes, tf.totalBytes);
-      if (transferredBytes >= tf.totalBytes) {
+      console.log(transferProgress);
+      if (transferProgress.transferredBytes >= transferProgress.totalBytes) {
         updateTransfer(tf.id, { ...tf, status: 'complete' });
         clearInterval(interval);
       }

@@ -10,6 +10,7 @@ use russh_sftp::protocol::FileType as RusshFileType;
 use std::backtrace::Backtrace;
 use std::collections::HashMap;
 use std::future::Future;
+use std::ops::Not;
 use std::os::unix::fs::MetadataExt;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -29,6 +30,13 @@ use tokio::fs::File as TokioFile;
 use tokio::runtime::Runtime;
 
 static TOKIO_RUNTIME: Lazy<Arc<Runtime>> = Lazy::new(|| Arc::new(Runtime::new().unwrap()));
+
+#[derive(Debug)]
+struct PathInfo {
+    path: String,
+    file_type: RusshFileType,
+    size: u64,
+}
 
 enum FileType {
     Russh(RusshFile),
@@ -100,7 +108,7 @@ impl client::Handler for Client {
 pub struct Session {
     session: Arc<Mutex<client::Handle<Client>>>,
     output: Arc<Mutex<HashMap<String, Arc<Mutex<UnboundedReceiver<String>>>>>>,
-    transfer_progress: Arc<Mutex<HashMap<String, Arc<Mutex<ReceiverWatch<u64>>>>>>,
+    transfer_progress: Arc<Mutex<HashMap<String, Arc<Mutex<ReceiverWatch<Vec<u64>>>>>>>,
     cancellation: Arc<Mutex<HashMap<String, Arc<Mutex<Sender<u8>>>>>>,
 }
 
@@ -223,8 +231,10 @@ impl Session {
         let transfer_id = transfer_id.to_owned();
         let source_path = source_path.to_owned();
         let source_path_clone = source_path.clone();
+        let source_path_clone2 = source_path.clone();
         let destination_path = destination_path.to_owned();
         let direction = direction.to_owned();
+        let direction_clone = direction.clone();
         let (cancel_sender, cancel_receiver) = mpsc::channel::<u8>(1);
         {
             self.cancellation
@@ -244,68 +254,122 @@ impl Session {
                 source_path, destination_path
             );
 
-            let mut source_file: FileType;
-            let mut destination_file: FileType;
+            let source: FileType;
             if direction == "upload" {
-                source_file = FileType::Tokio(TokioFile::open(source_path).await?);
-                destination_file = FileType::Russh(sftp.create(destination_path).await?);
+                source = FileType::Tokio(TokioFile::open(source_path).await?);
             } else {
-                source_file = FileType::Russh(sftp.open(source_path).await?);
-                destination_file = FileType::Tokio(TokioFile::create(destination_path).await?);
+                source = FileType::Russh(sftp.open(source_path).await?);
             }
 
-            let ft = source_file.file_type().await?;
+            let mut files: Vec<PathInfo> = vec![];
+            let ft = source.file_type().await?;
+            files.push(PathInfo {
+                path: source_path_clone.clone(),
+                file_type: ft,
+                size: source.file_size().await?,
+            });
+
             println!("RUST: File type {:?}", ft);
+            // TODO test this updated code
             if ft == RusshFileType::Dir {
-                let files = self
-                    .list_directory_contents(source_path_clone, direction)
-                    .await?;
+                files.extend(
+                    self.list_directory_contents(source_path_clone, direction)
+                        .await?,
+                );
                 println!("RUST: Files {:?}", files);
             }
 
-            let file_size = source_file.file_size().await?;
-            let mut total_bytes = 0u64;
-            let (transfer_sender, transfer_receiver) = tokio::sync::watch::channel(0u64);
+            let (transfer_sender, transfer_receiver) =
+                tokio::sync::watch::channel(vec![0u64, 0u64]);
             {
                 let mut transfer = self.transfer_progress.lock().await;
                 transfer.insert(transfer_id.clone(), Arc::new(Mutex::new(transfer_receiver)));
             }
 
+            let total_size = files.iter().map(|p| p.size).sum::<u64>();
+
+            transfer_sender.send(vec![0, total_size])?;
+
+            let mut transferred_bytes = 0u64;
             let mut buffer = [0; 100000];
-            println!("RUST: Transferring");
-            loop {
-                if !cancel_receiver.is_empty() {
-                    sftp.close().await?;
-                    drop(cancel_receiver);
-                    println!("Transfer Cancelled {}", transfer_id);
-                    break;
+            println!(
+                "RUST: Transferring id {} total size {}",
+                transfer_id, total_size
+            );
+            // todo test this recursive copy
+            for source_file_info in files {
+                // destination should be destination path + source_file.0 - source_path
+                let destination_path = destination_path.to_owned()
+                    + &source_file_info.path[source_path_clone2.len()..];
+                println!(
+                    "RUST: Transferring from {} to {}",
+                    source_file_info.path, destination_path
+                );
+                if source_file_info.file_type == RusshFileType::Dir {
+                    println!("RUST: Creating directory {}", destination_path.clone());
+                    if direction_clone == "upload" {
+                        if (sftp.try_exists(destination_path.clone()).await?).not() {
+                            sftp.create_dir(destination_path.clone()).await?;
+                        }
+                    } else {
+                        if tokio::fs::metadata(destination_path.clone()).await.is_err() {
+                            tokio::fs::create_dir(destination_path.clone()).await?;
+                        }
+                    }
+                    transferred_bytes += source_file_info.size;
+                    transfer_sender.send(vec![transferred_bytes, total_size])?;
+                    continue;
                 }
-                let bytes_left = file_size - total_bytes;
-                let read_size = std::cmp::min(buffer.len(), bytes_left as usize);
-
-                let bytes_read = source_file.read(&mut buffer[..read_size]).await?;
-                if bytes_read == 0 {
-                    break;
+                let mut source_file: FileType;
+                let mut destination_file: FileType;
+                println!("RUST: Creating file {}", destination_path.clone());
+                if direction_clone == "upload" {
+                    destination_file =
+                        FileType::Russh(sftp.create(destination_path.clone()).await?);
+                    source_file = FileType::Tokio(TokioFile::open(source_file_info.path).await?);
+                } else {
+                    destination_file =
+                        FileType::Tokio(TokioFile::create(destination_path.clone()).await?);
+                    source_file = FileType::Russh(sftp.open(source_file_info.path).await?);
                 }
-                // println!("RUST: Transferring {} bytes", bytes_read);
 
-                destination_file.write_all(&buffer[..bytes_read]).await?;
-                total_bytes += bytes_read as u64;
-                transfer_sender.send(total_bytes)?;
+                println!("RUST: Transferring file {}", destination_path.clone());
+                loop {
+                    if !cancel_receiver.is_empty() {
+                        sftp.close().await?;
+                        println!("Transfer Cancelled {}", transfer_id);
+                        break;
+                    }
+                    let bytes_left = total_size - transferred_bytes;
+                    let read_size = std::cmp::min(buffer.len(), bytes_left as usize);
+
+                    let bytes_read = source_file.read(&mut buffer[..read_size]).await?;
+                    if bytes_read == 0 {
+                        break;
+                    }
+
+                    destination_file.write_all(&buffer[..bytes_read]).await?;
+                    transferred_bytes += bytes_read as u64;
+                    transfer_sender.send(vec![transferred_bytes, total_size])?;
+                }
             }
             Ok(())
         });
         handle.await.unwrap()
     }
 
-    async fn transfer_progress(self: Arc<Self>, transfer_id: &str) -> Option<u64> {
+    // TODO progress seems to be updating but it isn't getting propogated to front end
+    async fn transfer_progress(self: Arc<Self>, transfer_id: &str) -> Option<Vec<u64>> {
         let transfer_id = transfer_id.to_owned();
         let handle = TOKIO_RUNTIME.spawn(async move {
             let transfer = self.transfer_progress.lock().await;
             let progress = transfer.get(&transfer_id);
             if let Some(progress) = progress {
-                Some(progress.lock().await.borrow().clone())
+                let p = progress.lock().await.borrow().clone();
+                println!("RUST: Progress {} {:?}", transfer_id, p);
+                Some(p)
             } else {
+                println!("RUST: Progress not found {}", transfer_id);
                 None
             }
         });
@@ -363,21 +427,26 @@ impl Session {
         &self,
         source_path: String,
         direction: String,
-    ) -> Result<HashMap<String, Vec<String>>, EnumError> {
-        let mut items = HashMap::new();
+    ) -> Result<Vec<PathInfo>, EnumError> {
+        let mut items = vec![];
         println!("RUST: Listing directory contents of {}", source_path);
         if direction == "local" {
             let mut read_dir = tokio::fs::read_dir(&source_path).await?;
             while let Some(entry) = read_dir.next_entry().await? {
                 let path = entry.path();
                 let metadata = entry.metadata().await?;
-                let file_type = if path.is_dir() { "Dir" } else { "File" };
-                let file_size = metadata.len().to_string();
+                let file_type = if path.is_dir() {
+                    RusshFileType::Dir
+                } else {
+                    RusshFileType::File
+                };
+                let file_size = metadata.len();
 
-                items.insert(
-                    source_path.clone() + "/" + &path.to_string_lossy().to_string(),
-                    vec![file_type.to_string(), file_size],
-                );
+                items.push(PathInfo {
+                    path: source_path.clone() + "/" + &path.to_string_lossy().to_string(),
+                    file_type: file_type,
+                    size: file_size,
+                });
                 if metadata.file_type().is_dir() {
                     let sub_items = self
                         .list_directory_contents_wrapper(
@@ -396,17 +465,14 @@ impl Session {
 
             let readdir = sftp.read_dir(&source_path).await?;
             for dir_entry in readdir {
-                let file_type = match dir_entry.file_type() {
-                    RusshFileType::File | RusshFileType::Symlink | RusshFileType::Other => "File",
-                    RusshFileType::Dir => "Dir",
-                };
-                let file_size = dir_entry.metadata().size.unwrap_or(0).to_string();
+                let file_type = dir_entry.file_type();
 
-                items.insert(
-                    source_path.clone() + "/" + &dir_entry.file_name().to_owned(),
-                    vec![file_type.to_string(), file_size],
-                );
-                if file_type == "Dir" {
+                items.push(PathInfo {
+                    path: source_path.clone() + "/" + &dir_entry.file_name().to_owned(),
+                    file_type: file_type,
+                    size: dir_entry.metadata().size.unwrap_or(0),
+                });
+                if file_type == RusshFileType::Dir {
                     let sub_items = self
                         .list_directory_contents_wrapper(
                             source_path.clone() + "/" + &dir_entry.file_name(),
@@ -424,8 +490,7 @@ impl Session {
         &self,
         source_path: String, // Take ownership
         direction: String,   // Take ownership
-    ) -> Pin<Box<dyn Future<Output = Result<HashMap<String, Vec<String>>, EnumError>> + Send + '_>>
-    {
+    ) -> Pin<Box<dyn Future<Output = Result<Vec<PathInfo>, EnumError>> + Send + '_>> {
         // Now directly pass the owned Strings without referencing them
         Box::pin(self.list_directory_contents(source_path, direction))
     }

@@ -238,7 +238,7 @@ const FolderViewer = () => {
       filename: item.fileName,
       sourcePath: sourcePath,
       destPath: destinationPath,
-      totalBytes: item.bytes,
+      totalBytes: 1,
       transferredBytes: 0,
       status: 'in-progress',
     });

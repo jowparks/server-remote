@@ -83,7 +83,7 @@ export default function FileViewerNav() {
         filename: file.name || '',
         sourcePath: sourcePath,
         destPath: destinationPath,
-        totalBytes: file.size || 0,
+        totalBytes: 1,
         transferredBytes: 0,
         status: 'in-progress',
       });

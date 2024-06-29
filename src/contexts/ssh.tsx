@@ -13,6 +13,7 @@ import {
   transferProgress,
   exec,
   transfer,
+  TransferProgress,
 } from '../../modules/ssh-module';
 import uuid from 'react-native-uuid';
 
@@ -31,7 +32,7 @@ export type SSHClient = {
     direction: string,
   ) => Promise<string>;
   // get the progress of a download
-  transferProgress: (transferId: string) => Promise<number>;
+  transferProgress: (transferId: string) => Promise<TransferProgress>;
 };
 
 // Create the context

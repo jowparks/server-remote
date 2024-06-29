@@ -92,7 +92,7 @@ public class SshModule: Module {
           return "0"
       }
       
-      AsyncFunction("transferProgress") { (transferId: String) async throws -> UInt64? in
+      AsyncFunction("transferProgress") { (transferId: String) async throws -> [UInt64]? in
           guard let session = self.session else {
               throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
           }
