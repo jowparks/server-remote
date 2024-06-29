@@ -53,6 +53,7 @@ export const TransferProvider: React.FC<TransferProviderProps> = ({
 
     const interval = setInterval(async () => {
       let tf = transfersRef.current.find((t) => t.id === transfer.id);
+      let status = 'in-progress';
       if (!tf) {
         throw new Error('Transfer not found');
       }
@@ -61,22 +62,18 @@ export const TransferProvider: React.FC<TransferProviderProps> = ({
         return;
       }
       const transferProgress = await sshClient.transferProgress(tf.id);
-      setTransfers((prevTransfers) =>
-        prevTransfers.map((t) =>
-          t.filename === tf.filename
-            ? {
-                ...t,
-                transferredBytes: transferProgress.transferredBytes,
-                totalBytes: transferProgress.totalBytes,
-              }
-            : t,
-        ),
-      );
-      console.log(transferProgress);
-      if (transferProgress.transferredBytes >= transferProgress.totalBytes) {
-        updateTransfer(tf.id, { ...tf, status: 'complete' });
+      if (transferProgress.transferred >= transferProgress.total) {
+        status = 'complete';
         clearInterval(interval);
       }
+
+      transferProgress.transferred !== 0 &&
+        updateTransfer(tf.id, {
+          ...tf,
+          transferredBytes: transferProgress.transferred,
+          totalBytes: transferProgress.total,
+          status: status as any,
+        });
     }, 100);
   };
 

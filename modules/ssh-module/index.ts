@@ -8,9 +8,15 @@ import { ChangeEventPayload } from './src/SshModule.types';
 // Get the native constant value.
 export const PI = SshModule.PI;
 
+export type TransferProgressExpo = {
+  // bigint strings
+  transferred: string;
+  total: string;
+};
+
 export type TransferProgress = {
-  transferredBytes: number;
-  totalBytes: number;
+  transferred: number;
+  total: number;
 };
 
 export function hello(): string {
@@ -100,16 +106,13 @@ export async function transfer(
 export async function transferProgress(
   transferId: string,
 ): Promise<TransferProgress> {
-  const progress = SshModule.transferProgress(transferId);
-  if (!progress[0] || !progress[1]) {
-    return {
-      transferredBytes: 0,
-      totalBytes: 0,
-    };
-  }
+  const progress = (await SshModule.transferProgress(
+    transferId,
+  )) as TransferProgress;
+  console.log('JS: transferProgress', progress);
   return {
-    transferredBytes: progress[0],
-    totalBytes: progress[1],
+    transferred: Number(progress.transferred),
+    total: Number(progress.total),
   };
 }
 

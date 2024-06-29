@@ -1,5 +1,12 @@
 import ExpoModulesCore
 
+struct TransferProgressSwift: Record {
+  @Field
+  var transferred: String
+  @Field
+  var total: String
+}
+
 public class SshModule: Module {
   // Each module class must implement the definition function. The definition consists of components
   // that describes the module's functionality and behavior.
@@ -92,11 +99,15 @@ public class SshModule: Module {
           return "0"
       }
       
-      AsyncFunction("transferProgress") { (transferId: String) async throws -> [UInt64]? in
+      AsyncFunction("transferProgress") { (transferId: String) async throws -> TransferProgressSwift in
           guard let session = self.session else {
               throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
           }
-          return await session.transferProgress(transferId: transferId)
+          let progress =  await session.transferProgress(transferId: transferId)
+          return TransferProgressSwift(
+            transferred: Field(wrappedValue: String(progress.transferred)),
+            total: Field(wrappedValue: String(progress.total))
+          )
       }
 
   }

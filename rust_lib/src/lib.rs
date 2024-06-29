@@ -101,6 +101,12 @@ impl client::Handler for Client {
     }
 }
 
+#[derive(uniffi::Record, Debug, Clone)]
+pub struct TransferProgress {
+    pub transferred: u64,
+    pub total: u64,
+}
+
 /// This struct is a convenience wrapper
 /// around a russh client
 /// that handles the input/output event loop
@@ -108,7 +114,7 @@ impl client::Handler for Client {
 pub struct Session {
     session: Arc<Mutex<client::Handle<Client>>>,
     output: Arc<Mutex<HashMap<String, Arc<Mutex<UnboundedReceiver<String>>>>>>,
-    transfer_progress: Arc<Mutex<HashMap<String, Arc<Mutex<ReceiverWatch<Vec<u64>>>>>>>,
+    transfer_progress: Arc<Mutex<HashMap<String, Arc<Mutex<ReceiverWatch<TransferProgress>>>>>>,
     cancellation: Arc<Mutex<HashMap<String, Arc<Mutex<Sender<u8>>>>>>,
 }
 
@@ -280,7 +286,10 @@ impl Session {
             }
 
             let (transfer_sender, transfer_receiver) =
-                tokio::sync::watch::channel(vec![0u64, 0u64]);
+                tokio::sync::watch::channel(TransferProgress {
+                    transferred: 0u64,
+                    total: 0u64,
+                });
             {
                 let mut transfer = self.transfer_progress.lock().await;
                 transfer.insert(transfer_id.clone(), Arc::new(Mutex::new(transfer_receiver)));
@@ -288,7 +297,10 @@ impl Session {
 
             let total_size = files.iter().map(|p| p.size).sum::<u64>();
 
-            transfer_sender.send(vec![0, total_size])?;
+            transfer_sender.send(TransferProgress {
+                transferred: 0,
+                total: total_size,
+            })?;
 
             let mut transferred_bytes = 0u64;
             let mut buffer = [0; 100000];
@@ -317,7 +329,10 @@ impl Session {
                         }
                     }
                     transferred_bytes += source_file_info.size;
-                    transfer_sender.send(vec![transferred_bytes, total_size])?;
+                    transfer_sender.send(TransferProgress {
+                        transferred: transferred_bytes,
+                        total: total_size,
+                    })?;
                     continue;
                 }
                 let mut source_file: FileType;
@@ -350,7 +365,10 @@ impl Session {
 
                     destination_file.write_all(&buffer[..bytes_read]).await?;
                     transferred_bytes += bytes_read as u64;
-                    transfer_sender.send(vec![transferred_bytes, total_size])?;
+                    transfer_sender.send(TransferProgress {
+                        transferred: transferred_bytes,
+                        total: total_size,
+                    })?;
                 }
             }
             Ok(())
@@ -359,7 +377,7 @@ impl Session {
     }
 
     // TODO progress seems to be updating but it isn't getting propogated to front end
-    async fn transfer_progress(self: Arc<Self>, transfer_id: &str) -> Option<Vec<u64>> {
+    async fn transfer_progress(self: Arc<Self>, transfer_id: &str) -> TransferProgress {
         let transfer_id = transfer_id.to_owned();
         let handle = TOKIO_RUNTIME.spawn(async move {
             let transfer = self.transfer_progress.lock().await;
@@ -367,10 +385,13 @@ impl Session {
             if let Some(progress) = progress {
                 let p = progress.lock().await.borrow().clone();
                 println!("RUST: Progress {} {:?}", transfer_id, p);
-                Some(p)
+                p
             } else {
                 println!("RUST: Progress not found {}", transfer_id);
-                None
+                TransferProgress {
+                    transferred: 0,
+                    total: 1,
+                }
             }
         });
         handle.await.unwrap()

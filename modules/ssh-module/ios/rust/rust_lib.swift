@@ -368,7 +368,7 @@ public protocol SessionProtocol : AnyObject {
     
     func transfer(transferId: String, sourcePath: String, destinationPath: String, direction: String) async throws 
     
-    func transferProgress(transferId: String) async  -> [UInt64]?
+    func transferProgress(transferId: String) async  -> TransferProgress
     
 }
 
@@ -480,7 +480,7 @@ public class Session:
     }
 
     
-    public func transferProgress(transferId: String) async  -> [UInt64]? {
+    public func transferProgress(transferId: String) async  -> TransferProgress {
         return try!  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_rust_lib_fn_method_session_transfer_progress(
@@ -491,7 +491,7 @@ public class Session:
             pollFunc: ffi_rust_lib_rust_future_poll_rust_buffer,
             completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
             freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionSequenceUInt64.lift,
+            liftFunc: FfiConverterTypeTransferProgress.lift,
             errorHandler: nil
             
         )
@@ -539,6 +539,64 @@ public func FfiConverterTypeSession_lift(_ pointer: UnsafeMutableRawPointer) thr
 
 public func FfiConverterTypeSession_lower(_ value: Session) -> UnsafeMutableRawPointer {
     return FfiConverterTypeSession.lower(value)
+}
+
+
+public struct TransferProgress {
+    public var transferred: UInt64
+    public var total: UInt64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        transferred: UInt64, 
+        total: UInt64) {
+        self.transferred = transferred
+        self.total = total
+    }
+}
+
+
+extension TransferProgress: Equatable, Hashable {
+    public static func ==(lhs: TransferProgress, rhs: TransferProgress) -> Bool {
+        if lhs.transferred != rhs.transferred {
+            return false
+        }
+        if lhs.total != rhs.total {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(transferred)
+        hasher.combine(total)
+    }
+}
+
+
+public struct FfiConverterTypeTransferProgress: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TransferProgress {
+        return
+            try TransferProgress(
+                transferred: FfiConverterUInt64.read(from: &buf), 
+                total: FfiConverterUInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TransferProgress, into buf: inout [UInt8]) {
+        FfiConverterUInt64.write(value.transferred, into: &buf)
+        FfiConverterUInt64.write(value.total, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeTransferProgress_lift(_ buf: RustBuffer) throws -> TransferProgress {
+    return try FfiConverterTypeTransferProgress.lift(buf)
+}
+
+public func FfiConverterTypeTransferProgress_lower(_ value: TransferProgress) -> RustBuffer {
+    return FfiConverterTypeTransferProgress.lower(value)
 }
 
 
@@ -615,49 +673,6 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
         case 1: return try FfiConverterString.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
-    }
-}
-
-fileprivate struct FfiConverterOptionSequenceUInt64: FfiConverterRustBuffer {
-    typealias SwiftType = [UInt64]?
-
-    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
-        guard let value = value else {
-            writeInt(&buf, Int8(0))
-            return
-        }
-        writeInt(&buf, Int8(1))
-        FfiConverterSequenceUInt64.write(value, into: &buf)
-    }
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
-        switch try readInt(&buf) as Int8 {
-        case 0: return nil
-        case 1: return try FfiConverterSequenceUInt64.read(from: &buf)
-        default: throw UniffiInternalError.unexpectedOptionalTag
-        }
-    }
-}
-
-fileprivate struct FfiConverterSequenceUInt64: FfiConverterRustBuffer {
-    typealias SwiftType = [UInt64]
-
-    public static func write(_ value: [UInt64], into buf: inout [UInt8]) {
-        let len = Int32(value.count)
-        writeInt(&buf, len)
-        for item in value {
-            FfiConverterUInt64.write(item, into: &buf)
-        }
-    }
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [UInt64] {
-        let len: Int32 = try readInt(&buf)
-        var seq = [UInt64]()
-        seq.reserveCapacity(Int(len))
-        for _ in 0 ..< len {
-            seq.append(try FfiConverterUInt64.read(from: &buf))
-        }
-        return seq
     }
 }
 private let UNIFFI_RUST_FUTURE_POLL_READY: Int8 = 0
@@ -762,7 +777,7 @@ private var initializationResult: InitializationResult {
     if (uniffi_rust_lib_checksum_method_session_transfer() != 49655) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_transfer_progress() != 38878) {
+    if (uniffi_rust_lib_checksum_method_session_transfer_progress() != 43642) {
         return InitializationResult.apiChecksumMismatch
     }
 
