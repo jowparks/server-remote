@@ -18,7 +18,8 @@ import { useTransfers } from '../../contexts/transfers';
 
 enum NavOptions {
   Paste = 'Paste',
-  Upload = 'Upload',
+  UploadFile = 'Upload File',
+  UploadFolder = 'Upload Folder',
   Bookmark = 'Bookmark',
   Unbookmark = 'Unbookmark',
 }
@@ -50,7 +51,7 @@ export default function FileViewerNav() {
 
   useEffect(() => {
     const upload = {
-      title: NavOptions.Upload,
+      title: NavOptions.UploadFile,
       systemIcon: 'square.and.arrow.up',
     };
     const bookmark = bookmarked
@@ -64,23 +65,39 @@ export default function FileViewerNav() {
       systemIcon: 'doc.on.clipboard.fill',
       disabled: !cachedFile,
     };
-    setActions([upload, bookmark, paste]);
+    const uploadFolder = {
+      title: NavOptions.UploadFolder,
+      systemIcon: 'folder.circle',
+    };
+    setActions([upload, uploadFolder, bookmark, paste]);
   }, [bookmarked, cachedFile]);
 
-  function handleUpload() {
+  function handleUpload(option: NavOptions) {
     if (!sshClient || !currentFolder) return;
     const upload = async () => {
-      const file = await DocumentPicker.pickSingle({
-        presentationStyle: 'pageSheet',
-      });
+      let file;
+      if (option === NavOptions.UploadFile) {
+        file = await DocumentPicker.pickSingle({
+          presentationStyle: 'pageSheet',
+        });
+      } else {
+        const temp = await DocumentPicker.pickDirectory({
+          presentationStyle: 'pageSheet',
+        });
+        // all but last character of temp "/"
+        file = temp ? { uri: temp.uri.slice(0, -1) } : null;
+      }
       if (!file?.uri) return;
       const sourcePath = decodeURI(file.uri.replace('file://', ''));
-      const destinationPath = `${currentFolder.filePath}/${file.name}`;
+      // TODO: test upload works
+      const parts = sourcePath.split('/');
+      const lastPart = parts[parts.length - 1];
+      const destinationPath = `${currentFolder.filePath}/${lastPart}`;
       console.log(`Upload from: ${sourcePath} to ${destinationPath}`);
       const id = uuid.v4() as string;
       addTransfer({
         id: id,
-        filename: file.name || '',
+        filename: lastPart,
         sourcePath: sourcePath,
         destPath: destinationPath,
         totalBytes: 1,
@@ -116,8 +133,11 @@ export default function FileViewerNav() {
       case NavOptions.Paste:
         setPasteLocation(currentFolder);
         break;
-      case NavOptions.Upload:
-        handleUpload();
+      case NavOptions.UploadFolder:
+        handleUpload(NavOptions.UploadFolder);
+        break;
+      case NavOptions.UploadFile:
+        handleUpload(NavOptions.UploadFile);
         break;
       default:
         break;

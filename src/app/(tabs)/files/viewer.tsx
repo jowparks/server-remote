@@ -214,11 +214,6 @@ const FolderViewer = () => {
 
   const handleDownload = async (item: FileInfo) => {
     if (!item) return;
-    // // TODO: handle directory uploads
-    // if (item.fileType === 'd') {
-    //   console.error('Downloading directory not supported');
-    //   return;
-    // }
     if (!sshClient) return;
     const directory = await DocumentPicker.pickDirectory({
       presentationStyle: 'pageSheet',

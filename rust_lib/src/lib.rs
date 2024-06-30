@@ -236,11 +236,8 @@ impl Session {
     ) -> Result<(), EnumError> {
         let transfer_id = transfer_id.to_owned();
         let source_path = source_path.to_owned();
-        let source_path_clone = source_path.clone();
-        let source_path_clone2 = source_path.clone();
         let destination_path = destination_path.to_owned();
         let direction = direction.to_owned();
-        let direction_clone = direction.clone();
         let (cancel_sender, cancel_receiver) = mpsc::channel::<u8>(1);
         {
             self.cancellation
@@ -257,20 +254,21 @@ impl Session {
             // TODO: fix error here, seems like it is using //home instead of /home, then test recursive directory with /home folder
             println!(
                 "RUST: Transferring between {} {}",
-                source_path, destination_path
+                source_path.clone(),
+                destination_path
             );
 
             let source: FileType;
             if direction == "upload" {
-                source = FileType::Tokio(TokioFile::open(source_path).await?);
+                source = FileType::Tokio(TokioFile::open(source_path.clone()).await?);
             } else {
-                source = FileType::Russh(sftp.open(source_path).await?);
+                source = FileType::Russh(sftp.open(source_path.clone()).await?);
             }
 
             let mut files: Vec<PathInfo> = vec![];
             let ft = source.file_type().await?;
             files.push(PathInfo {
-                path: source_path_clone.clone(),
+                path: source_path.clone(),
                 file_type: ft,
                 size: source.file_size().await?,
             });
@@ -278,10 +276,17 @@ impl Session {
             println!("RUST: File type {:?}", ft);
             // TODO test this updated code
             if ft == RusshFileType::Dir {
-                files.extend(
-                    self.list_directory_contents(source_path_clone, direction)
-                        .await?,
-                );
+                if direction == "upload" {
+                    files.extend(
+                        self.list_directory_contents_local(source_path.clone())
+                            .await?,
+                    );
+                } else if direction == "download" {
+                    files.extend(
+                        self.list_directory_contents_sftp(source_path.clone())
+                            .await?,
+                    );
+                }
                 println!("RUST: Files {:?}", files);
             }
 
@@ -312,14 +317,14 @@ impl Session {
             for source_file_info in files {
                 // destination should be destination path + source_file.0 - source_path
                 let destination_path = destination_path.to_owned()
-                    + &source_file_info.path[source_path_clone2.len()..];
+                    + &source_file_info.path[source_path.clone().len()..];
                 println!(
                     "RUST: Transferring from {} to {}",
                     source_file_info.path, destination_path
                 );
                 if source_file_info.file_type == RusshFileType::Dir {
                     println!("RUST: Creating directory {}", destination_path.clone());
-                    if direction_clone == "upload" {
+                    if direction == "upload" {
                         if (sftp.try_exists(destination_path.clone()).await?).not() {
                             sftp.create_dir(destination_path.clone()).await?;
                         }
@@ -338,7 +343,7 @@ impl Session {
                 let mut source_file: FileType;
                 let mut destination_file: FileType;
                 println!("RUST: Creating file {}", destination_path.clone());
-                if direction_clone == "upload" {
+                if direction == "upload" {
                     destination_file =
                         FileType::Russh(sftp.create(destination_path.clone()).await?);
                     source_file = FileType::Tokio(TokioFile::open(source_file_info.path).await?);
@@ -443,77 +448,85 @@ impl Session {
 
 impl Session {
     // WARNING: only use this inside existing tokio runtime thread
-    // TODO: handle recursion, handle filepath being full path (add source path to )
-    async fn list_directory_contents(
+    async fn list_directory_contents_local(
         &self,
         source_path: String,
-        direction: String,
     ) -> Result<Vec<PathInfo>, EnumError> {
         let mut items = vec![];
-        println!("RUST: Listing directory contents of {}", source_path);
-        if direction == "local" {
-            let mut read_dir = tokio::fs::read_dir(&source_path).await?;
-            while let Some(entry) = read_dir.next_entry().await? {
-                let path = entry.path();
-                let metadata = entry.metadata().await?;
-                let file_type = if path.is_dir() {
-                    RusshFileType::Dir
-                } else {
-                    RusshFileType::File
-                };
-                let file_size = metadata.len();
+        println!("RUST: Listing local directory contents of {}", source_path);
+        let mut read_dir = tokio::fs::read_dir(&source_path).await?;
+        while let Some(entry) = read_dir.next_entry().await? {
+            let path = entry.path();
+            let metadata = entry.metadata().await?;
+            let file_type = if path.is_dir() {
+                RusshFileType::Dir
+            } else {
+                RusshFileType::File
+            };
+            let file_size = metadata.len();
 
-                items.push(PathInfo {
-                    path: source_path.clone() + "/" + &path.to_string_lossy().to_string(),
-                    file_type: file_type,
-                    size: file_size,
-                });
-                if metadata.file_type().is_dir() {
-                    let sub_items = self
-                        .list_directory_contents_wrapper(
-                            source_path.clone() + "/" + &path.to_string_lossy(),
-                            direction.clone(),
-                        )
-                        .await?;
-                    items.extend(sub_items);
-                }
-            }
-        } else {
-            // Assuming `self.session` and `SftpSession` are defined elsewhere in your code
-            let channel = self.session.lock().await.channel_open_session().await?;
-            channel.request_subsystem(true, "sftp").await?;
-            let sftp = SftpSession::new(channel.into_stream()).await?;
-
-            let readdir = sftp.read_dir(&source_path).await?;
-            for dir_entry in readdir {
-                let file_type = dir_entry.file_type();
-
-                items.push(PathInfo {
-                    path: source_path.clone() + "/" + &dir_entry.file_name().to_owned(),
-                    file_type: file_type,
-                    size: dir_entry.metadata().size.unwrap_or(0),
-                });
-                if file_type == RusshFileType::Dir {
-                    let sub_items = self
-                        .list_directory_contents_wrapper(
-                            source_path.clone() + "/" + &dir_entry.file_name(),
-                            direction.clone(),
-                        )
-                        .await?;
-                    items.extend(sub_items);
-                }
+            let entry_path = source_path.clone() + "/" + &entry.file_name().to_string_lossy();
+            items.push(PathInfo {
+                path: entry_path.clone(),
+                file_type: file_type,
+                size: file_size,
+            });
+            if metadata.file_type().is_dir() {
+                let sub_items = self
+                    .list_directory_contents_local_wrapper(entry_path)
+                    .await?;
+                items.extend(sub_items);
             }
         }
         Ok(items)
     }
 
-    fn list_directory_contents_wrapper(
+    fn list_directory_contents_local_wrapper(
         &self,
         source_path: String, // Take ownership
-        direction: String,   // Take ownership
     ) -> Pin<Box<dyn Future<Output = Result<Vec<PathInfo>, EnumError>> + Send + '_>> {
         // Now directly pass the owned Strings without referencing them
-        Box::pin(self.list_directory_contents(source_path, direction))
+        Box::pin(self.list_directory_contents_local(source_path))
+    }
+
+    // WARNING: only use this inside existing tokio runtime thread
+    async fn list_directory_contents_sftp(
+        &self,
+        source_path: String,
+    ) -> Result<Vec<PathInfo>, EnumError> {
+        let mut items = vec![];
+        println!("RUST: Listing sftp directory contents of {}", source_path);
+        // Assuming `self.session` and `SftpSession` are defined elsewhere in your code
+        let channel = self.session.lock().await.channel_open_session().await?;
+        channel.request_subsystem(true, "sftp").await?;
+        let sftp = SftpSession::new(channel.into_stream()).await?;
+
+        let readdir = sftp.read_dir(&source_path).await?;
+        for dir_entry in readdir {
+            let file_type = dir_entry.file_type();
+
+            let entry_path = source_path.clone() + "/" + &dir_entry.file_name();
+            items.push(PathInfo {
+                path: entry_path.clone(),
+                file_type: file_type,
+                size: dir_entry.metadata().size.unwrap_or(0),
+            });
+            if file_type == RusshFileType::Dir {
+                let sub_items = self
+                    .list_directory_contents_sftp_wrapper(entry_path)
+                    .await?;
+                items.extend(sub_items);
+            }
+        }
+        Ok(items)
+    }
+
+    fn list_directory_contents_sftp_wrapper(
+        &self,
+        source_path: String, // Take ownership
+    ) -> Pin<Box<dyn Future<Output = Result<Vec<PathInfo>, EnumError>> + Send + '_>> {
+        // Now directly pass the owned Strings without referencing them
+        Box::pin(self.list_directory_contents_sftp(source_path))
     }
 }
 
