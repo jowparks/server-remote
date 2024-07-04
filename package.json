@@ -13,6 +13,7 @@
     "cargo-android": "tsx scripts/cargo-android.ts",
     "build-rust-android": "npm run cargo-android",
     "build-rust-ios": "npm run cargo-ios -- --target=ios-sim && pod install --project-directory=ios",
+    "build-rust-ios-release": "npm run cargo-ios -- --target=ios && pod install --project-directory=ios",
     "build-rust": "npm run build-rust-android && npm run build-rust-ios"
   },
   "dependencies": {

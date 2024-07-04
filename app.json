@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Server Remote",
-    "scheme": "Server Remote",
+    "scheme": "Server-Remote",
     "slug": "Server Remote",
     "version": "1.0.0",
     "orientation": "portrait",

@@ -190,41 +190,43 @@ impl Session {
             let session = self.session.lock().await;
             channel = session.channel_open_session().await?;
         }
-        let handle = TOKIO_RUNTIME.spawn(async move {
-            let mut return_code = String::new();
+        TOKIO_RUNTIME
+            .spawn(async move {
+                let mut return_code = String::new();
 
-            channel.exec(true, command_clone).await?;
+                channel.exec(true, command_clone).await?;
 
-            loop {
-                if !cancel_receiver.is_empty() {
-                    channel.close().await?;
-                    drop(cancel_receiver);
-                    println!("Cancelled command {}", command_id_clone);
-                    break;
+                loop {
+                    if !cancel_receiver.is_empty() {
+                        channel.close().await?;
+                        drop(cancel_receiver);
+                        println!("Cancelled command {}", command_id_clone);
+                        break;
+                    }
+                    // returns None if the channel is closed
+                    let Some(msg) = channel.wait().await else {
+                        drop(tx);
+                        break;
+                    };
+                    println!("msg: {:?}", msg);
+                    match msg {
+                        ChannelMsg::Data { ref data } => {
+                            let data_str = String::from_utf8(data.to_vec()).unwrap();
+                            tx.send(data_str)?;
+                        }
+
+                        ChannelMsg::ExitStatus { exit_status } => {
+                            return_code = format!("{}", exit_status);
+                        }
+                        _ => {
+                            // println!("Unhandled message: {:?}", msg);
+                        }
+                    }
                 }
-                // returns None if the channel is closed
-                let Some(msg) = channel.wait().await else {
-                    drop(tx);
-                    break;
-                };
-                println!("msg: {:?}", msg);
-                match msg {
-                    ChannelMsg::Data { ref data } => {
-                        let data_str = String::from_utf8(data.to_vec()).unwrap();
-                        tx.send(data_str)?;
-                    }
-
-                    ChannelMsg::ExitStatus { exit_status } => {
-                        return_code = format!("{}", exit_status);
-                    }
-                    _ => {
-                        // println!("Unhandled message: {:?}", msg);
-                    }
-                }
-            }
-            Ok(return_code)
-        });
-        handle.await.unwrap()
+                Ok(return_code)
+            })
+            .await
+            .map_err(|join_err| EnumError::from(join_err))?
     }
 
     async fn transfer(
@@ -246,174 +248,183 @@ impl Session {
                 .insert(transfer_id.to_string(), Arc::new(Mutex::new(cancel_sender)));
         }
 
-        let handle = TOKIO_RUNTIME.spawn(async move {
-            let channel = self.session.lock().await.channel_open_session().await?;
-            channel.request_subsystem(true, "sftp").await?;
-            let sftp = SftpSession::new(channel.into_stream()).await?;
+        TOKIO_RUNTIME
+            .spawn(async move {
+                let channel = self.session.lock().await.channel_open_session().await?;
+                channel.request_subsystem(true, "sftp").await?;
+                let sftp = SftpSession::new(channel.into_stream()).await?;
 
-            // TODO: fix error here, seems like it is using //home instead of /home, then test recursive directory with /home folder
-            println!(
-                "RUST: Transferring between {} {}",
-                source_path.clone(),
-                destination_path
-            );
-
-            let source: FileType;
-            if direction == "upload" {
-                source = FileType::Tokio(TokioFile::open(source_path.clone()).await?);
-            } else {
-                source = FileType::Russh(sftp.open(source_path.clone()).await?);
-            }
-
-            let mut files: Vec<PathInfo> = vec![];
-            let ft = source.file_type().await?;
-            files.push(PathInfo {
-                path: source_path.clone(),
-                file_type: ft,
-                size: source.file_size().await?,
-            });
-
-            println!("RUST: File type {:?}", ft);
-            // TODO test this updated code
-            if ft == RusshFileType::Dir {
-                if direction == "upload" {
-                    files.extend(
-                        self.list_directory_contents_local(source_path.clone())
-                            .await?,
-                    );
-                } else if direction == "download" {
-                    files.extend(
-                        self.list_directory_contents_sftp(source_path.clone())
-                            .await?,
-                    );
-                }
-                println!("RUST: Files {:?}", files);
-            }
-
-            let (transfer_sender, transfer_receiver) =
-                tokio::sync::watch::channel(TransferProgress {
-                    transferred: 0u64,
-                    total: 0u64,
-                });
-            {
-                let mut transfer = self.transfer_progress.lock().await;
-                transfer.insert(transfer_id.clone(), Arc::new(Mutex::new(transfer_receiver)));
-            }
-
-            let total_size = files.iter().map(|p| p.size).sum::<u64>();
-
-            transfer_sender.send(TransferProgress {
-                transferred: 0,
-                total: total_size,
-            })?;
-
-            let mut transferred_bytes = 0u64;
-            let mut buffer = [0; 100000];
-            println!(
-                "RUST: Transferring id {} total size {}",
-                transfer_id, total_size
-            );
-            // todo test this recursive copy
-            for source_file_info in files {
-                // destination should be destination path + source_file.0 - source_path
-                let destination_path = destination_path.to_owned()
-                    + &source_file_info.path[source_path.clone().len()..];
+                // TODO: fix error here, seems like it is using //home instead of /home, then test recursive directory with /home folder
                 println!(
-                    "RUST: Transferring from {} to {}",
-                    source_file_info.path, destination_path
+                    "RUST: Transferring between {} {}",
+                    source_path.clone(),
+                    destination_path
                 );
-                if source_file_info.file_type == RusshFileType::Dir {
-                    println!("RUST: Creating directory {}", destination_path.clone());
-                    if direction == "upload" {
-                        if (sftp.try_exists(destination_path.clone()).await?).not() {
-                            sftp.create_dir(destination_path.clone()).await?;
-                        }
-                    } else {
-                        if tokio::fs::metadata(destination_path.clone()).await.is_err() {
-                            tokio::fs::create_dir(destination_path.clone()).await?;
-                        }
-                    }
-                    transferred_bytes += source_file_info.size;
-                    transfer_sender.send(TransferProgress {
-                        transferred: transferred_bytes,
-                        total: total_size,
-                    })?;
-                    continue;
-                }
-                let mut source_file: FileType;
-                let mut destination_file: FileType;
-                println!("RUST: Creating file {}", destination_path.clone());
+
+                let source: FileType;
                 if direction == "upload" {
-                    destination_file =
-                        FileType::Russh(sftp.create(destination_path.clone()).await?);
-                    source_file = FileType::Tokio(TokioFile::open(source_file_info.path).await?);
+                    source = FileType::Tokio(TokioFile::open(source_path.clone()).await?);
                 } else {
-                    destination_file =
-                        FileType::Tokio(TokioFile::create(destination_path.clone()).await?);
-                    source_file = FileType::Russh(sftp.open(source_file_info.path).await?);
+                    source = FileType::Russh(sftp.open(source_path.clone()).await?);
                 }
 
-                println!("RUST: Transferring file {}", destination_path.clone());
-                loop {
-                    if !cancel_receiver.is_empty() {
-                        sftp.close().await?;
-                        println!("Transfer Cancelled {}", transfer_id);
-                        break;
-                    }
-                    let bytes_left = total_size - transferred_bytes;
-                    let read_size = std::cmp::min(buffer.len(), bytes_left as usize);
+                let mut files: Vec<PathInfo> = vec![];
+                let ft = source.file_type().await?;
+                files.push(PathInfo {
+                    path: source_path.clone(),
+                    file_type: ft,
+                    size: source.file_size().await?,
+                });
 
-                    let bytes_read = source_file.read(&mut buffer[..read_size]).await?;
-                    if bytes_read == 0 {
-                        break;
+                println!("RUST: File type {:?}", ft);
+                // TODO test this updated code
+                if ft == RusshFileType::Dir {
+                    if direction == "upload" {
+                        files.extend(
+                            self.list_directory_contents_local(source_path.clone())
+                                .await?,
+                        );
+                    } else if direction == "download" {
+                        files.extend(
+                            self.list_directory_contents_sftp(source_path.clone())
+                                .await?,
+                        );
                     }
-
-                    destination_file.write_all(&buffer[..bytes_read]).await?;
-                    transferred_bytes += bytes_read as u64;
-                    transfer_sender.send(TransferProgress {
-                        transferred: transferred_bytes,
-                        total: total_size,
-                    })?;
+                    println!("RUST: Files {:?}", files);
                 }
-            }
-            Ok(())
-        });
-        handle.await.unwrap()
+
+                let (transfer_sender, transfer_receiver) =
+                    tokio::sync::watch::channel(TransferProgress {
+                        transferred: 0u64,
+                        total: 0u64,
+                    });
+                {
+                    let mut transfer = self.transfer_progress.lock().await;
+                    transfer.insert(transfer_id.clone(), Arc::new(Mutex::new(transfer_receiver)));
+                }
+
+                let total_size = files.iter().map(|p| p.size).sum::<u64>();
+
+                transfer_sender.send(TransferProgress {
+                    transferred: 0,
+                    total: total_size,
+                })?;
+
+                let mut transferred_bytes = 0u64;
+                let mut buffer = [0; 100000];
+                println!(
+                    "RUST: Transferring id {} total size {}",
+                    transfer_id, total_size
+                );
+                // todo test this recursive copy
+                for source_file_info in files {
+                    // destination should be destination path + source_file.0 - source_path
+                    let destination_path = destination_path.to_owned()
+                        + &source_file_info.path[source_path.clone().len()..];
+                    println!(
+                        "RUST: Transferring from {} to {}",
+                        source_file_info.path, destination_path
+                    );
+                    if source_file_info.file_type == RusshFileType::Dir {
+                        println!("RUST: Creating directory {}", destination_path.clone());
+                        if direction == "upload" {
+                            if (sftp.try_exists(destination_path.clone()).await?).not() {
+                                sftp.create_dir(destination_path.clone()).await?;
+                            }
+                        } else {
+                            if tokio::fs::metadata(destination_path.clone()).await.is_err() {
+                                tokio::fs::create_dir(destination_path.clone()).await?;
+                            }
+                        }
+                        transferred_bytes += source_file_info.size;
+                        transfer_sender.send(TransferProgress {
+                            transferred: transferred_bytes,
+                            total: total_size,
+                        })?;
+                        continue;
+                    }
+                    let mut source_file: FileType;
+                    let mut destination_file: FileType;
+                    println!("RUST: Creating file {}", destination_path.clone());
+                    if direction == "upload" {
+                        destination_file =
+                            FileType::Russh(sftp.create(destination_path.clone()).await?);
+                        source_file =
+                            FileType::Tokio(TokioFile::open(source_file_info.path).await?);
+                    } else {
+                        destination_file =
+                            FileType::Tokio(TokioFile::create(destination_path.clone()).await?);
+                        source_file = FileType::Russh(sftp.open(source_file_info.path).await?);
+                    }
+
+                    println!("RUST: Transferring file {}", destination_path.clone());
+                    loop {
+                        if !cancel_receiver.is_empty() {
+                            sftp.close().await?;
+                            println!("Transfer Cancelled {}", transfer_id);
+                            break;
+                        }
+                        let bytes_left = total_size - transferred_bytes;
+                        let read_size = std::cmp::min(buffer.len(), bytes_left as usize);
+
+                        let bytes_read = source_file.read(&mut buffer[..read_size]).await?;
+                        if bytes_read == 0 {
+                            break;
+                        }
+
+                        destination_file.write_all(&buffer[..bytes_read]).await?;
+                        transferred_bytes += bytes_read as u64;
+                        transfer_sender.send(TransferProgress {
+                            transferred: transferred_bytes,
+                            total: total_size,
+                        })?;
+                    }
+                }
+                Ok(())
+            })
+            .await?
     }
 
     // TODO progress seems to be updating but it isn't getting propogated to front end
-    async fn transfer_progress(self: Arc<Self>, transfer_id: &str) -> TransferProgress {
+    async fn transfer_progress(
+        self: Arc<Self>,
+        transfer_id: &str,
+    ) -> Result<TransferProgress, EnumError> {
         let transfer_id = transfer_id.to_owned();
-        let handle = TOKIO_RUNTIME.spawn(async move {
-            let transfer = self.transfer_progress.lock().await;
-            let progress = transfer.get(&transfer_id);
-            if let Some(progress) = progress {
-                let p = progress.lock().await.borrow().clone();
-                println!("RUST: Progress {} {:?}", transfer_id, p);
-                p
-            } else {
-                println!("RUST: Progress not found {}", transfer_id);
-                TransferProgress {
-                    transferred: 0,
-                    total: 1,
+        TOKIO_RUNTIME
+            .spawn(async move {
+                let transfer = self.transfer_progress.lock().await;
+                let progress = transfer.get(&transfer_id);
+                if let Some(progress) = progress {
+                    let p = progress.lock().await.borrow().clone();
+                    println!("RUST: Progress {} {:?}", transfer_id, p);
+                    p
+                } else {
+                    println!("RUST: Progress not found {}", transfer_id);
+                    TransferProgress {
+                        transferred: 0,
+                        total: 1,
+                    }
                 }
-            }
-        });
-        handle.await.unwrap()
+            })
+            .await
+            .map_err(|join_err| EnumError::from(join_err))
     }
 
-    async fn read_output(self: Arc<Self>, command_id: &str) -> Option<String> {
+    async fn read_output(self: Arc<Self>, command_id: &str) -> Result<Option<String>, EnumError> {
         let command_id = command_id.to_owned();
-        let handle = TOKIO_RUNTIME.spawn(async move {
-            let output = self.output.lock().await;
-            let rx = output.get(&command_id);
-            if let Some(rx) = rx {
-                rx.lock().await.recv().await
-            } else {
-                None
-            }
-        });
-        handle.await.unwrap()
+        TOKIO_RUNTIME
+            .spawn(async move {
+                let output = self.output.lock().await;
+                let rx = output.get(&command_id);
+                if let Some(rx) = rx {
+                    rx.lock().await.recv().await
+                } else {
+                    None
+                }
+            })
+            .await
+            .map_err(|join_err| EnumError::from(join_err))
     }
 
     fn close(self: Arc<Self>) -> Result<(), EnumError> {
@@ -428,21 +439,22 @@ impl Session {
 
     async fn cancel(self: Arc<Self>, id: &str) -> Result<(), EnumError> {
         let id = id.to_owned();
-        let handle = TOKIO_RUNTIME.spawn(async move {
-            let map = self.cancellation.lock().await;
-            let cancellation = map.get(&id);
-            if let Some(cancellation) = cancellation {
-                cancellation.lock().await.send(1).await?;
-                println!("Cancelling {}", id);
-                Ok(())
-            } else {
-                Err(EnumError::Oops {
-                    msg: format!("ID {} not found", id),
-                    backtrace: Backtrace::capture().to_string(),
-                })
-            }
-        });
-        handle.await.unwrap()
+        TOKIO_RUNTIME
+            .spawn(async move {
+                let map = self.cancellation.lock().await;
+                let cancellation = map.get(&id);
+                if let Some(cancellation) = cancellation {
+                    cancellation.lock().await.send(1).await?;
+                    println!("Cancelling {}", id);
+                    Ok(())
+                } else {
+                    Err(EnumError::Oops {
+                        msg: format!("ID {} not found", id),
+                        backtrace: Backtrace::capture().to_string(),
+                    })
+                }
+            })
+            .await?
     }
 }
 
@@ -552,6 +564,15 @@ impl From<std::io::Error> for EnumError {
     fn from(error: std::io::Error) -> Self {
         EnumError::Oops {
             msg: format!("std: {}", error),
+            backtrace: Backtrace::capture().to_string(),
+        }
+    }
+}
+
+impl From<tokio::task::JoinError> for EnumError {
+    fn from(error: tokio::task::JoinError) -> Self {
+        EnumError::Oops {
+            msg: format!("tokio: {}", error),
             backtrace: Backtrace::capture().to_string(),
         }
     }

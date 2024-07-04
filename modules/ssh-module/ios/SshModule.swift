@@ -98,7 +98,7 @@ public class SshModule: Module {
           }
           return "0"
       }
-      
+      // TODO: wrap all these functions in an inner function, retry once with a reconnect if there is an error
       AsyncFunction("transferProgress") { (transferId: String) async throws -> TransferProgressSwift in
           guard let session = self.session else {
               throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
