@@ -7,11 +7,46 @@ struct TransferProgressSwift: Record {
   var total: String
 }
 
+struct ConnectionDetails {
+    var user: String
+    var password: String
+    var address: String
+}
+
 public class SshModule: Module {
   // Each module class must implement the definition function. The definition consists of components
   // that describes the module's functionality and behavior.
   // See https://docs.expo.dev/modules/module-api for more details about available components.
   var session: Session?
+    
+  var connectionDetails: ConnectionDetails?
+    
+    func reconnect() async throws -> Session {
+        guard let connectionDetails = self.connectionDetails else {
+            throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
+        }
+        guard let session = self.session else {
+            try await connection(user: connectionDetails.user, password: connectionDetails.password, addrs: connectionDetails.address)
+            throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "unreachable"])
+        }
+        do {
+            _ = try await session.testConnection()
+        } catch {
+            print("test_connection error: "+String(describing: error))
+            try await connection(user: connectionDetails.user, password: connectionDetails.password, addrs: connectionDetails.address)
+        }
+        return self.session!
+    }
+    
+    func connection(user: String, password: String, addrs: String) async throws -> Void {
+        do {
+            self.session = try connect(user: user, password: password, addrs: addrs)
+            self.connectionDetails = ConnectionDetails(user: user, password: password, address: addrs)
+        } catch {
+            print("connect error: "+String(describing: error))
+            throw error
+        }
+    }
 
   
   public func definition() -> ModuleDefinition {
@@ -35,19 +70,23 @@ public class SshModule: Module {
     }
 
     AsyncFunction("connect") { (user: String, password: String, addrs: String) async throws -> Void in
-      self.session = try connect(user: user, password: password, addrs: addrs)
+        try await connection(user: user, password: password, addrs: addrs)
     }
 
     AsyncFunction("exec") { (commandId: String, command: String) async throws -> String in
-        guard let session = self.session else {
-            throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
-        }
+
+        let session = try await self.reconnect()
         
         let isCompleted = IsCompleted()
 
-        @Sendable func getData() async {
-            while let data = await session.readOutput(commandId: commandId) {
-                self.sendEvent("exec", ["commandId": commandId, "data": data])
+        @Sendable func getData() async throws {
+            do {
+                while let data = try await session.readOutput(commandId: commandId) {
+                    self.sendEvent("exec", ["commandId": commandId, "data": data])
+                }
+            } catch {
+                print("read output error: "+String(describing: error))
+                throw error
             }
         }
 
@@ -58,7 +97,7 @@ public class SshModule: Module {
                     break
                 }
                 try await Task.sleep(nanoseconds: 100_000_000) // Sleep for 100ms
-                await getData()
+                try await getData()
             }
         }
         
@@ -66,7 +105,7 @@ public class SshModule: Module {
             let returnCode = try await session.exec(commandId: commandId, command: command)
             await isCompleted.set(true)
             try await task.value
-            await getData()
+            try await getData()
             self.sendEvent("exec", ["commandId": commandId, "data": "eventingComplete"])
             
             return returnCode
@@ -77,17 +116,15 @@ public class SshModule: Module {
     }
       
       AsyncFunction("cancel") { (id: String) async throws -> String in
-          guard let session = self.session else {
-              throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
-          }
+          let session = try await self.reconnect()
+
           try await session.cancel(id: id)
           return "0"
       }
       
       AsyncFunction("transfer") { (transferId: String, sourcePath: String, destinationPath: String, direction: String) async throws -> String in
-          guard let session = self.session else {
-              throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
-          }
+          let session = try await self.reconnect()
+
           do {
               print("trying transfer")
               print(transferId, sourcePath, destinationPath, direction)
@@ -95,19 +132,24 @@ public class SshModule: Module {
               print("success")
           } catch {
               print("transfer error: "+String(describing: error))
+              throw error
           }
           return "0"
       }
       // TODO: wrap all these functions in an inner function, retry once with a reconnect if there is an error
       AsyncFunction("transferProgress") { (transferId: String) async throws -> TransferProgressSwift in
-          guard let session = self.session else {
-              throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
+          let session = try await self.reconnect()
+
+          do {
+              let progress = try await session.transferProgress(transferId: transferId)
+              return TransferProgressSwift(
+                transferred: Field(wrappedValue: String(progress.transferred)),
+                total: Field(wrappedValue: String(progress.total))
+              )
+          } catch {
+              print("transfer progress error: "+String(describing: error))
+              throw error
           }
-          let progress =  await session.transferProgress(transferId: transferId)
-          return TransferProgressSwift(
-            transferred: Field(wrappedValue: String(progress.transferred)),
-            total: Field(wrappedValue: String(progress.total))
-          )
       }
 
   }

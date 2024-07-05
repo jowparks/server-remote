@@ -63,6 +63,8 @@ void* _Nonnull uniffi_rust_lib_fn_method_session_exec(void*_Nonnull ptr, RustBuf
 );
 void* _Nonnull uniffi_rust_lib_fn_method_session_read_output(void*_Nonnull ptr, RustBuffer command_id
 );
+void* _Nonnull uniffi_rust_lib_fn_method_session_test_connection(void*_Nonnull ptr
+);
 void* _Nonnull uniffi_rust_lib_fn_method_session_transfer(void*_Nonnull ptr, RustBuffer transfer_id, RustBuffer source_path, RustBuffer destination_path, RustBuffer direction
 );
 void* _Nonnull uniffi_rust_lib_fn_method_session_transfer_progress(void*_Nonnull ptr, RustBuffer transfer_id
@@ -194,6 +196,9 @@ uint16_t uniffi_rust_lib_checksum_method_session_exec(void
     
 );
 uint16_t uniffi_rust_lib_checksum_method_session_read_output(void
+    
+);
+uint16_t uniffi_rust_lib_checksum_method_session_test_connection(void
     
 );
 uint16_t uniffi_rust_lib_checksum_method_session_transfer(void

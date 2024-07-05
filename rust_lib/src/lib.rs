@@ -166,6 +166,48 @@ fn connect(user: String, password: String, addrs: String) -> Result<Arc<Session>
 
 #[uniffi::export]
 impl Session {
+    // TODO test that this works when the connection is lost and regained
+    async fn test_connection(self: Arc<Self>) -> Result<String, EnumError> {
+        // timeout after 300 ms
+        TOKIO_RUNTIME
+            .spawn(async move {
+                let result = tokio::time::timeout(std::time::Duration::from_millis(300), async {
+                    let session = self.session.lock().await;
+                    let mut channel = session.channel_open_session().await?;
+                    channel.exec(true, "echo i").await?;
+                    loop {
+                        let msg = channel.wait().await;
+                        match msg {
+                            Some(msg) => match msg {
+                                ChannelMsg::Data { data } => {
+                                    return Ok(String::from_utf8(data.to_vec()).unwrap());
+                                }
+                                _ => continue,
+                            },
+                            None => {
+                                return Err(EnumError::Oops {
+                                    msg: "No channel message returned".to_string(),
+                                    backtrace: Backtrace::capture().to_string(),
+                                })
+                            }
+                        }
+                    }
+                })
+                .await;
+
+                // Handle the timeout case
+                match result {
+                    Ok(operation_result) => operation_result,
+                    Err(_) => Err(EnumError::Oops {
+                        msg: "Operation timed out".to_string(),
+                        backtrace: Backtrace::capture().to_string(),
+                    }),
+                }
+            })
+            .await
+            .map_err(|join_err| EnumError::from(join_err))?
+    }
+
     async fn exec(self: Arc<Self>, command_id: &str, command: &str) -> Result<String, EnumError> {
         std::env::set_var("RUST_BACKTRACE", "1");
         let command_clone = command.to_owned();
@@ -573,6 +615,15 @@ impl From<tokio::task::JoinError> for EnumError {
     fn from(error: tokio::task::JoinError) -> Self {
         EnumError::Oops {
             msg: format!("tokio: {}", error),
+            backtrace: Backtrace::capture().to_string(),
+        }
+    }
+}
+
+impl From<tokio::time::error::Elapsed> for EnumError {
+    fn from(error: tokio::time::error::Elapsed) -> Self {
+        EnumError::Oops {
+            msg: format!("tokio elapsed err: {}", error),
             backtrace: Backtrace::capture().to_string(),
         }
     }

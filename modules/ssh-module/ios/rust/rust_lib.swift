@@ -364,11 +364,13 @@ public protocol SessionProtocol : AnyObject {
     
     func exec(commandId: String, command: String) async throws  -> String
     
-    func readOutput(commandId: String) async  -> String?
+    func readOutput(commandId: String) async throws  -> String?
+    
+    func testConnection() async throws  -> String
     
     func transfer(transferId: String, sourcePath: String, destinationPath: String, direction: String) async throws 
     
-    func transferProgress(transferId: String) async  -> TransferProgress
+    func transferProgress(transferId: String) async throws  -> TransferProgress
     
 }
 
@@ -442,8 +444,8 @@ public class Session:
     }
 
     
-    public func readOutput(commandId: String) async  -> String? {
-        return try!  await uniffiRustCallAsync(
+    public func readOutput(commandId: String) async throws  -> String? {
+        return try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_rust_lib_fn_method_session_read_output(
                     self.uniffiClonePointer(),
@@ -454,8 +456,23 @@ public class Session:
             completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
             freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionString.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeEnumError.lift
+        )
+    }
+
+    
+    public func testConnection() async throws  -> String {
+        return try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_rust_lib_fn_method_session_test_connection(
+                    self.uniffiClonePointer()
+                )
+            },
+            pollFunc: ffi_rust_lib_rust_future_poll_rust_buffer,
+            completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
+            freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterString.lift,
+            errorHandler: FfiConverterTypeEnumError.lift
         )
     }
 
@@ -480,8 +497,8 @@ public class Session:
     }
 
     
-    public func transferProgress(transferId: String) async  -> TransferProgress {
-        return try!  await uniffiRustCallAsync(
+    public func transferProgress(transferId: String) async throws  -> TransferProgress {
+        return try  await uniffiRustCallAsync(
             rustFutureFunc: {
                 uniffi_rust_lib_fn_method_session_transfer_progress(
                     self.uniffiClonePointer(),
@@ -492,8 +509,7 @@ public class Session:
             completeFunc: ffi_rust_lib_rust_future_complete_rust_buffer,
             freeFunc: ffi_rust_lib_rust_future_free_rust_buffer,
             liftFunc: FfiConverterTypeTransferProgress.lift,
-            errorHandler: nil
-            
+            errorHandler: FfiConverterTypeEnumError.lift
         )
     }
 
@@ -771,13 +787,16 @@ private var initializationResult: InitializationResult {
     if (uniffi_rust_lib_checksum_method_session_exec() != 51110) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_read_output() != 27283) {
+    if (uniffi_rust_lib_checksum_method_session_read_output() != 39097) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rust_lib_checksum_method_session_test_connection() != 37246) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rust_lib_checksum_method_session_transfer() != 49655) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_rust_lib_checksum_method_session_transfer_progress() != 43642) {
+    if (uniffi_rust_lib_checksum_method_session_transfer_progress() != 31115) {
         return InitializationResult.apiChecksumMismatch
     }
 
