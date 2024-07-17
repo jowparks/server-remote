@@ -30,6 +30,7 @@ export default function TransferScreen({
   const { transfers, updateTransfer } = useTransfers();
   const { sshClient } = useSsh();
   if (!open) return null;
+  // TODO: progress of circle is based on first upload/download, not the current one
   return (
     <Sheet
       forceRemoveScrollEnabled={open}
