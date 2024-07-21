@@ -52,7 +52,10 @@ function SearchLayoutNav() {
     <Stack>
       <Stack.Screen
         name="generic"
-        initialParams={{ jsonData: jsonData ?? 'foo' }}
+        initialParams={{
+          jsonData: jsonData,
+          currentPath: '',
+        }}
         options={{
           headerShown: true,
           headerStyle: {

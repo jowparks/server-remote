@@ -1,9 +1,9 @@
 import { Link } from 'expo-router';
 import React from 'react';
 import { ListItem, Spacer, View, YGroup } from 'tamagui';
-import { MenuType } from './types';
+import { SearchScreenType } from './types';
 
-export default function MenuScreen(props: MenuType) {
+export default function MenuScreen(props: SearchScreenType) {
   return (
     <View flex={1} width="90%" alignItems="center" alignSelf="center">
       <Spacer size="4%" />
