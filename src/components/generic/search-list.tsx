@@ -4,7 +4,13 @@ import Spin from '../general/spinner';
 import { RefreshControl } from 'react-native';
 import { useFocusedEffect } from '../../util/focused-effect';
 import { useSsh } from '../../contexts/ssh';
-import { SearchListScreenType, SearchReplace } from './types';
+import {
+  CommandType,
+  GenericScreenType,
+  Screens,
+  SearchListScreenType,
+  SearchReplace,
+} from './types';
 import GenericListCard from './card';
 import SearchBar from '../general/search-bar';
 import { useRouter } from 'expo-router';
@@ -12,11 +18,11 @@ import {
   replaceTemplateStringWithJsonPath,
   updateObjectAtPath,
 } from '../../util/json';
+import { useGenericScreen } from '../../contexts/generic';
 
 export default function GenericScrollCard(props: SearchListScreenType) {
   const {
     searchCommand,
-    idField,
     nameField,
     subHeadingField,
     jsonData,
@@ -24,9 +30,11 @@ export default function GenericScrollCard(props: SearchListScreenType) {
     onCardPress,
   } = props;
   const { sshClient } = useSsh();
+  const { setJsonData } = useGenericScreen();
   const router = useRouter();
 
-  const [localJsonData, setLocalJsonData] = useState({});
+  const [localJsonData, setLocalJsonData] =
+    useState<GenericScreenType>(jsonData);
   const [listItems, setListItems] = useState([]);
   const [loaded, setLoaded] = useState(true);
   const [searchInput, setSearchInput] = useState<string>('');
@@ -35,10 +43,6 @@ export default function GenericScrollCard(props: SearchListScreenType) {
 
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
-
-  useEffect(() => {
-    setLocalJsonData(jsonData);
-  }, []);
 
   useFocusedEffect(() => {
     const zeroLength = searchInput.length === 0;
@@ -49,20 +53,19 @@ export default function GenericScrollCard(props: SearchListScreenType) {
     const fetchList = async () => {
       console.log('fetching generic search list...');
       setLoaded(false);
-      console.log('setloaded');
       if (!sshClient) return;
-      console.log('sshClient`');
-      const command = searchCommand.replace(SearchReplace, searchInput);
+      const encodedSearchInput = encodeURIComponent(searchInput);
+      const command = searchCommand.replace(SearchReplace, encodedSearchInput);
       console.log('command', command);
       const response = await sshClient.exec(command as string);
       // TODO update jsonData at correct path location for responses, use localJsonData
       setSearchResponse(response);
       setLocalJsonData(
         updateObjectAtPath(
-          localJsonData,
+          jsonData,
           currentPath ? currentPath + '.searchResponse' : 'searchResponse',
           response,
-        ),
+        ) as GenericScreenType,
       );
       const listItems = JSON.parse(response);
       setListItems(listItems);
@@ -116,27 +119,39 @@ export default function GenericScrollCard(props: SearchListScreenType) {
                   key={index}
                   name={item[nameField as string]}
                   subHeading={item[subHeadingField as string]}
+                  contentWidth="100%"
                   onCardPress={async () => {
-                    // TODO THIS IS THE NEXT THING TO HANDLE, update remote config with object instead of string
-                    if (onCardPress instanceof Object) {
+                    if (Screens.includes(onCardPress['type'] as string)) {
+                      console.log(
+                        'New screen to navigate to: ',
+                        onCardPress['type'],
+                      );
+                      const data = {
+                        ...localJsonData,
+                        currentPath: currentPath
+                          ? currentPath + '.' + 'onCardPress'
+                          : 'onCardPress',
+                      };
+                      console.log('jsonData prepush', data);
+                      setJsonData(data);
                       router.push({
                         pathname: '(tabs)/search/generic',
-                        params: {
-                          jsonData: JSON.stringify({
-                            ...localJsonData,
-                            currentPath: currentPath
-                              ? currentPath + '.' + 'onCardPress'
-                              : 'onCardPress',
-                          }),
-                        },
                       });
-                    } else {
+                    } else if (onCardPress['type'] === 'command') {
                       const commandStr = replaceTemplateStringWithJsonPath(
-                        onCardPress,
+                        (onCardPress as CommandType).command,
                         item,
                       );
                       const output = await sshClient?.exec(commandStr);
-                      console.log(output);
+                      setJsonData(
+                        updateObjectAtPath(
+                          localJsonData,
+                          currentPath
+                            ? currentPath + '.onCardPressResponse'
+                            : 'onCardPressResponse',
+                          output,
+                        ) as SearchListScreenType,
+                      );
                     }
                   }}
                 />

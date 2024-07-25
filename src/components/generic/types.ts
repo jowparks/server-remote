@@ -1,14 +1,29 @@
-export type SubscreenType = string | SearchScreenType | SearchListScreenType;
+export type SubscreenType =
+  | CommandType
+  | SearchScreenType
+  | SearchListScreenType;
 
-export type GenericScreenType = SearchListScreenType | SearchScreenType;
+export type GenericScreenType =
+  | SearchListScreenType
+  | SearchScreenType
+  | ScrollCardScreenType;
+
+export const Screens = ['searchList', 'menu', 'scrollCard'];
+
+export const Displays = ['button', 'command', 'text', 'image'];
+
+export type DisplayTypes = ButtonType | ImageType | TextType | CommandType;
 
 export type JsonString = string;
 
 export const SearchReplace = '{{ searchreplace }}';
 
+export type CommandType = {
+  type: 'command';
+  command: string;
+};
+
 export type ButtonType = {
-  jsonData: Object;
-  currentPath: string;
   type: 'button';
   icon: string;
   iconPressed: string;
@@ -16,9 +31,20 @@ export type ButtonType = {
   buttonResponse: string;
 };
 
+export type TextType = {
+  type: 'text';
+  text: string;
+  size: number;
+};
+
+export type ImageType = {
+  type: 'image';
+  imageSource: string;
+};
+
 export type SearchListScreenType = {
   // standard strings will be kept as is, SearchReplace will be replaced with search string
-  jsonData: Object;
+  jsonData: GenericScreenType;
   currentPath: string;
   type: 'searchList';
   title: string;
@@ -29,7 +55,6 @@ export type SearchListScreenType = {
   searchResponse?: string;
   onCardPressResponse?: string;
   idField?: string;
-  buttons?: ButtonType[];
 };
 
 export type ScrollCardScreenType = {
@@ -37,14 +62,7 @@ export type ScrollCardScreenType = {
   currentPath: string;
   type: 'scrollCard';
   title: string;
-  searchCommand: string;
-  onCardPress: SubscreenType;
-  nameField: string;
-  subHeadingField: string;
-  searchResponse?: string;
-  onCardPressResponse?: string;
-  idField?: string;
-  buttons?: ButtonType[];
+  displayItems: DisplayTypes[];
 };
 
 export type SearchScreenType = {

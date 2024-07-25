@@ -1,5 +1,5 @@
 export function getObjectAtPath(jsonDataObj: Object, pathString: string): any {
-  if (pathString === '') return jsonDataObj;
+  if (!pathString) return jsonDataObj;
   const pathKeys = pathString.split('.');
   let currentObject = jsonDataObj;
 

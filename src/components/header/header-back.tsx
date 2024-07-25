@@ -1,10 +1,9 @@
 import { ChevronLeft } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { Button } from 'tamagui';
+import React, { memo } from 'react';
 import TransparentButton from '../general/transparent-button';
 
-export default function HeaderBack(props) {
+const HeaderBack = memo((props) => {
   const router = useRouter();
 
   return (
@@ -12,4 +11,6 @@ export default function HeaderBack(props) {
       <ChevronLeft color={'white'} {...props} />
     </TransparentButton>
   );
-}
+});
+
+export default HeaderBack;
