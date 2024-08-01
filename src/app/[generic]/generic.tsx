@@ -6,9 +6,9 @@ import MenuScreen from '../../../components/generic/menu';
 import { getObjectAtPath } from '../../../util/json';
 import GenericScrollCard from '../../../components/generic/scroll-card';
 import Spin from '../../../components/general/spinner';
-import { useSsh } from '../../../contexts/ssh';
 import { useGenericScreen } from '../../../contexts/generic';
 import { useFocusedEffect } from '../../../util/focused-effect';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function Generic() {
   return (
@@ -19,8 +19,8 @@ export default function Generic() {
 }
 
 function GenericScreen() {
-  const { sshClient } = useSsh();
-  const { jsonData } = useGenericScreen();
+  const params = useLocalSearchParams();
+  const { config } = useGenericScreen();
   const [localJsonData, setLocalJsonData] = useState<GenericScreenType | null>(
     null,
   );
@@ -30,31 +30,20 @@ function GenericScreen() {
 
   useFocusedEffect(() => {
     console.log('useFocusedEffect generic');
-    if (jsonData !== null) {
-      setLocalJsonData(jsonData);
-      const currentObj = getObjectAtPath(jsonData, jsonData.currentPath);
+    if (!params) return;
+    const data = config?.tabs[params.tabName as string];
+    console.log('data', data);
+    if (data) {
+      setLocalJsonData(data);
+      const currentObj = getObjectAtPath(data, data.currentPath ?? '');
       setCurrentObj(currentObj);
       setIsLoading(false);
       return;
+    } else {
+      setError(
+        `Could not load JSON for tab "${params.tabName}" from remote server`,
+      );
     }
-    if (!sshClient) return;
-    sshClient
-      .exec('cat /etc/serverRemote.json')
-      .then((res) => {
-        if (!res) {
-          setError('Could not load JSON from remote server');
-        }
-        const data = JSON.parse(res) as GenericScreenType;
-        setLocalJsonData(data);
-        const currentObj = getObjectAtPath(data, data.currentPath);
-        setCurrentObj(currentObj);
-      })
-      .catch((error) => {
-        console.error('Failed to fetch JSON:', error);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
   }, []);
 
   if (isLoading || localJsonData === null || currentObj === null) {

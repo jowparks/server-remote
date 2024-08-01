@@ -1,15 +1,23 @@
 import React, { useState } from 'react';
-import { View, ScrollView, YGroup, Separator, Text } from 'tamagui';
+import {
+  View,
+  ScrollView,
+  YGroup,
+  Separator,
+  Text,
+  Button,
+  Image,
+  useWindowDimensions,
+  Spacer,
+} from 'tamagui';
 import Spin from '../general/spinner';
-import { RefreshControl } from 'react-native';
-import { useSsh } from '../../contexts/ssh';
 import { ScrollCardScreenType } from './types';
-import { useRouter } from 'expo-router';
+import { replaceTemplateStringWithJsonPath } from '../../util/json';
 
 export default function GenericScrollCard(props: ScrollCardScreenType) {
   const { jsonData, displayItems } = props;
+  const { height: windowHeight } = useWindowDimensions();
 
-  const [localJsonData, setLocalJsonData] = useState(jsonData);
   const [loaded, setLoaded] = useState(true);
 
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -23,33 +31,64 @@ export default function GenericScrollCard(props: ScrollCardScreenType) {
         <Spin />
       ) : (
         <ScrollView
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => {
-                setRefreshing(true);
-                setTriggerRefresh(!triggerRefresh);
-              }}
-            />
-          }
+        // refreshControl={
+        //   <RefreshControl
+        //     refreshing={refreshing}
+        //     onRefresh={() => {
+        //       setRefreshing(true);
+        //       setTriggerRefresh(!triggerRefresh);
+        //     }}
+        //   />
+        // }
         >
           <YGroup
             alignSelf="center"
-            bordered
+            alignItems="center"
             size="$5"
             width="100%"
             separator={<Separator />}
           >
             {displayItems.map((renderable, index) => (
               <YGroup.Item key={index}>
+                <Spacer />
                 {(() => {
                   switch (renderable.type) {
                     case 'button':
-                      return <Text>Button {renderable.buttonCommand}</Text>;
+                      return (
+                        <Button>
+                          <Text>{renderable.text}</Text>
+                        </Button>
+                      );
                     case 'image':
-                      return <Text>Image {renderable.imageSource}</Text>;
+                      const uri = replaceTemplateStringWithJsonPath(
+                        renderable.imageSource,
+                        jsonData,
+                      );
+                      // TODO set screen height divided by 2
+
+                      return (
+                        <View width={'100%'} height={windowHeight / 2}>
+                          <Image
+                            source={{
+                              uri,
+                              // width,
+                              // height,
+                            }}
+                            width={'100%'}
+                            height={'100%'}
+                            resizeMode="contain"
+                          />
+                        </View>
+                      );
                     case 'text':
-                      return <Text>{renderable.text}</Text>;
+                      return (
+                        <Text alignContent="center">
+                          {replaceTemplateStringWithJsonPath(
+                            renderable.text,
+                            jsonData,
+                          )}
+                        </Text>
+                      );
                     case 'command':
                       return <Text>Command {renderable.command}</Text>;
                     default:

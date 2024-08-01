@@ -1,25 +1,46 @@
 import React, { createContext, useContext, useState } from 'react';
-import { GenericScreenType } from '../components/generic/types';
+import { GenericScreenType, Config } from '../components/generic/types';
 
 // Create a new context
 const GenericScreenContext = createContext<{
-  jsonData: GenericScreenType | null;
-  setJsonData: (screen: GenericScreenType) => void;
+  config: Config | null;
+  currentTab: string;
+  setConfig: (config: Config) => void;
+  setTab: (name: string, tab: GenericScreenType) => void;
+  setCurrentTab: (name: string) => void;
 }>({
-  jsonData: null,
-  setJsonData: () => {},
+  config: null,
+  currentTab: '',
+  setConfig: () => {},
+  setTab: () => {},
+  setCurrentTab: () => {},
 });
 
 export const useGenericScreen = () => useContext(GenericScreenContext);
 
 export const GenericScreenProvider = ({ children }) => {
-  const [jsonData, setJsonData] = useState<GenericScreenType | null>(null);
-
+  const [config, setConfig] = useState<Config | null>(null);
+  const [currentTab, setCurrentTab] = useState<string>('');
+  // TODO add wrapper here that whenever setJsonData is called, it should template all the fields out
+  function setTab(name: string, tab: GenericScreenType) {
+    if (config) {
+      setConfig({
+        ...config,
+        tabs: {
+          ...config.tabs,
+          [name]: tab,
+        },
+      });
+    }
+  }
   return (
     <GenericScreenContext.Provider
       value={{
-        jsonData,
-        setJsonData,
+        config,
+        currentTab,
+        setConfig,
+        setTab,
+        setCurrentTab,
       }}
     >
       {children}

@@ -30,7 +30,7 @@ export default function GenericScrollCard(props: SearchListScreenType) {
     onCardPress,
   } = props;
   const { sshClient } = useSsh();
-  const { setJsonData } = useGenericScreen();
+  const { currentTab, setTab } = useGenericScreen();
   const router = useRouter();
 
   const [localJsonData, setLocalJsonData] =
@@ -126,16 +126,22 @@ export default function GenericScrollCard(props: SearchListScreenType) {
                         'New screen to navigate to: ',
                         onCardPress['type'],
                       );
-                      const data = {
+                      let data: any = {
                         ...localJsonData,
                         currentPath: currentPath
                           ? currentPath + '.' + 'onCardPress'
                           : 'onCardPress',
                       };
+                      console.log(data.currentPath + '.eventData');
+                      data = updateObjectAtPath(
+                        data,
+                        data.currentPath + '.eventData',
+                        item,
+                      );
                       console.log('jsonData prepush', data);
-                      setJsonData(data);
+                      setTab(currentTab, data);
                       router.push({
-                        pathname: '(tabs)/search/generic',
+                        pathname: '(tabs)/generic/generic',
                       });
                     } else if (onCardPress['type'] === 'command') {
                       const commandStr = replaceTemplateStringWithJsonPath(
@@ -143,7 +149,8 @@ export default function GenericScrollCard(props: SearchListScreenType) {
                         item,
                       );
                       const output = await sshClient?.exec(commandStr);
-                      setJsonData(
+                      setTab(
+                        currentTab,
                         updateObjectAtPath(
                           localJsonData,
                           currentPath

@@ -45,7 +45,7 @@ export function updateObjectAtPath(
       }
     }
   }
-  return currentObject;
+  return jsonDataObj;
 }
 
 export function replaceTemplateStringWithJsonPath(

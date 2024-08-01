@@ -25,10 +25,10 @@ export type CommandType = {
 
 export type ButtonType = {
   type: 'button';
-  icon: string;
-  iconPressed: string;
   buttonCommand: string;
   buttonResponse: string;
+  text?: string;
+  icon?: string;
 };
 
 export type TextType = {
@@ -40,12 +40,15 @@ export type TextType = {
 export type ImageType = {
   type: 'image';
   imageSource: string;
+  width?: number;
+  height?: number;
 };
 
 export type SearchListScreenType = {
   // standard strings will be kept as is, SearchReplace will be replaced with search string
   jsonData: GenericScreenType;
-  currentPath: string;
+  eventData?: Object;
+  currentPath?: string;
   type: 'searchList';
   title: string;
   searchCommand: string;
@@ -59,6 +62,7 @@ export type SearchListScreenType = {
 
 export type ScrollCardScreenType = {
   jsonData: Object;
+  eventData?: Object;
   currentPath: string;
   type: 'scrollCard';
   title: string;
@@ -72,4 +76,10 @@ export type SearchScreenType = {
   command: string;
   name: string;
   subHeading: string;
+};
+
+export type Config = {
+  tabs: {
+    [key: string]: GenericScreenType;
+  };
 };
