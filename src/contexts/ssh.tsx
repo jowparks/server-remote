@@ -33,6 +33,7 @@ export type SSHClient = {
   ) => Promise<string>;
   // get the progress of a download
   transferProgress: (transferId: string) => Promise<TransferProgress>;
+  connect: (user: string, password: string, addrs: string) => void;
 };
 
 // Create the context
@@ -40,11 +41,13 @@ interface SshContextValue {
   sshServer: Server | null;
   setSshServer: React.Dispatch<React.SetStateAction<Server | null>>;
   sshClient: SSHClient | null;
+  connect: (user: string, password: string, addrs: string) => void;
 }
 const SshContext = createContext<SshContextValue>({
   sshServer: null,
   setSshServer: () => {},
   sshClient: null,
+  connect: () => {},
 });
 
 // Create the provider component
@@ -52,35 +55,38 @@ export function SshProvider({ children }: { children: ReactNode }) {
   const [sshClient, setSshClient] = useState<SSHClient | null>(null);
   const [server, setSshServer] = useState<Server | null>(null);
 
-  useEffect(() => {
-    if (!server || (!server.password && !server.key)) {
-      return;
+  const connectToServer = async (server: Server) => {
+    if (server && !!server.password) {
+      await connect(
+        server.user,
+        server.password ?? '',
+        `${server.host}:${server.port}`,
+      );
+      const sshClient: SSHClient = {
+        exec: execInner,
+        execAsync: execInnerAsync,
+        cancel,
+        transfer,
+        transferProgress,
+        connect,
+      };
+      return sshClient;
     }
-    const connectToServer = async () => {
-      setSshClient(null);
-      if (server && !!server.password) {
-        (async () => {
-          await connect(
-            server.user,
-            server.password ?? '',
-            `${server.host}:${server.port}`,
-          );
-          const sshClient: SSHClient = {
-            exec: execInner,
-            execAsync: execInnerAsync,
-            cancel,
-            transfer,
-            transferProgress,
-          };
-          setSshClient(sshClient);
-        })();
-      }
-      if (server && server.key) {
-        //
-      }
-    };
+    if (server && server.key) {
+      //
+    }
+    return null;
+  };
 
-    connectToServer();
+  useEffect(() => {
+    const connect = async () => {
+      if (!server || (!server.password && !server.key)) {
+        return;
+      }
+      const client = await connectToServer(server);
+      setSshClient(client);
+    };
+    connect();
   }, [server]);
 
   // TODO make this cancellable too, cleanup this interface relative to SshModule
@@ -118,6 +124,7 @@ export function SshProvider({ children }: { children: ReactNode }) {
         sshServer: server,
         setSshServer,
         sshClient,
+        connect,
       }}
     >
       {children}

@@ -5,26 +5,32 @@ import { DarkBlueTheme } from '../../style/theme';
 import { useSsh } from '../../contexts/ssh';
 import { Config } from '../../components/generic/types';
 import { useGenericScreen } from '../../contexts/generic';
-import SearchLayout from '../[generic]/_layout';
+import Spin from '../../components/general/spinner';
 
 export default function TabLayout() {
   const { config, setConfig, setCurrentTab } = useGenericScreen();
   const { sshClient } = useSsh();
   useEffect(() => {
+    console.log('fetching config');
     if (!sshClient) return;
-    sshClient
-      .exec('cat /etc/serverRemote.json')
-      .then((res) => {
-        if (!res) {
-          return;
-        }
-        const config = JSON.parse(res) as Config;
-        setConfig(config);
-      })
-      .catch((error) => {
-        console.error('Failed to fetch JSON:', error);
-      });
-  }, []);
+    console.log('fetching config inner');
+    const fetchJson = async () => {
+      const res = await sshClient.exec('cat /etc/serverRemote.json');
+      let config;
+      if (!res) {
+        config = {};
+      } else {
+        config = JSON.parse(res) as Config;
+      }
+      console.log('configinner', config);
+      setConfig(config === null ? {} : config);
+    };
+    fetchJson();
+  }, [sshClient]);
+  if (config == null) {
+    console.log('config', config);
+    return <Spin />;
+  }
   // TODO: use this patch to get dynamic tabs working: https://github.com/kennethstarkrl/expo-router-3.4.9-ds-patch
   return (
     <Tabs
@@ -85,9 +91,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="generic"
         options={{
           headerShown: false,
+          href: null,
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons
               name={focused ? 'search' : 'search-outline'}
@@ -97,13 +104,15 @@ export default function TabLayout() {
           ),
         }}
       />
-      {Object.keys(config?.tabs || {}).map((key) => {
+      {/* {Object.keys(config?.tabs || {}).map((key, index) => {
         const tab = config?.tabs[key];
         if (!tab) return;
+        console.log(config);
+        console.log(tab.name);
         return (
           <Tabs.Screen
-            key={'[generic]'}
-            name={'[generic]'}
+            key={index}
+            name={'generic'}
             options={{
               headerShown: false,
               tabBarIcon: ({ focused, color, size }) => (
@@ -116,7 +125,7 @@ export default function TabLayout() {
             }}
           />
         );
-      })}
+      })} */}
     </Tabs>
   );
 }

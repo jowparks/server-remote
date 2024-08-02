@@ -50,7 +50,7 @@ export type SearchListScreenType = {
   eventData?: Object;
   currentPath?: string;
   type: 'searchList';
-  title: string;
+  name: string;
   searchCommand: string;
   onCardPress: SubscreenType;
   nameField: string;
@@ -66,6 +66,7 @@ export type ScrollCardScreenType = {
   currentPath: string;
   type: 'scrollCard';
   title: string;
+  name: string;
   displayItems: DisplayTypes[];
 };
 
@@ -79,7 +80,7 @@ export type SearchScreenType = {
 };
 
 export type Config = {
-  tabs: {
+  tabs?: {
     [key: string]: GenericScreenType;
   };
 };

@@ -3,6 +3,7 @@ import { Button, Sheet, XStack, Text, View, YStack, Spacer } from 'tamagui';
 import LabeledInput from '../../components/general/labeled-input';
 import { Server } from '../../typing/server';
 import { DarkBlueTheme } from '../../style/theme';
+import { useSsh } from '../../contexts/ssh';
 
 type ServerModalProps = {
   open: boolean;
@@ -17,6 +18,7 @@ export default function ServerModal({
   open,
   onOpenChange,
 }: ServerModalProps) {
+  const { connect } = useSsh();
   const defaultServer = {
     host: '',
     port: 22,
@@ -48,21 +50,17 @@ export default function ServerModal({
     );
 
     const connectionPromise = new Promise(async (resolve, reject) => {
+      if (!serverDetails.host || !serverDetails.port || !serverDetails.user) {
+        reject('Fail: Missing required fields');
+      }
       if (serverDetails.password) {
-        // co
-        // await SSHClient.connectWithPassword(
-        //   serverDetails.host,
-        //   serverDetails.port,
-        //   serverDetails.user,
-        //   serverDetails.password,
-        //   (err, _) => {
-        //     if (err) {
-        //       reject('Fail: ' + err);
-        //     } else {
-        //       setTestResult('Success');
-        //     }
-        //   },
-        // );
+        resolve(
+          connect(
+            serverDetails.user,
+            serverDetails.password,
+            serverDetails.host + ':' + serverDetails.port,
+          ),
+        );
       }
       if (serverDetails.key) {
         // await SSHClient.connectWithKey(
@@ -85,6 +83,7 @@ export default function ServerModal({
 
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
+      setTestResult('Success');
     } catch (error) {
       setTestResult(error);
     }

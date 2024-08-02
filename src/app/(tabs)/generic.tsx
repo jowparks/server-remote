@@ -1,13 +1,13 @@
 import { View, Text } from 'tamagui';
 import React, { useState } from 'react';
-import { GenericScreenType } from '../../../components/generic/types';
-import GenericSearchList from '../../../components/generic/search-list';
-import MenuScreen from '../../../components/generic/menu';
-import { getObjectAtPath } from '../../../util/json';
-import GenericScrollCard from '../../../components/generic/scroll-card';
-import Spin from '../../../components/general/spinner';
-import { useGenericScreen } from '../../../contexts/generic';
-import { useFocusedEffect } from '../../../util/focused-effect';
+import { GenericScreenType } from '../../components/generic/types';
+import GenericSearchList from '../../components/generic/search-list';
+import MenuScreen from '../../components/generic/menu';
+import { getObjectAtPath } from '../../util/json';
+import GenericScrollCard from '../../components/generic/scroll-card';
+import Spin from '../../components/general/spinner';
+import { useGenericScreen } from '../../contexts/generic';
+import { useFocusedEffect } from '../../util/focused-effect';
 import { useLocalSearchParams } from 'expo-router';
 
 export default function Generic() {
