@@ -1,19 +1,24 @@
+import { Link, Navigator, Slot } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
 import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, ViewStyle } from 'react-native';
 import { DarkBlueTheme } from '../../style/theme';
 import { useSsh } from '../../contexts/ssh';
-import { Config } from '../../components/generic/types';
 import { useGenericScreen } from '../../contexts/generic';
+import { Config } from '../../components/generic/types';
 import Spin from '../../components/general/spinner';
 
-export default function TabLayout() {
+export const unstable_settings = {
+  initialRouteName: 'index',
+};
+
+type Icons = keyof typeof Ionicons.glyphMap;
+
+export default function Layout() {
   const { config, setConfig, setCurrentTab } = useGenericScreen();
   const { sshClient } = useSsh();
   useEffect(() => {
-    console.log('fetching config');
     if (!sshClient) return;
-    console.log('fetching config inner');
     const fetchJson = async () => {
       const res = await sshClient.exec('cat /etc/serverRemote.json');
       let config;
@@ -28,121 +33,124 @@ export default function TabLayout() {
     fetchJson();
   }, [sshClient]);
   if (config == null) {
-    console.log('config', config);
     return <Spin />;
   }
-  // TODO: use this patch to get dynamic tabs working: https://github.com/kennethstarkrl/expo-router-3.4.9-ds-patch
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: 'white',
-        tabBarInactiveTintColor: 'grey',
-        tabBarActiveBackgroundColor: DarkBlueTheme.colors.background,
-        tabBarInactiveBackgroundColor: DarkBlueTheme.colors.background,
-        tabBarBackground: () => <></>,
-      }}
-      screenListeners={{
-        tabPress: (e) => {
-          const target = e.target?.split('-')[0];
-          console.log('Tab target: ', target);
-          if (!target) return;
-          setCurrentTab(target);
-        },
-      }}
-      initialRouteName="docker"
-    >
-      <Tabs.Screen
-        name="docker"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'logo-docker' : 'logo-docker'}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="vm"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'desktop-outline' : 'desktop-outline'}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="files"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'folder-outline' : 'folder-outline'}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="generic"
-        options={{
-          headerShown: false,
-          href: null,
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? 'search' : 'search-outline'}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-      {/* {Object.keys(config?.tabs || {}).map((key, index) => {
-        const tab = config?.tabs[key];
-        if (!tab) return;
-        console.log(config);
-        console.log(tab.name);
-        return (
-          <Tabs.Screen
-            key={index}
-            name={'generic'}
-            options={{
-              headerShown: false,
-              tabBarIcon: ({ focused, color, size }) => (
-                <Ionicons
-                  name={focused ? 'search' : 'search-outline'}
-                  size={size}
-                  color={color}
-                />
-              ),
-            }}
-          />
-        );
-      })} */}
-    </Tabs>
+    <View style={{ flex: 1 }}>
+      <Navigator>
+        <Slot />
+        <CustomTabBar tabConfig={config} />
+      </Navigator>
+    </View>
   );
 }
 
-<Tabs.Screen
-  name="search"
-  options={{
-    headerShown: false,
-    tabBarIcon: ({ focused, color, size }) => (
-      <Ionicons
-        name={focused ? 'search' : 'search-outline'}
-        size={size}
-        color={color}
+function CustomTabBar(props: { tabConfig: Config }) {
+  const { tabConfig } = props;
+  return (
+    <View
+      style={{
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-evenly',
+        backgroundColor: DarkBlueTheme.colors.background,
+        paddingVertical: 10,
+        borderTopColor: DarkBlueTheme.colors.border,
+        borderTopWidth: 1,
+      }}
+    >
+      <Tab
+        name="docker"
+        href="/(tabs)/docker"
+        title="Docker"
+        iconFocused="logo-docker"
+        iconUnfocused="logo-docker"
       />
-    ),
-  }}
-/>;
-function setError(arg0: string) {
-  throw new Error('Function not implemented.');
+      <Tab
+        name="vm"
+        href="/(tabs)/vm"
+        title="VM"
+        iconFocused="desktop-outline"
+        iconUnfocused="desktop-outline"
+      />
+      <Tab
+        name="files"
+        href="/(tabs)/files"
+        title="Files"
+        iconFocused="folder-outline"
+        iconUnfocused="folder-outline"
+      />
+      {Object.keys(tabConfig?.tabs || {}).map((key, index) => {
+        const tab = tabConfig?.tabs ? tabConfig.tabs[key] : null;
+        if (!tab) return;
+        console.log(tabConfig);
+        console.log(tab.name);
+        return (
+          <Tab
+            key={index}
+            tabKey={key}
+            name={tab.name}
+            href={`/(tabs)/generic`}
+            title={tab.name}
+            iconFocused="add"
+            iconUnfocused="add"
+          />
+        );
+      })}
+    </View>
+  );
 }
+
+function useIsTabSelected(name: string): boolean {
+  const { state } = Navigator.useContext();
+  const current = state.routes.find((route, i) => state.index === i);
+  console.log(current?.name);
+  console.log(name);
+  return current?.name === name;
+}
+
+function Tab({
+  name,
+  title,
+  tabKey,
+  href,
+  iconFocused,
+  iconUnfocused,
+  style,
+}: {
+  name: string;
+  title: string;
+  tabKey?: string;
+  href: string;
+  iconFocused: Icons;
+  iconUnfocused: Icons;
+  style?: ViewStyle;
+}) {
+  const focused = useIsTabSelected(name);
+  const params = tabKey ? `?tabName=${tabKey}` : '';
+  return (
+    <View style={{ flex: 1, alignItems: 'center' }}>
+      <Link href={href + params} asChild style={style}>
+        <Pressable>
+          <View style={{ alignItems: 'center', opacity: focused ? 1 : 0.5 }}>
+            <Ionicons
+              name={focused ? iconFocused : iconUnfocused}
+              size={24}
+              color="white"
+            />
+            <Text style={styles.link}>{title}</Text>
+          </View>
+        </Pressable>
+      </Link>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  link: {
+    fontSize: 12,
+    color: 'white',
+    paddingHorizontal: 24,
+  },
+});

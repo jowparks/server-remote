@@ -20,6 +20,7 @@ export default function Generic() {
 
 function GenericScreen() {
   const params = useLocalSearchParams();
+  console.log('params', params);
   const { config } = useGenericScreen();
   const [localJsonData, setLocalJsonData] = useState<GenericScreenType | null>(
     null,
@@ -31,7 +32,8 @@ function GenericScreen() {
   useFocusedEffect(() => {
     console.log('useFocusedEffect generic');
     if (!params) return;
-    const data = config?.tabs[params.tabName as string];
+    if (!config || !config.tabs) return;
+    const data = config.tabs[params.tabName as string];
     console.log('data', data);
     if (data) {
       setLocalJsonData(data);
