@@ -1,27 +1,27 @@
 import { View, Text } from 'tamagui';
 import React, { useState } from 'react';
-import { GenericScreenType } from '../../components/generic/types';
-import GenericSearchList from '../../components/generic/search-list';
-import MenuScreen from '../../components/generic/menu';
-import { getObjectAtPath } from '../../util/json';
-import GenericScrollCard from '../../components/generic/scroll-card';
-import Spin from '../../components/general/spinner';
-import { useGenericScreen } from '../../contexts/generic';
-import { useFocusedEffect } from '../../util/focused-effect';
+import { GenericScreenType } from '../../../components/generic/types';
+import GenericSearchList from '../../../components/generic/search-list';
+import MenuScreen from '../../../components/generic/menu';
+import { getObjectAtPath } from '../../../util/json';
+import GenericScrollCard from '../../../components/generic/scroll-card';
+import Spin from '../../../components/general/spinner';
+import { useGenericScreen } from '../../../contexts/generic';
+import { useFocusedEffect } from '../../../util/focused-effect';
 import { useLocalSearchParams } from 'expo-router';
 
-export default function Generic() {
+export default function Template() {
   return (
     <View flex={1} alignItems="center">
-      <GenericScreen />
+      <TemplateScreen />
     </View>
   );
 }
 
-function GenericScreen() {
+function TemplateScreen() {
   const params = useLocalSearchParams();
   console.log('params', params);
-  const { config } = useGenericScreen();
+  const { config, currentTab } = useGenericScreen();
   const [localJsonData, setLocalJsonData] = useState<GenericScreenType | null>(
     null,
   );
@@ -30,10 +30,12 @@ function GenericScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useFocusedEffect(() => {
-    console.log('useFocusedEffect generic');
+    console.log('useFocusedEffect template');
     if (!params) return;
     if (!config || !config.tabs) return;
-    const data = config.tabs[params.tabName as string];
+    console.log('currentTabTemplate', currentTab);
+    const data = config.tabs[currentTab];
+    console.log(config.tabs);
     console.log('data', data);
     if (data) {
       setLocalJsonData(data);

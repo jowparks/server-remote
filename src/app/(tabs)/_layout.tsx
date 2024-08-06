@@ -27,7 +27,6 @@ export default function Layout() {
       } else {
         config = JSON.parse(res) as Config;
       }
-      console.log('configinner', config);
       setConfig(config === null ? {} : config);
     };
     fetchJson();
@@ -61,6 +60,7 @@ function CustomTabBar(props: { tabConfig: Config }) {
       }}
     >
       <Tab
+        id="docker"
         name="docker"
         href="/(tabs)/docker"
         title="Docker"
@@ -68,6 +68,7 @@ function CustomTabBar(props: { tabConfig: Config }) {
         iconUnfocused="logo-docker"
       />
       <Tab
+        id="vm"
         name="vm"
         href="/(tabs)/vm"
         title="VM"
@@ -75,6 +76,7 @@ function CustomTabBar(props: { tabConfig: Config }) {
         iconUnfocused="desktop-outline"
       />
       <Tab
+        id="files"
         name="files"
         href="/(tabs)/files"
         title="Files"
@@ -84,14 +86,12 @@ function CustomTabBar(props: { tabConfig: Config }) {
       {Object.keys(tabConfig?.tabs || {}).map((key, index) => {
         const tab = tabConfig?.tabs ? tabConfig.tabs[key] : null;
         if (!tab) return;
-        console.log(tabConfig);
-        console.log(tab.name);
         return (
           <Tab
+            id={key}
             key={index}
-            tabKey={key}
             name={tab.name}
-            href={`/(tabs)/generic`}
+            href={`/(tabs)/generic/template`}
             title={tab.name}
             iconFocused="add"
             iconUnfocused="add"
@@ -111,28 +111,32 @@ function useIsTabSelected(name: string): boolean {
 }
 
 function Tab({
+  id,
   name,
   title,
-  tabKey,
   href,
   iconFocused,
   iconUnfocused,
   style,
 }: {
+  id: string;
   name: string;
   title: string;
-  tabKey?: string;
   href: string;
   iconFocused: Icons;
   iconUnfocused: Icons;
   style?: ViewStyle;
 }) {
   const focused = useIsTabSelected(name);
-  const params = tabKey ? `?tabName=${tabKey}` : '';
+  const { setCurrentTab } = useGenericScreen();
+
+  const handlePress = () => {
+    setCurrentTab(id);
+  };
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Link href={href + params} asChild style={style}>
-        <Pressable>
+      <Link push href={href} asChild style={style}>
+        <Pressable onPress={handlePress}>
           <View style={{ alignItems: 'center', opacity: focused ? 1 : 0.5 }}>
             <Ionicons
               name={focused ? iconFocused : iconUnfocused}

@@ -30,7 +30,7 @@ export default function GenericScrollCard(props: SearchListScreenType) {
     onCardPress,
   } = props;
   const { sshClient } = useSsh();
-  const { currentTab, setTab } = useGenericScreen();
+  const { currentTab, setCurrentTab, setTab } = useGenericScreen();
   const router = useRouter();
 
   const [localJsonData, setLocalJsonData] =
@@ -140,8 +140,9 @@ export default function GenericScrollCard(props: SearchListScreenType) {
                       );
                       console.log('jsonData prepush', data);
                       setTab(currentTab, data);
+                      setCurrentTab(currentTab);
                       router.push({
-                        pathname: '(tabs)/generic/generic',
+                        pathname: `(tabs)/generic/template`,
                       });
                     } else if (onCardPress['type'] === 'command') {
                       const commandStr = replaceTemplateStringWithJsonPath(
@@ -149,6 +150,7 @@ export default function GenericScrollCard(props: SearchListScreenType) {
                         item,
                       );
                       const output = await sshClient?.exec(commandStr);
+                      setCurrentTab(currentTab);
                       setTab(
                         currentTab,
                         updateObjectAtPath(

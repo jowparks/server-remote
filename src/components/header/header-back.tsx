@@ -1,14 +1,20 @@
 import { ChevronLeft } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import React, { memo } from 'react';
+import { IconProps } from '@tamagui/helpers-icon';
 import TransparentButton from '../general/transparent-button';
 
-const HeaderBack = memo((props) => {
+export type HeaderBackProps = {
+  onPress?: () => void;
+  iconProps?: IconProps;
+};
+
+const HeaderBack = memo(({ onPress, iconProps }: HeaderBackProps) => {
   const router = useRouter();
 
   return (
-    <TransparentButton onPress={() => router.back()}>
-      <ChevronLeft color={'white'} {...props} />
+    <TransparentButton onPress={() => (onPress ? onPress() : router.back())}>
+      <ChevronLeft color={'white'} {...iconProps} />
     </TransparentButton>
   );
 });
