@@ -26,7 +26,7 @@ export type CommandType = {
 export type ButtonType = {
   type: 'button';
   buttonCommand: string;
-  buttonResponse: string;
+  buttonResponse?: string;
   text?: string;
   icon?: string;
 };
