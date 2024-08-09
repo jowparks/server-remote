@@ -57,7 +57,9 @@ export function replaceTemplateStringWithJsonPath(
   let match;
 
   // Loop over all matches of the regex in the templateString
-  while ((match = regex.exec(templateString)) !== null) {
+  const matches = Array.from(templateString.matchAll(regex));
+
+  for (const match of matches) {
     // Extract the path from the current match
     const path = match[1].trim();
 

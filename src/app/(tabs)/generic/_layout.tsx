@@ -13,7 +13,8 @@ export {
 export default function GenericLayout() {
   return <GenericLayoutNav />;
 }
-
+// TODO make name/subheading fields dynamic relative to searchResponse
+// TODO handle errors with headerback triggering incorrectly
 function GenericLayoutNav() {
   return (
     <Stack>

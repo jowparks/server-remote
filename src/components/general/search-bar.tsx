@@ -19,6 +19,7 @@ export default function SearchBar({ searchInput, handleSearch, visible }) {
         placeholder="Search"
         value={searchInput}
         onChangeText={handleSearch}
+        autoCapitalize="none"
       />
       <Spacer size="$2" />
     </>
