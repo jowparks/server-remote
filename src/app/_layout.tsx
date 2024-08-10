@@ -2,8 +2,6 @@ import { SplashScreen } from 'expo-router';
 import { TamaguiProvider, Text, XStack } from 'tamagui';
 
 import '../../tamagui-web.css';
-import Handlebars from 'handlebars';
-
 import config from '../../tamagui.config';
 import { useFonts } from 'expo-font';
 import { ToastProvider, ToastViewport } from '@tamagui/toast';
@@ -59,8 +57,7 @@ Appearance.setColorScheme('dark');
 function RootLayoutNav() {
   // const colorScheme = useColorScheme();
   const { left, top, right } = useSafeAreaInsets();
-  const template = Handlebars.compile('Name: {{name}}');
-  console.log(template({ name: 'Nils' }));
+
   return (
     <TamaguiProvider config={config} defaultTheme="dark_blue">
       {/* <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}> */}

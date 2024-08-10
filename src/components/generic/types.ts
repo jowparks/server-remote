@@ -12,7 +12,12 @@ export const Screens = ['searchList', 'menu', 'scrollCard'];
 
 export const Displays = ['button', 'command', 'text', 'image'];
 
-export type DisplayTypes = ButtonType | ImageType | TextType | CommandType;
+export type DisplayTypes =
+  | GenericScreenType
+  | ButtonType
+  | ImageType
+  | TextType
+  | CommandType;
 
 export type JsonString = string;
 
@@ -25,7 +30,7 @@ export type CommandType = {
 
 export type ButtonType = {
   type: 'button';
-  buttonCommand: string;
+  onPress: SubscreenType;
   buttonResponse?: string;
   text?: string;
   icon?: string;

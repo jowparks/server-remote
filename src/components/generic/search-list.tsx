@@ -14,10 +14,7 @@ import {
 import GenericListCard from './card';
 import SearchBar from '../general/search-bar';
 import { useRouter } from 'expo-router';
-import {
-  replaceTemplateStringWithJsonPath,
-  updateObjectAtPath,
-} from '../../util/json';
+import { template, updateObjectAtPath } from '../../util/json';
 import { useGenericScreen } from '../../contexts/generic';
 
 export default function GenericScrollCard(props: SearchListScreenType) {
@@ -145,7 +142,7 @@ export default function GenericScrollCard(props: SearchListScreenType) {
                         pathname: `(tabs)/generic/template`,
                       });
                     } else if (onCardPress['type'] === 'command') {
-                      const commandStr = replaceTemplateStringWithJsonPath(
+                      const commandStr = template(
                         (onCardPress as CommandType).command,
                         item,
                       );

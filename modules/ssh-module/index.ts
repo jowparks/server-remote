@@ -80,9 +80,9 @@ export async function exec({
   };
 
   const subscription = addExecListener(listener);
-
+  console.log('JS: exec', commandId, command);
   const returnCode = await SshModule.exec(commandId, command);
-
+  console.log('JS: exec returnCode', returnCode);
   while (!completed) {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }

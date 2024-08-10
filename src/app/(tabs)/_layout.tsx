@@ -19,6 +19,7 @@ export default function Layout() {
   const { sshClient } = useSsh();
   useEffect(() => {
     if (!sshClient) return;
+    // TODO: handle when config fails to load, display something
     const fetchJson = async () => {
       const res = await sshClient.exec('cat /etc/serverRemote.json');
       let config;

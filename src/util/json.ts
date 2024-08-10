@@ -1,3 +1,5 @@
+import Handlebars, { HelperOptions } from 'handlebars';
+
 export function getObjectAtPath(jsonDataObj: Object, pathString: string): any {
   if (!pathString) return jsonDataObj;
   const pathKeys = pathString.split('.');
@@ -48,27 +50,8 @@ export function updateObjectAtPath(
   return jsonDataObj;
 }
 
-export function replaceTemplateStringWithJsonPath(
-  templateString: string,
-  jsonDataObj: Object,
-): string {
-  // Regular expression to find all {{ }} patterns
-  const regex = /{{\s*([^}]+)\s*}}/g;
-  let match;
-
-  // Loop over all matches of the regex in the templateString
-  const matches = Array.from(templateString.matchAll(regex));
-
-  for (const match of matches) {
-    // Extract the path from the current match
-    const path = match[1].trim();
-
-    // Use the provided getObjectAtPath function to get the value at the path
-    const valueAtPath = getObjectAtPath(jsonDataObj, path);
-
-    // Replace the current {{ path }} in the templateString with the value
-    templateString = templateString.replace(match[0], valueAtPath);
-  }
-
-  return templateString;
+export function template(templateStr: string, data: Object): string {
+  Handlebars.registerHelper('eq', (a, b) => a == b);
+  const template = Handlebars.compile(templateStr);
+  return template(data);
 }
