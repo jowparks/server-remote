@@ -55,7 +55,7 @@ export default function ServerModal({
       }
       if (serverDetails.password) {
         resolve(
-          connect(
+          await connect(
             serverDetails.user,
             serverDetails.password,
             serverDetails.host + ':' + serverDetails.port,
@@ -80,7 +80,6 @@ export default function ServerModal({
         // );
       }
     });
-
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
       setTestResult('Success');

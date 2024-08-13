@@ -7,12 +7,11 @@ import { useSsh } from '../../contexts/ssh';
 import { useGenericScreen } from '../../contexts/generic';
 import { Config } from '../../components/generic/types';
 import Spin from '../../components/general/spinner';
+import { Icons } from '../../util/icon';
 
 export const unstable_settings = {
   initialRouteName: 'index',
 };
-
-type Icons = keyof typeof Ionicons.glyphMap;
 
 export default function Layout() {
   const { config, setConfig, setCurrentTab } = useGenericScreen();
@@ -52,17 +51,16 @@ function CustomTabBar(props: { tabConfig: Config }) {
       style={{
         width: '100%',
         flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'space-evenly',
         backgroundColor: DarkBlueTheme.colors.background,
         paddingVertical: 10,
         borderTopColor: DarkBlueTheme.colors.border,
+        borderLeftColor: DarkBlueTheme.colors.border,
         borderTopWidth: 1,
       }}
     >
       <Tab
         id="docker"
-        name="docker"
         href="/(tabs)/docker"
         title="Docker"
         iconFocused="logo-docker"
@@ -70,7 +68,6 @@ function CustomTabBar(props: { tabConfig: Config }) {
       />
       <Tab
         id="vm"
-        name="vm"
         href="/(tabs)/vm"
         title="VM"
         iconFocused="desktop-outline"
@@ -78,7 +75,6 @@ function CustomTabBar(props: { tabConfig: Config }) {
       />
       <Tab
         id="files"
-        name="files"
         href="/(tabs)/files"
         title="Files"
         iconFocused="folder-outline"
@@ -91,11 +87,10 @@ function CustomTabBar(props: { tabConfig: Config }) {
           <Tab
             id={key}
             key={index}
-            name={tab.name}
             href={`/(tabs)/generic/template`}
             title={tab.name}
-            iconFocused="add"
-            iconUnfocused="add"
+            iconFocused={tab.icon as Icons}
+            iconUnfocused={tab.icon as Icons}
           />
         );
       })}
@@ -103,17 +98,12 @@ function CustomTabBar(props: { tabConfig: Config }) {
   );
 }
 
-function useIsTabSelected(name: string): boolean {
-  const { state } = Navigator.useContext();
-  const current = state.routes.find((route, i) => state.index === i);
-  console.log(current?.name);
-  console.log(name);
-  return current?.name === name;
+function useIsTabSelected(currentTab: string, name: string): boolean {
+  return currentTab === name;
 }
 
 function Tab({
   id,
-  name,
   title,
   href,
   iconFocused,
@@ -121,21 +111,22 @@ function Tab({
   style,
 }: {
   id: string;
-  name: string;
   title: string;
   href: string;
   iconFocused: Icons;
   iconUnfocused: Icons;
   style?: ViewStyle;
 }) {
-  const focused = useIsTabSelected(name);
-  const { setCurrentTab } = useGenericScreen();
+  const { currentTab, setCurrentTab } = useGenericScreen();
+  const focused = useIsTabSelected(currentTab, id);
 
   const handlePress = () => {
     setCurrentTab(id);
   };
   return (
-    <View style={{ flex: 1, alignItems: 'center' }}>
+    <View
+      style={{ flex: 0, alignItems: 'center', overflow: 'visible', width: 100 }}
+    >
       <Link push href={href} asChild style={style}>
         <Pressable onPress={handlePress}>
           <View style={{ alignItems: 'center', opacity: focused ? 1 : 0.5 }}>
@@ -154,7 +145,7 @@ function Tab({
 
 const styles = StyleSheet.create({
   link: {
-    fontSize: 12,
+    fontSize: 10,
     color: 'white',
     paddingHorizontal: 24,
   },

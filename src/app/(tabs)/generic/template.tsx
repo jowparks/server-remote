@@ -8,7 +8,7 @@ import GenericScrollCard from '../../../components/generic/scroll-card';
 import Spin from '../../../components/general/spinner';
 import { useGenericScreen } from '../../../contexts/generic';
 import { useFocusedEffect } from '../../../util/focused-effect';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 
 export default function Template() {
   return (
@@ -20,7 +20,8 @@ export default function Template() {
 
 function TemplateScreen() {
   const params = useLocalSearchParams();
-  console.log('params', params);
+  const navigation = useNavigation();
+
   const { config, currentTab } = useGenericScreen();
   const [localJsonData, setLocalJsonData] = useState<GenericScreenType | null>(
     null,
@@ -35,7 +36,7 @@ function TemplateScreen() {
     if (!config || !config.tabs) return;
     console.log('currentTabTemplate', currentTab);
     const data = config.tabs[currentTab];
-    console.log(config.tabs);
+    navigation.setOptions({ title: data.name });
     console.log('data', data);
     if (data) {
       setLocalJsonData(data);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   ScrollView,
@@ -17,20 +17,16 @@ import { SSHClient, useSsh } from '../../contexts/ssh';
 
 export default function GenericScrollCard(props: ScrollCardScreenType) {
   const { jsonData, displayItems } = props;
-
-  const [loaded, setLoaded] = useState(true);
-
-  const [refreshing, setRefreshing] = useState<boolean>(false);
   const { sshClient } = useSsh();
+  const { width: windowWidth } = useWindowDimensions();
 
-  const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
-  const { height: windowHeight } = useWindowDimensions();
-
+  // const [refreshing, setRefreshing] = useState<boolean>(false);
+  // const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
   // useFocusedEffect(() => {}, [sshClient, triggerRefresh]);
 
   return (
     <View flex={1} width={'90%'}>
-      {!loaded || !sshClient ? (
+      {!sshClient ? (
         <Spin />
       ) : (
         <ScrollView
@@ -54,7 +50,7 @@ export default function GenericScrollCard(props: ScrollCardScreenType) {
             {displayItems.map((renderable, index) => (
               <YGroup.Item key={index}>
                 <Spacer />
-                {render(renderable, jsonData, sshClient, windowHeight)}
+                {render(renderable, jsonData, sshClient, windowWidth)}
               </YGroup.Item>
             ))}
           </YGroup>
@@ -68,16 +64,14 @@ function render(
   renderable: DisplayTypes,
   jsonData: any,
   sshClient: SSHClient,
-  windowHeight: number,
+  windowWidth: number,
 ) {
-  // const { height: windowHeight } = useWindowDimensions();
-
   switch (renderable.type) {
     case 'button':
       return (
         <Button
           onPress={() =>
-            render(renderable.onPress, jsonData, sshClient, windowHeight)
+            render(renderable.onPress, jsonData, sshClient, windowWidth)
           }
         >
           <Text>{renderable.text}</Text>
@@ -85,10 +79,8 @@ function render(
       );
     case 'image':
       const uri = template(renderable.imageSource, jsonData);
-      // TODO set screen height divided by 2
-
       return (
-        <View width={'100%'} height={windowHeight / 2}>
+        <View width={windowWidth * 0.9} height={'100%'}>
           <Image
             source={{ uri }}
             width={'100%'}
@@ -99,7 +91,13 @@ function render(
       );
     case 'text':
       return (
-        <Text alignContent="center">{template(renderable.text, jsonData)}</Text>
+        <Text
+          textAlign={renderable.align ?? 'center'}
+          width={'90%'}
+          fontSize={renderable.size ?? 24}
+        >
+          {template(renderable.text, jsonData)}
+        </Text>
       );
     case 'command':
       // TODO save output from command to commandResponse
@@ -107,9 +105,8 @@ function render(
       //   if (!sshClient) return;
       //   const response = await sshClient.exec(renderable.command);
       // })();
-      // return <></>;
       console.log(template(renderable.command, jsonData));
-      return;
+      return <></>;
     default:
       return <></>;
   }

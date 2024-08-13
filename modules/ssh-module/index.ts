@@ -50,9 +50,7 @@ export async function connect(
   password: string,
   addrs: string,
 ): Promise<void> {
-  await SshModule.connect(user, password, addrs)
-    .then(() => console.log('Connected successfully'))
-    .catch((err) => console.error('Error using SshModule.connect:', err));
+  return SshModule.connect(user, password, addrs);
 }
 
 export type ExecParams = {

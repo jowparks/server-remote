@@ -7,6 +7,7 @@ import { useSsh } from '../../contexts/ssh';
 import {
   CommandType,
   GenericScreenType,
+  ScreenMetadata,
   Screens,
   SearchListScreenType,
   SearchReplace,
@@ -17,21 +18,16 @@ import { useRouter } from 'expo-router';
 import { template, updateObjectAtPath } from '../../util/json';
 import { useGenericScreen } from '../../contexts/generic';
 
+type Screen = SearchListScreenType & ScreenMetadata;
 export default function GenericScrollCard(props: SearchListScreenType) {
-  const {
-    searchCommand,
-    nameField,
-    subHeadingField,
-    jsonData,
-    currentPath,
-    onCardPress,
-  } = props;
+  const { searchCommand, jsonData, currentPath, onCardPress } = props;
   const { sshClient } = useSsh();
   const { currentTab, setCurrentTab, setTab } = useGenericScreen();
   const router = useRouter();
 
-  const [localJsonData, setLocalJsonData] =
-    useState<GenericScreenType>(jsonData);
+  const [localJsonData, setLocalJsonData] = useState<Screen>(
+    jsonData as Screen,
+  );
   const [listItems, setListItems] = useState([]);
   const [loaded, setLoaded] = useState(true);
   const [searchInput, setSearchInput] = useState<string>('');
@@ -48,12 +44,10 @@ export default function GenericScrollCard(props: SearchListScreenType) {
     if (searchInput.length < 3) return;
 
     const fetchList = async () => {
-      console.log('fetching generic search list...');
       setLoaded(false);
       if (!sshClient) return;
       const encodedSearchInput = encodeURIComponent(searchInput);
       const command = searchCommand.replace(SearchReplace, encodedSearchInput);
-      console.log('command', command);
       const response = await sshClient.exec(command as string);
       // TODO update jsonData at correct path location for responses, use localJsonData
       setSearchResponse(response);
@@ -62,13 +56,12 @@ export default function GenericScrollCard(props: SearchListScreenType) {
           jsonData,
           currentPath ? currentPath + '.searchResponse' : 'searchResponse',
           response,
-        ) as GenericScreenType,
+        ) as Screen,
       );
       const listItems = JSON.parse(response);
       setListItems(listItems);
       setLoaded(true);
       setRefreshing(false);
-      console.log('fetched generic search list...');
     };
     fetchList();
   }, [sshClient, triggerRefresh]);
@@ -114,8 +107,11 @@ export default function GenericScrollCard(props: SearchListScreenType) {
               {listItems.map((item, index) => (
                 <GenericListCard
                   key={index}
-                  name={item[nameField as string]}
-                  subHeading={item[subHeadingField as string]}
+                  name={template(localJsonData.card.nameField, item)}
+                  subHeading={template(
+                    localJsonData.card.subHeadingField,
+                    item,
+                  )}
                   contentWidth="100%"
                   onCardPress={async () => {
                     if (Screens.includes(onCardPress['type'] as string)) {
@@ -156,7 +152,7 @@ export default function GenericScrollCard(props: SearchListScreenType) {
                             ? currentPath + '.onCardPressResponse'
                             : 'onCardPressResponse',
                           output,
-                        ) as SearchListScreenType,
+                        ) as SearchListScreenType & ScreenMetadata,
                       );
                     }
                   }}

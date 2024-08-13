@@ -26,9 +26,8 @@ function GenericLayoutNav() {
             backgroundColor: DarkBlueTheme.colors.background,
           },
           headerBackTitleVisible: false,
-          title: 'Files',
+          title: '',
           headerLeft: () => <HeaderBack />,
-          headerRight: () => <FilesViewerNav />,
         }}
       />
     </Stack>

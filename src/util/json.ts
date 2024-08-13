@@ -1,4 +1,4 @@
-import Handlebars, { HelperOptions } from 'handlebars';
+import Handlebars from 'handlebars';
 
 export function getObjectAtPath(jsonDataObj: Object, pathString: string): any {
   if (!pathString) return jsonDataObj;
