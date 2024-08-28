@@ -17,7 +17,7 @@ export default function Layout() {
   const { config, setConfig } = useGenericScreen();
   const { sshClient } = useSsh();
   const { setCurrentTab } = useGenericScreen();
-  const [tabs, setTabs] = React.useState<GenericScreenType[]>([]);
+  const [tabs, setTabs] = React.useState<[string, GenericScreenType][]>([]);
   useEffect(() => {
     if (!sshClient) return;
     // TODO: handle when config fails to load, display something
@@ -30,7 +30,7 @@ export default function Layout() {
         config = JSON.parse(res) as Config;
       }
       setConfig(config === null ? {} : config);
-      setTabs(config?.tabs ? Object.values(config.tabs) : []);
+      setTabs(config?.tabs ? Object.entries(config.tabs) : []);
     };
     fetchJson();
   }, [sshClient]);
@@ -98,12 +98,13 @@ export default function Layout() {
       {tabs.length > 0 ? (
         <Tabs.Screen
           name="generic"
+          initialParams={{ tabName: tabs[0][0] }}
           options={{
-            title: tabs[0].name,
+            title: tabs[0][1].name,
             headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <Ionicons
-                name={tabs[0].icon as Icons}
+                name={tabs[0][1].icon as Icons}
                 size={size}
                 color={color}
               />
@@ -116,12 +117,13 @@ export default function Layout() {
       {tabs.length > 1 ? (
         <Tabs.Screen
           name="generic2"
+          initialParams={{ tabName: tabs[1][0] }}
           options={{
-            title: tabs[1].name,
+            title: tabs[1][1].name,
             headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <Ionicons
-                name={tabs[1].icon as Icons}
+                name={tabs[1][1].icon as Icons}
                 size={size}
                 color={color}
               />
@@ -134,12 +136,13 @@ export default function Layout() {
       {tabs.length > 2 ? (
         <Tabs.Screen
           name="generic3"
+          initialParams={{ tabName: tabs[2][0] }}
           options={{
-            title: tabs[2].name,
+            title: tabs[2][1].name,
             headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <Ionicons
-                name={tabs[2].icon as Icons}
+                name={tabs[2][1].icon as Icons}
                 size={size}
                 color={color}
               />

@@ -22,7 +22,7 @@ function TemplateScreen() {
   const params = useLocalSearchParams();
   const navigation = useNavigation();
 
-  const { config, currentTab } = useGenericScreen();
+  const { config } = useGenericScreen();
   const [localJsonData, setLocalJsonData] = useState<GenericScreenType | null>(
     null,
   );
@@ -34,8 +34,8 @@ function TemplateScreen() {
     console.log('useFocusedEffect template');
     if (!params) return;
     if (!config || !config.tabs) return;
-    console.log('currentTabTemplate', currentTab);
-    const data = config.tabs[currentTab];
+    console.log('params', params);
+    const data = config.tabs[params.tabName as string];
     navigation.setOptions({ title: data.name });
     if (data) {
       setLocalJsonData(data);
@@ -62,13 +62,31 @@ function TemplateScreen() {
   switch (type) {
     case 'searchList':
       console.log('Search List determined...');
-      return <GenericSearchList {...currentObj} jsonData={localJsonData} />;
+      return (
+        <GenericSearchList
+          {...currentObj}
+          tabName={params.tabName as string}
+          jsonData={localJsonData}
+        />
+      );
     case 'menu':
       console.log('Menu determined...');
-      return <MenuScreen {...currentObj} jsonData={localJsonData} />;
+      return (
+        <MenuScreen
+          {...currentObj}
+          tabName={params.tabName as string}
+          jsonData={localJsonData}
+        />
+      );
     case 'scrollCard':
       console.log('Scroll Card determined...');
-      return <GenericScrollCard {...currentObj} jsonData={localJsonData} />;
+      return (
+        <GenericScrollCard
+          {...currentObj}
+          tabName={params.tabName as string}
+          jsonData={localJsonData}
+        />
+      );
     default:
       const exhaustiveCheck: never = type;
       throw new Error(`Unhandled type: ${exhaustiveCheck}`);

@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { DarkBlueTheme } from '../../../style/theme';
 import { StyleSheet } from 'react-native';
@@ -16,10 +16,12 @@ export default function GenericLayout() {
 // TODO make name/subheading fields dynamic relative to searchResponse
 // TODO handle errors with headerback triggering incorrectly
 export function GenericLayoutNav() {
+  const params = useLocalSearchParams();
   return (
     <Stack>
       <Stack.Screen
         name="template"
+        initialParams={params}
         options={{
           headerShown: true,
           headerStyle: {

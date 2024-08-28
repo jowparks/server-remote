@@ -55,6 +55,7 @@ export type ImageType = {
 export type SearchListScreenType = {
   // standard strings will be kept as is, SearchReplace will be replaced with search string
   type: 'searchList';
+  tabName: string;
   jsonData: GenericScreenType;
   eventData?: Object;
   currentPath?: string;
@@ -75,6 +76,8 @@ export type SearchCardType = {
 
 export type ScrollCardScreenType = {
   type: 'scrollCard';
+  // TODO: handle tab name in all screen types, pass as param for everywhere you use router.push
+  tabName: string;
   jsonData: GenericScreenType;
   eventData?: Object;
   currentPath: string;
@@ -85,6 +88,7 @@ export type ScrollCardScreenType = {
 
 export type SearchScreenType = {
   type: 'menu';
+  tabName: string;
   jsonData: Object;
   currentPath: string;
   command: string;

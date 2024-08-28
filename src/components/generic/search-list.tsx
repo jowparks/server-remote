@@ -148,7 +148,6 @@ export default function GenericScrollCard(props: SearchListScreenType) {
                       );
                       console.log('jsonData prepush', data);
                       setTab(currentTab, data);
-                      setCurrentTab(currentTab);
                       router.push({
                         pathname: `(tabs)/generic/template`,
                       });
