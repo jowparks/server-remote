@@ -19,7 +19,7 @@ import uuid from 'react-native-uuid';
 
 export type SSHClient = {
   // waits until command is done, returns all of response
-  exec: (command: string) => Promise<string>;
+  exec: (command: string, commandId?: string) => Promise<string>;
   // uses onData, onError, onComplete to handle response as it comes in
   execAsync: (params: ExecParams) => Promise<string>;
   // cancel a command based on its commandId
@@ -90,12 +90,14 @@ export function SshProvider({ children }: { children: ReactNode }) {
   }, [server]);
 
   // TODO make this cancellable too, cleanup this interface relative to SshModule
-  const execInner = async (command: string) => {
+  const execInner = async (
+    command: string,
+    commandId: string = uuid.v4() as string,
+  ) => {
     if (!server) {
       throw new Error('Not connected to a server');
     }
     let response = '';
-    const commandId = uuid.v4() as string;
     return new Promise<string>(async (resolve) => {
       await exec({
         command,

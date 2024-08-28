@@ -1,11 +1,10 @@
-import { Link, Navigator, Slot } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ViewStyle } from 'react-native';
 import { DarkBlueTheme } from '../../style/theme';
 import { useSsh } from '../../contexts/ssh';
 import { useGenericScreen } from '../../contexts/generic';
-import { Config } from '../../components/generic/types';
+import { Config, GenericScreenType } from '../../components/generic/types';
 import Spin from '../../components/general/spinner';
 import { Icons } from '../../util/icon';
 
@@ -13,9 +12,12 @@ export const unstable_settings = {
   initialRouteName: 'index',
 };
 
+// TODO: go back to normal tabs and just add extras that don't render if config isn't present (generic1.tsx, generic2.tsx)
 export default function Layout() {
-  const { config, setConfig, setCurrentTab } = useGenericScreen();
+  const { config, setConfig } = useGenericScreen();
   const { sshClient } = useSsh();
+  const { setCurrentTab } = useGenericScreen();
+  const [tabs, setTabs] = React.useState<GenericScreenType[]>([]);
   useEffect(() => {
     if (!sshClient) return;
     // TODO: handle when config fails to load, display something
@@ -28,125 +30,125 @@ export default function Layout() {
         config = JSON.parse(res) as Config;
       }
       setConfig(config === null ? {} : config);
+      setTabs(config?.tabs ? Object.values(config.tabs) : []);
     };
     fetchJson();
   }, [sshClient]);
-  if (config == null) {
+  if (config == null || tabs.length === 0) {
     return <Spin />;
   }
   return (
-    <View style={{ flex: 1 }}>
-      <Navigator>
-        <Slot />
-        <CustomTabBar tabConfig={config} />
-      </Navigator>
-    </View>
-  );
-}
-
-function CustomTabBar(props: { tabConfig: Config }) {
-  const { tabConfig } = props;
-  return (
-    <View
-      style={{
-        width: '100%',
-        flexDirection: 'row',
-        justifyContent: 'space-evenly',
-        backgroundColor: DarkBlueTheme.colors.background,
-        paddingVertical: 10,
-        borderTopColor: DarkBlueTheme.colors.border,
-        borderLeftColor: DarkBlueTheme.colors.border,
-        borderTopWidth: 1,
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: 'white',
+        tabBarInactiveTintColor: 'grey',
+        tabBarActiveBackgroundColor: DarkBlueTheme.colors.background,
+        tabBarInactiveBackgroundColor: DarkBlueTheme.colors.background,
+        tabBarBackground: () => <></>,
       }}
+      screenListeners={{
+        tabPress: (e) => {
+          const target = e.target?.split('-')[0];
+          console.log('Tab target: ', target);
+          if (!target) return;
+          setCurrentTab(target);
+        },
+      }}
+      initialRouteName="docker"
     >
-      <Tab
-        id="docker"
-        href="/(tabs)/docker"
-        title="Docker"
-        iconFocused="logo-docker"
-        iconUnfocused="logo-docker"
-      />
-      <Tab
-        id="vm"
-        href="/(tabs)/vm"
-        title="VM"
-        iconFocused="desktop-outline"
-        iconUnfocused="desktop-outline"
-      />
-      <Tab
-        id="files"
-        href="/(tabs)/files"
-        title="Files"
-        iconFocused="folder-outline"
-        iconUnfocused="folder-outline"
-      />
-      {Object.keys(tabConfig?.tabs || {}).map((key, index) => {
-        const tab = tabConfig?.tabs ? tabConfig.tabs[key] : null;
-        if (!tab) return;
-        return (
-          <Tab
-            id={key}
-            key={index}
-            href={`/(tabs)/generic/template`}
-            title={tab.name}
-            iconFocused={tab.icon as Icons}
-            iconUnfocused={tab.icon as Icons}
-          />
-        );
-      })}
-    </View>
-  );
-}
-
-function useIsTabSelected(currentTab: string, name: string): boolean {
-  return currentTab === name;
-}
-
-function Tab({
-  id,
-  title,
-  href,
-  iconFocused,
-  iconUnfocused,
-  style,
-}: {
-  id: string;
-  title: string;
-  href: string;
-  iconFocused: Icons;
-  iconUnfocused: Icons;
-  style?: ViewStyle;
-}) {
-  const { currentTab, setCurrentTab } = useGenericScreen();
-  const focused = useIsTabSelected(currentTab, id);
-
-  const handlePress = () => {
-    setCurrentTab(id);
-  };
-  return (
-    <View
-      style={{ flex: 0, alignItems: 'center', overflow: 'visible', width: 100 }}
-    >
-      <Link push href={href} asChild style={style}>
-        <Pressable onPress={handlePress}>
-          <View style={{ alignItems: 'center', opacity: focused ? 1 : 0.5 }}>
+      <Tabs.Screen
+        name="docker"
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ focused, color, size }) => (
             <Ionicons
-              name={focused ? iconFocused : iconUnfocused}
-              size={24}
-              color="white"
+              name={focused ? 'logo-docker' : 'logo-docker'}
+              size={size}
+              color={color}
             />
-            <Text style={styles.link}>{title}</Text>
-          </View>
-        </Pressable>
-      </Link>
-    </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="vm"
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={focused ? 'desktop-outline' : 'desktop-outline'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="files"
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={focused ? 'folder-outline' : 'folder-outline'}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      {tabs.length > 0 ? (
+        <Tabs.Screen
+          name="generic"
+          options={{
+            title: tabs[0].name,
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons
+                name={tabs[0].icon as Icons}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
+      ) : (
+        <Tabs.Screen name="generic" options={{ href: null }} />
+      )}
+      {tabs.length > 1 ? (
+        <Tabs.Screen
+          name="generic2"
+          options={{
+            title: tabs[1].name,
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons
+                name={tabs[1].icon as Icons}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
+      ) : (
+        <Tabs.Screen name="generic2" options={{ href: null }} />
+      )}
+      {tabs.length > 2 ? (
+        <Tabs.Screen
+          name="generic3"
+          options={{
+            title: tabs[2].name,
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons
+                name={tabs[2].icon as Icons}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
+      ) : (
+        <Tabs.Screen name="generic3" options={{ href: null }} />
+      )}
+    </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  link: {
-    fontSize: 10,
-    color: 'white',
-    paddingHorizontal: 24,
-  },
-});

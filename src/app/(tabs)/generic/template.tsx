@@ -37,7 +37,6 @@ function TemplateScreen() {
     console.log('currentTabTemplate', currentTab);
     const data = config.tabs[currentTab];
     navigation.setOptions({ title: data.name });
-    console.log('data', data);
     if (data) {
       setLocalJsonData(data);
       const currentObj = getObjectAtPath(data, data.currentPath ?? '');

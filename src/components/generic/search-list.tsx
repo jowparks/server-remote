@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Spacer, ScrollView, YGroup, Separator } from 'tamagui';
 import Spin from '../general/spinner';
 import { RefreshControl } from 'react-native';
@@ -6,7 +6,6 @@ import { useFocusedEffect } from '../../util/focused-effect';
 import { useSsh } from '../../contexts/ssh';
 import {
   CommandType,
-  GenericScreenType,
   ScreenMetadata,
   Screens,
   SearchListScreenType,
@@ -17,6 +16,7 @@ import SearchBar from '../general/search-bar';
 import { useRouter } from 'expo-router';
 import { template, updateObjectAtPath } from '../../util/json';
 import { useGenericScreen } from '../../contexts/generic';
+import uuid from 'react-native-uuid';
 
 type Screen = SearchListScreenType & ScreenMetadata;
 export default function GenericScrollCard(props: SearchListScreenType) {
@@ -31,11 +31,13 @@ export default function GenericScrollCard(props: SearchListScreenType) {
   const [listItems, setListItems] = useState([]);
   const [loaded, setLoaded] = useState(true);
   const [searchInput, setSearchInput] = useState<string>('');
-  const [searchResponse, setSearchResponse] = useState<any>([]);
   const [searchError, setSearchError] = useState<string>('');
 
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [triggerRefresh, setTriggerRefresh] = useState<boolean>(false);
+
+  const currentCommandIdRef = useRef<string | null>(null);
+  const cancelledCommands = useRef<string[]>([]);
 
   useFocusedEffect(() => {
     const zeroLength = searchInput.length === 0;
@@ -48,9 +50,25 @@ export default function GenericScrollCard(props: SearchListScreenType) {
       if (!sshClient) return;
       const encodedSearchInput = encodeURIComponent(searchInput);
       const command = searchCommand.replace(SearchReplace, encodedSearchInput);
-      const response = await sshClient.exec(command as string);
-      // TODO update jsonData at correct path location for responses, use localJsonData
-      setSearchResponse(response);
+      const commandId = uuid.v4() as string;
+      // Cancel the previous command if it exists
+      if (currentCommandIdRef.current) {
+        sshClient.cancel(currentCommandIdRef.current);
+        cancelledCommands.current.push(currentCommandIdRef.current);
+      }
+
+      // Store the new command ID and reset the cancel flag
+      currentCommandIdRef.current = commandId;
+
+      const response = await sshClient.exec(command as string, commandId);
+
+      if (cancelledCommands.current.includes(commandId)) {
+        cancelledCommands.current = cancelledCommands.current.filter(
+          (c) => c !== commandId,
+        );
+        return;
+      }
+
       setLocalJsonData(
         updateObjectAtPath(
           jsonData,
@@ -114,11 +132,8 @@ export default function GenericScrollCard(props: SearchListScreenType) {
                   )}
                   contentWidth="100%"
                   onCardPress={async () => {
+                    // TODO consolidate this with the same code in scroll-card.tsx
                     if (Screens.includes(onCardPress['type'] as string)) {
-                      console.log(
-                        'New screen to navigate to: ',
-                        onCardPress['type'],
-                      );
                       let data: any = {
                         ...localJsonData,
                         currentPath: currentPath

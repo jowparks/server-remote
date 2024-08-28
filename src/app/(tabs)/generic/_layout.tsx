@@ -15,7 +15,7 @@ export default function GenericLayout() {
 }
 // TODO make name/subheading fields dynamic relative to searchResponse
 // TODO handle errors with headerback triggering incorrectly
-function GenericLayoutNav() {
+export function GenericLayoutNav() {
   return (
     <Stack>
       <Stack.Screen
