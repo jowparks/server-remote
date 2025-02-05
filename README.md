@@ -38,6 +38,10 @@
 - Select new user, click add
 - Have user go to email, and follow link to test app
 
+### Testing
+
+- Test via UTM (password info in 1password)
+
 ## Libssh2 and Password vs key auth
 
 - Went down a big rabbit hole trying to use key auth, I was getting errors in the iOS code:
@@ -50,6 +54,7 @@ NMSSH: Public key authentication failed with reason -16
 and ssh server:
 ```bash
 grep 'sshd' /var/log/auth.log
+docker run -d --name container1 alpine sleep infinity
 
 Apr  6 03:42:33 dev sshd[46161]: pam_unix(sshd:session): session closed for user dev
 Apr  6 03:44:22 dev sshd[46222]: Accepted publickey for dev from 10.0.2.2 port 57995 ssh2: RSA SHA256:1I7Ay1tgj/nmUI5W3c05jdbPpj8Qa5PuGWu1XNz0WHc
