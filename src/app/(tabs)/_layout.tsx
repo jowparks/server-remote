@@ -2,8 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { DarkBlueTheme } from '../../style/theme';
+import { useTabs } from '../../contexts/tabs';
 
 export default function TabLayout() {
+  const { tabs } = useTabs();
   return (
     <Tabs
       screenOptions={{
@@ -26,6 +28,7 @@ export default function TabLayout() {
               color={color}
             />
           ),
+          href: tabs.includes('docker') ? '/docker' : null,
         }}
       />
       <Tabs.Screen
@@ -39,6 +42,7 @@ export default function TabLayout() {
               color={color}
             />
           ),
+          href: tabs.includes('vm') ? '/vm' : null,
         }}
       />
       <Tabs.Screen
@@ -52,6 +56,7 @@ export default function TabLayout() {
               color={color}
             />
           ),
+          href: tabs.includes('files') ? '/files' : null,
         }}
       />
     </Tabs>

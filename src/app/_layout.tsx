@@ -25,6 +25,7 @@ import Login from '../components/overlays/login';
 import { AirtableProvider } from '../contexts/airtable';
 import UpdateRequired from '../components/overlays/update-required';
 import { TransferProvider } from '../contexts/transfers';
+import { TabsProvider } from '../contexts/tabs';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -68,128 +69,130 @@ function RootLayoutNav() {
               <VmProvider>
                 <TransferProvider>
                   <DockerProvider>
-                    <AirtableProvider>
-                      <FilesProvider>
-                        <ToastProvider>
-                          <ToastViewport
-                            flexDirection="column-reverse"
-                            top={top}
-                            left={left}
-                            right={right}
-                          />
-                          <AuthenticationProvider>
-                            <Login />
-                            <UpdateRequired />
-                            <Drawer
-                              screenOptions={{
-                                drawerActiveBackgroundColor:
-                                  DarkBlueTheme.colors.background,
-                                drawerInactiveBackgroundColor:
-                                  DarkBlueTheme.colors.background,
-                                drawerContentStyle: {
-                                  backgroundColor:
+                    <TabsProvider>
+                      <AirtableProvider>
+                        <FilesProvider>
+                          <ToastProvider>
+                            <ToastViewport
+                              flexDirection="column-reverse"
+                              top={top}
+                              left={left}
+                              right={right}
+                            />
+                            <AuthenticationProvider>
+                              <Login />
+                              <UpdateRequired />
+                              <Drawer
+                                screenOptions={{
+                                  drawerActiveBackgroundColor:
                                     DarkBlueTheme.colors.background,
-                                },
-                                drawerActiveTintColor: 'white',
-                                drawerInactiveTintColor: 'grey',
-                              }}
-                            >
-                              <Drawer.Screen
-                                name="index"
-                                options={{
-                                  title: 'Servers',
-                                  headerShown: true,
-                                  drawerLabel: () => (
-                                    <>
-                                      <XStack
-                                        alignContent="center"
-                                        alignItems="center"
-                                        gap={'$2'}
-                                      >
-                                        <Server />
-                                        <Text>Servers</Text>
-                                      </XStack>
-                                    </>
-                                  ),
-                                  headerLeft: () => <DrawerButton />,
-                                  headerStyle: {
+                                  drawerInactiveBackgroundColor:
+                                    DarkBlueTheme.colors.background,
+                                  drawerContentStyle: {
                                     backgroundColor:
                                       DarkBlueTheme.colors.background,
                                   },
-                                }}
-                              />
-                              <Drawer.Screen
-                                name="feature-request"
-                                options={{
-                                  title: 'Request a feature',
-                                  headerShown: false,
-                                  drawerLabel: () => (
-                                    <>
-                                      <XStack
-                                        alignContent="center"
-                                        alignItems="center"
-                                        gap={'$2'}
-                                      >
-                                        <Wand2 />
-                                        <Text>Request a feature!</Text>
-                                      </XStack>
-                                    </>
-                                  ),
-                                  headerLeft: () => <DrawerButton />,
-                                  headerStyle: {
-                                    backgroundColor:
-                                      DarkBlueTheme.colors.background,
-                                  },
-                                }}
-                              />
-                              <Drawer.Screen
-                                name="settings"
-                                options={{
-                                  title: 'Settings',
-                                  headerShown: false,
-                                  drawerLabel: () => (
-                                    <>
-                                      <XStack
-                                        alignContent="center"
-                                        alignItems="center"
-                                        gap={'$2'}
-                                      >
-                                        <Settings />
-                                        <Text>Settings</Text>
-                                      </XStack>
-                                    </>
-                                  ),
                                   drawerActiveTintColor: 'white',
                                   drawerInactiveTintColor: 'grey',
                                 }}
-                              />
-                              <Drawer.Screen
-                                name="(tabs)"
-                                options={{
-                                  drawerStatusBarAnimation: 'fade',
-                                  headerShown: false,
-                                  drawerItemStyle: { display: 'none' },
-                                }}
-                              />
-                              <Drawer.Screen
-                                name="add-server"
-                                options={{
-                                  headerShown: false,
-                                  drawerItemStyle: { display: 'none' },
-                                }}
-                              />
-                              <Drawer.Screen
-                                name="+not-found"
-                                options={{
-                                  headerShown: false,
-                                  drawerItemStyle: { display: 'none' },
-                                }}
-                              />
-                            </Drawer>
-                          </AuthenticationProvider>
-                        </ToastProvider>
-                      </FilesProvider>
-                    </AirtableProvider>
+                              >
+                                <Drawer.Screen
+                                  name="index"
+                                  options={{
+                                    title: 'Servers',
+                                    headerShown: true,
+                                    drawerLabel: () => (
+                                      <>
+                                        <XStack
+                                          alignContent="center"
+                                          alignItems="center"
+                                          gap={'$2'}
+                                        >
+                                          <Server />
+                                          <Text>Servers</Text>
+                                        </XStack>
+                                      </>
+                                    ),
+                                    headerLeft: () => <DrawerButton />,
+                                    headerStyle: {
+                                      backgroundColor:
+                                        DarkBlueTheme.colors.background,
+                                    },
+                                  }}
+                                />
+                                <Drawer.Screen
+                                  name="feature-request"
+                                  options={{
+                                    title: 'Request a feature',
+                                    headerShown: false,
+                                    drawerLabel: () => (
+                                      <>
+                                        <XStack
+                                          alignContent="center"
+                                          alignItems="center"
+                                          gap={'$2'}
+                                        >
+                                          <Wand2 />
+                                          <Text>Request a feature!</Text>
+                                        </XStack>
+                                      </>
+                                    ),
+                                    headerLeft: () => <DrawerButton />,
+                                    headerStyle: {
+                                      backgroundColor:
+                                        DarkBlueTheme.colors.background,
+                                    },
+                                  }}
+                                />
+                                <Drawer.Screen
+                                  name="settings"
+                                  options={{
+                                    title: 'Settings',
+                                    headerShown: false,
+                                    drawerLabel: () => (
+                                      <>
+                                        <XStack
+                                          alignContent="center"
+                                          alignItems="center"
+                                          gap={'$2'}
+                                        >
+                                          <Settings />
+                                          <Text>Settings</Text>
+                                        </XStack>
+                                      </>
+                                    ),
+                                    drawerActiveTintColor: 'white',
+                                    drawerInactiveTintColor: 'grey',
+                                  }}
+                                />
+                                <Drawer.Screen
+                                  name="(tabs)"
+                                  options={{
+                                    drawerStatusBarAnimation: 'fade',
+                                    headerShown: false,
+                                    drawerItemStyle: { display: 'none' },
+                                  }}
+                                />
+                                <Drawer.Screen
+                                  name="add-server"
+                                  options={{
+                                    headerShown: false,
+                                    drawerItemStyle: { display: 'none' },
+                                  }}
+                                />
+                                <Drawer.Screen
+                                  name="+not-found"
+                                  options={{
+                                    headerShown: false,
+                                    drawerItemStyle: { display: 'none' },
+                                  }}
+                                />
+                              </Drawer>
+                            </AuthenticationProvider>
+                          </ToastProvider>
+                        </FilesProvider>
+                      </AirtableProvider>
+                    </TabsProvider>
                   </DockerProvider>
                 </TransferProvider>
               </VmProvider>

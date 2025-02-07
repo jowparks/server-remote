@@ -49,6 +49,17 @@ function SettingsLayoutNav() {
           title: 'App Settings',
         }}
       />
+      <Stack.Screen
+        name="tabs"
+        options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: DarkBlueTheme.colors.background,
+          },
+          headerLeft: () => <HeaderBack />,
+          title: 'Tabs',
+        }}
+      />
     </Stack>
   );
 }

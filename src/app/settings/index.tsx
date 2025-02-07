@@ -1,4 +1,3 @@
-import { Scroll } from '@tamagui/lucide-icons';
 import { Link } from 'expo-router';
 import React from 'react';
 import { ListItem, Separator, View, YGroup, Spacer, ScrollView } from 'tamagui';
@@ -21,6 +20,11 @@ export default function SettingsScreen() {
               </ListItem>
             </Link>
             <Link href="/settings/app">
+              <ListItem elevate size="$4" bordered>
+                App Settings
+              </ListItem>
+            </Link>
+            <Link href="/settings/tabs">
               <ListItem
                 elevate
                 size="$4"
@@ -30,7 +34,7 @@ export default function SettingsScreen() {
                   borderBottomRightRadius: 10,
                 }}
               >
-                App Settings
+                Tabs
               </ListItem>
             </Link>
           </YGroup.Item>
