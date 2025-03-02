@@ -395,14 +395,22 @@ internal interface UniffiLib : Library {
     ): Pointer
     fun uniffi_rust_lib_fn_free_session(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_rust_lib_fn_method_session_close(`ptr`: Pointer,
+    fun uniffi_rust_lib_fn_method_session_cancel(`ptr`: Pointer,`id`: RustBuffer.ByValue,
     ): Pointer
-    fun uniffi_rust_lib_fn_method_session_exec(`ptr`: Pointer,`command`: RustBuffer.ByValue,
+    fun uniffi_rust_lib_fn_method_session_close(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_rust_lib_fn_method_session_exec(`ptr`: Pointer,`commandId`: RustBuffer.ByValue,`command`: RustBuffer.ByValue,
     ): Pointer
-    fun uniffi_rust_lib_fn_func_connect(`user`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`addrs`: RustBuffer.ByValue,
+    fun uniffi_rust_lib_fn_method_session_read_output(`ptr`: Pointer,`commandId`: RustBuffer.ByValue,
     ): Pointer
-    fun uniffi_rust_lib_fn_func_test_rust(`num1`: Long,`num2`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Long
+    fun uniffi_rust_lib_fn_method_session_test_connection(`ptr`: Pointer,
+    ): Pointer
+    fun uniffi_rust_lib_fn_method_session_transfer(`ptr`: Pointer,`transferId`: RustBuffer.ByValue,`sourcePath`: RustBuffer.ByValue,`destinationPath`: RustBuffer.ByValue,`direction`: RustBuffer.ByValue,
+    ): Pointer
+    fun uniffi_rust_lib_fn_method_session_transfer_progress(`ptr`: Pointer,`transferId`: RustBuffer.ByValue,
+    ): Pointer
+    fun uniffi_rust_lib_fn_func_connect(`user`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`addrs`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Pointer
     fun ffi_rust_lib_rustbuffer_alloc(`size`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun ffi_rust_lib_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -517,11 +525,19 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_rust_lib_checksum_func_connect(
     ): Short
-    fun uniffi_rust_lib_checksum_func_test_rust(
+    fun uniffi_rust_lib_checksum_method_session_cancel(
     ): Short
     fun uniffi_rust_lib_checksum_method_session_close(
     ): Short
     fun uniffi_rust_lib_checksum_method_session_exec(
+    ): Short
+    fun uniffi_rust_lib_checksum_method_session_read_output(
+    ): Short
+    fun uniffi_rust_lib_checksum_method_session_test_connection(
+    ): Short
+    fun uniffi_rust_lib_checksum_method_session_transfer(
+    ): Short
+    fun uniffi_rust_lib_checksum_method_session_transfer_progress(
     ): Short
     fun ffi_rust_lib_uniffi_contract_version(
     ): Int
@@ -540,16 +556,28 @@ private fun uniffiCheckContractApiVersion(lib: UniffiLib) {
 
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: UniffiLib) {
-    if (lib.uniffi_rust_lib_checksum_func_connect() != 42318.toShort()) {
+    if (lib.uniffi_rust_lib_checksum_func_connect() != 57044.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_rust_lib_checksum_func_test_rust() != 48329.toShort()) {
+    if (lib.uniffi_rust_lib_checksum_method_session_cancel() != 16516.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_rust_lib_checksum_method_session_close() != 16336.toShort()) {
+    if (lib.uniffi_rust_lib_checksum_method_session_close() != 40540.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_rust_lib_checksum_method_session_exec() != 31113.toShort()) {
+    if (lib.uniffi_rust_lib_checksum_method_session_exec() != 51110.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_rust_lib_checksum_method_session_read_output() != 39097.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_rust_lib_checksum_method_session_test_connection() != 37246.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_rust_lib_checksum_method_session_transfer() != 49655.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_rust_lib_checksum_method_session_transfer_progress() != 31115.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -701,22 +729,6 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
         val byteBuf = toUtf8(value)
         buf.putInt(byteBuf.limit())
         buf.put(byteBuf)
-    }
-}
-
-public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
-    override fun read(buf: ByteBuffer): ByteArray {
-        val len = buf.getInt()
-        val byteArr = ByteArray(len)
-        buf.get(byteArr)
-        return byteArr
-    }
-    override fun allocationSize(value: ByteArray): Int {
-        return 4 + value.size
-    }
-    override fun write(value: ByteArray, buf: ByteBuffer) {
-        buf.putInt(value.size)
-        buf.put(value)
     }
 }
 
@@ -959,9 +971,19 @@ object NoPointer
  */
 public interface SessionInterface {
     
-    suspend fun `close`()
+    suspend fun `cancel`(`id`: String)
     
-    suspend fun `exec`(`command`: String): String
+    fun `close`()
+    
+    suspend fun `exec`(`commandId`: String, `command`: String): String
+    
+    suspend fun `readOutput`(`commandId`: String): String?
+    
+    suspend fun `testConnection`(): String
+    
+    suspend fun `transfer`(`transferId`: String, `sourcePath`: String, `destinationPath`: String, `direction`: String)
+    
+    suspend fun `transferProgress`(`transferId`: String): TransferProgress
     
     companion object
 }
@@ -1008,12 +1030,104 @@ open class Session : FFIObject, SessionInterface {
     
     @Throws(EnumException::class)
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `close`() {
+    override suspend fun `cancel`(`id`: String) {
         return uniffiRustCallAsync(
             callWithPointer { thisPtr ->
-                UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_close(
+                UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_cancel(
+                    thisPtr,
+                    FfiConverterString.lower(`id`),
+                )
+            },
+            { future, callback, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_poll_void(future, callback, continuation) },
+            { future, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_complete_void(future, continuation) },
+            { future -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_free_void(future) },
+            // lift function
+            { Unit },
+            
+            // Error FFI converter
+            EnumException.ErrorHandler,
+        )
+    }
+    
+    @Throws(EnumException::class)override fun `close`() =
+        callWithPointer {
+    uniffiRustCallWithError(EnumException) { _status ->
+    UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_close(it,
+        
+        _status)
+}
+        }
+    
+    
+    
+    @Throws(EnumException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `exec`(`commandId`: String, `command`: String) : String {
+        return uniffiRustCallAsync(
+            callWithPointer { thisPtr ->
+                UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_exec(
+                    thisPtr,
+                    FfiConverterString.lower(`commandId`),FfiConverterString.lower(`command`),
+                )
+            },
+            { future, callback, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_poll_rust_buffer(future, callback, continuation) },
+            { future, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_complete_rust_buffer(future, continuation) },
+            { future -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_free_rust_buffer(future) },
+            // lift function
+            { FfiConverterString.lift(it) },
+            // Error FFI converter
+            EnumException.ErrorHandler,
+        )
+    }
+    
+    @Throws(EnumException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `readOutput`(`commandId`: String) : String? {
+        return uniffiRustCallAsync(
+            callWithPointer { thisPtr ->
+                UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_read_output(
+                    thisPtr,
+                    FfiConverterString.lower(`commandId`),
+                )
+            },
+            { future, callback, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_poll_rust_buffer(future, callback, continuation) },
+            { future, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_complete_rust_buffer(future, continuation) },
+            { future -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_free_rust_buffer(future) },
+            // lift function
+            { FfiConverterOptionalString.lift(it) },
+            // Error FFI converter
+            EnumException.ErrorHandler,
+        )
+    }
+    
+    @Throws(EnumException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `testConnection`() : String {
+        return uniffiRustCallAsync(
+            callWithPointer { thisPtr ->
+                UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_test_connection(
                     thisPtr,
                     
+                )
+            },
+            { future, callback, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_poll_rust_buffer(future, callback, continuation) },
+            { future, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_complete_rust_buffer(future, continuation) },
+            { future -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_free_rust_buffer(future) },
+            // lift function
+            { FfiConverterString.lift(it) },
+            // Error FFI converter
+            EnumException.ErrorHandler,
+        )
+    }
+    
+    @Throws(EnumException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `transfer`(`transferId`: String, `sourcePath`: String, `destinationPath`: String, `direction`: String) {
+        return uniffiRustCallAsync(
+            callWithPointer { thisPtr ->
+                UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_transfer(
+                    thisPtr,
+                    FfiConverterString.lower(`transferId`),FfiConverterString.lower(`sourcePath`),FfiConverterString.lower(`destinationPath`),FfiConverterString.lower(`direction`),
                 )
             },
             { future, callback, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_poll_void(future, callback, continuation) },
@@ -1029,19 +1143,19 @@ open class Session : FFIObject, SessionInterface {
     
     @Throws(EnumException::class)
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `exec`(`command`: String) : String {
+    override suspend fun `transferProgress`(`transferId`: String) : TransferProgress {
         return uniffiRustCallAsync(
             callWithPointer { thisPtr ->
-                UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_exec(
+                UniffiLib.INSTANCE.uniffi_rust_lib_fn_method_session_transfer_progress(
                     thisPtr,
-                    FfiConverterString.lower(`command`),
+                    FfiConverterString.lower(`transferId`),
                 )
             },
             { future, callback, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_poll_rust_buffer(future, callback, continuation) },
             { future, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_complete_rust_buffer(future, continuation) },
             { future -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_free_rust_buffer(future) },
             // lift function
-            { FfiConverterString.lift(it) },
+            { FfiConverterTypeTransferProgress.lift(it) },
             // Error FFI converter
             EnumException.ErrorHandler,
         )
@@ -1080,153 +1194,30 @@ public object FfiConverterTypeSession: FfiConverter<Session, Pointer> {
 
 
 
-data class Key (
-    var `spendingKey`: String, 
-    var `viewKey`: String, 
-    var `incomingViewKey`: String, 
-    var `outgoingViewKey`: String, 
-    var `publicAddress`: String, 
-    var `proofAuthorizingKey`: String
+data class TransferProgress (
+    var `transferred`: ULong, 
+    var `total`: ULong
 ) {
     
     companion object
 }
 
-public object FfiConverterTypeKey: FfiConverterRustBuffer<Key> {
-    override fun read(buf: ByteBuffer): Key {
-        return Key(
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-        )
-    }
-
-    override fun allocationSize(value: Key) = (
-            FfiConverterString.allocationSize(value.`spendingKey`) +
-            FfiConverterString.allocationSize(value.`viewKey`) +
-            FfiConverterString.allocationSize(value.`incomingViewKey`) +
-            FfiConverterString.allocationSize(value.`outgoingViewKey`) +
-            FfiConverterString.allocationSize(value.`publicAddress`) +
-            FfiConverterString.allocationSize(value.`proofAuthorizingKey`)
-    )
-
-    override fun write(value: Key, buf: ByteBuffer) {
-            FfiConverterString.write(value.`spendingKey`, buf)
-            FfiConverterString.write(value.`viewKey`, buf)
-            FfiConverterString.write(value.`incomingViewKey`, buf)
-            FfiConverterString.write(value.`outgoingViewKey`, buf)
-            FfiConverterString.write(value.`publicAddress`, buf)
-            FfiConverterString.write(value.`proofAuthorizingKey`, buf)
-    }
-}
-
-
-
-data class NoteParams (
-    var `owner`: ByteArray, 
-    var `value`: ULong, 
-    var `memo`: ByteArray, 
-    var `assetId`: ByteArray, 
-    var `sender`: ByteArray
-) {
-    
-    companion object
-}
-
-public object FfiConverterTypeNoteParams: FfiConverterRustBuffer<NoteParams> {
-    override fun read(buf: ByteBuffer): NoteParams {
-        return NoteParams(
-            FfiConverterByteArray.read(buf),
+public object FfiConverterTypeTransferProgress: FfiConverterRustBuffer<TransferProgress> {
+    override fun read(buf: ByteBuffer): TransferProgress {
+        return TransferProgress(
             FfiConverterULong.read(buf),
-            FfiConverterByteArray.read(buf),
-            FfiConverterByteArray.read(buf),
-            FfiConverterByteArray.read(buf),
-        )
-    }
-
-    override fun allocationSize(value: NoteParams) = (
-            FfiConverterByteArray.allocationSize(value.`owner`) +
-            FfiConverterULong.allocationSize(value.`value`) +
-            FfiConverterByteArray.allocationSize(value.`memo`) +
-            FfiConverterByteArray.allocationSize(value.`assetId`) +
-            FfiConverterByteArray.allocationSize(value.`sender`)
-    )
-
-    override fun write(value: NoteParams, buf: ByteBuffer) {
-            FfiConverterByteArray.write(value.`owner`, buf)
-            FfiConverterULong.write(value.`value`, buf)
-            FfiConverterByteArray.write(value.`memo`, buf)
-            FfiConverterByteArray.write(value.`assetId`, buf)
-            FfiConverterByteArray.write(value.`sender`, buf)
-    }
-}
-
-
-
-data class SpendComponents (
-    var `note`: ByteArray, 
-    var `witnessRootHash`: ByteArray, 
-    var `witnessTreeSize`: ULong, 
-    var `witnessAuthPath`: List<WitnessNode>
-) {
-    
-    companion object
-}
-
-public object FfiConverterTypeSpendComponents: FfiConverterRustBuffer<SpendComponents> {
-    override fun read(buf: ByteBuffer): SpendComponents {
-        return SpendComponents(
-            FfiConverterByteArray.read(buf),
-            FfiConverterByteArray.read(buf),
             FfiConverterULong.read(buf),
-            FfiConverterSequenceTypeWitnessNode.read(buf),
         )
     }
 
-    override fun allocationSize(value: SpendComponents) = (
-            FfiConverterByteArray.allocationSize(value.`note`) +
-            FfiConverterByteArray.allocationSize(value.`witnessRootHash`) +
-            FfiConverterULong.allocationSize(value.`witnessTreeSize`) +
-            FfiConverterSequenceTypeWitnessNode.allocationSize(value.`witnessAuthPath`)
+    override fun allocationSize(value: TransferProgress) = (
+            FfiConverterULong.allocationSize(value.`transferred`) +
+            FfiConverterULong.allocationSize(value.`total`)
     )
 
-    override fun write(value: SpendComponents, buf: ByteBuffer) {
-            FfiConverterByteArray.write(value.`note`, buf)
-            FfiConverterByteArray.write(value.`witnessRootHash`, buf)
-            FfiConverterULong.write(value.`witnessTreeSize`, buf)
-            FfiConverterSequenceTypeWitnessNode.write(value.`witnessAuthPath`, buf)
-    }
-}
-
-
-
-data class WitnessNode (
-    var `side`: String, 
-    var `hashOfSibling`: ByteArray
-) {
-    
-    companion object
-}
-
-public object FfiConverterTypeWitnessNode: FfiConverterRustBuffer<WitnessNode> {
-    override fun read(buf: ByteBuffer): WitnessNode {
-        return WitnessNode(
-            FfiConverterString.read(buf),
-            FfiConverterByteArray.read(buf),
-        )
-    }
-
-    override fun allocationSize(value: WitnessNode) = (
-            FfiConverterString.allocationSize(value.`side`) +
-            FfiConverterByteArray.allocationSize(value.`hashOfSibling`)
-    )
-
-    override fun write(value: WitnessNode, buf: ByteBuffer) {
-            FfiConverterString.write(value.`side`, buf)
-            FfiConverterByteArray.write(value.`hashOfSibling`, buf)
+    override fun write(value: TransferProgress, buf: ByteBuffer) {
+            FfiConverterULong.write(value.`transferred`, buf)
+            FfiConverterULong.write(value.`total`, buf)
     }
 }
 
@@ -1238,10 +1229,12 @@ sealed class EnumException: Exception() {
     
     class Oops(
         
-        val `msg`: String
+        val `msg`: String, 
+        
+        val `backtrace`: String
         ) : EnumException() {
         override val message
-            get() = "msg=${ `msg` }"
+            get() = "msg=${ `msg` }, backtrace=${ `backtrace` }"
     }
     
 
@@ -1259,6 +1252,7 @@ public object FfiConverterTypeEnumError : FfiConverterRustBuffer<EnumException> 
         return when(buf.getInt()) {
             1 -> EnumException.Oops(
                 FfiConverterString.read(buf),
+                FfiConverterString.read(buf),
                 )
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
         }
@@ -1270,6 +1264,7 @@ public object FfiConverterTypeEnumError : FfiConverterRustBuffer<EnumException> 
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
                 4
                 + FfiConverterString.allocationSize(value.`msg`)
+                + FfiConverterString.allocationSize(value.`backtrace`)
             )
         }
     }
@@ -1279,6 +1274,7 @@ public object FfiConverterTypeEnumError : FfiConverterRustBuffer<EnumException> 
             is EnumException.Oops -> {
                 buf.putInt(1)
                 FfiConverterString.write(value.`msg`, buf)
+                FfiConverterString.write(value.`backtrace`, buf)
                 Unit
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
@@ -1289,24 +1285,28 @@ public object FfiConverterTypeEnumError : FfiConverterRustBuffer<EnumException> 
 
 
 
-public object FfiConverterSequenceTypeWitnessNode: FfiConverterRustBuffer<List<WitnessNode>> {
-    override fun read(buf: ByteBuffer): List<WitnessNode> {
-        val len = buf.getInt()
-        return List<WitnessNode>(len) {
-            FfiConverterTypeWitnessNode.read(buf)
+public object FfiConverterOptionalString: FfiConverterRustBuffer<String?> {
+    override fun read(buf: ByteBuffer): String? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterString.read(buf)
+    }
+
+    override fun allocationSize(value: String?): Int {
+        if (value == null) {
+            return 1
+        } else {
+            return 1 + FfiConverterString.allocationSize(value)
         }
     }
 
-    override fun allocationSize(value: List<WitnessNode>): Int {
-        val sizeForLength = 4
-        val sizeForItems = value.map { FfiConverterTypeWitnessNode.allocationSize(it) }.sum()
-        return sizeForLength + sizeForItems
-    }
-
-    override fun write(value: List<WitnessNode>, buf: ByteBuffer) {
-        buf.putInt(value.size)
-        value.forEach {
-            FfiConverterTypeWitnessNode.write(it, buf)
+    override fun write(value: String?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterString.write(value, buf)
         }
     }
 }
@@ -1316,24 +1316,10 @@ public object FfiConverterSequenceTypeWitnessNode: FfiConverterRustBuffer<List<W
 
 @Throws(EnumException::class)
 
-@Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-suspend fun `connect`(`user`: String, `password`: String, `addrs`: String) : Session {
-    return uniffiRustCallAsync(
-        UniffiLib.INSTANCE.uniffi_rust_lib_fn_func_connect(FfiConverterString.lower(`user`),FfiConverterString.lower(`password`),FfiConverterString.lower(`addrs`),),
-        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_poll_pointer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_complete_pointer(future, continuation) },
-        { future -> UniffiLib.INSTANCE.ffi_rust_lib_rust_future_free_pointer(future) },
-        // lift function
-        { FfiConverterTypeSession.lift(it) },
-        // Error FFI converter
-        EnumException.ErrorHandler,
-    )
-}
-
-fun `testRust`(`num1`: ULong, `num2`: ULong): ULong {
-    return FfiConverterULong.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_rust_lib_fn_func_test_rust(FfiConverterULong.lower(`num1`),FfiConverterULong.lower(`num2`),_status)
+fun `connect`(`user`: String, `password`: String, `addrs`: String): Session {
+    return FfiConverterTypeSession.lift(
+    uniffiRustCallWithError(EnumException) { _status ->
+    UniffiLib.INSTANCE.uniffi_rust_lib_fn_func_connect(FfiConverterString.lower(`user`),FfiConverterString.lower(`password`),FfiConverterString.lower(`addrs`),_status)
 })
 }
 

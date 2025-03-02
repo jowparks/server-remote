@@ -9,6 +9,8 @@ import expo.modules.kotlin.records.Record
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import uniffi.rust_lib.Session
+import uniffi.rust_lib.connect
 
 class TransferProgress(
   @Field
@@ -29,26 +31,22 @@ class SshModule : Module() {
 
   private suspend fun reconnect(): Session {
       val details = connectionDetails ?: throw CodedException("Session is null")
-      val currentSession = session
+      val currentSession = session ?: return connect(details.user, details.password, details.address)
       return try {
-          currentSession?.testConnection()
-          currentSession ?: connect(details.user, details.password, details.address)
-      } catch (e: Exception) {
-          connect(details.user, details.password, details.address)
-      }
-  }
-
-  private suspend fun connect(user: String, password: String, address: String) {
-      session = connect(user, password, address)
-      connectionDetails = ConnectionDetails(user, password, address)
+            currentSession.testConnection()
+            currentSession ?: connect(details.user, details.password, details.address)
+        } catch (e: Exception) {
+            connect(details.user, details.password, details.address)
+        }
   }
 
   override fun definition() = ModuleDefinition {
     Name("SshModule")
 
     Constants(
-      mapOf("PI" to Math.PI)
+      "PI" to Math.PI
     )
+
 
     Events("exec")
 
@@ -64,15 +62,15 @@ class SshModule : Module() {
       CoroutineScope(Dispatchers.IO).launch {
         try {
           val session = reconnect()
-          session.exec(commandId, command) { output ->
-            sendEvent("exec", mapOf("commandId" to commandId, "data" to output))
-          }
+          val output = session.exec(commandId, command) // Await the suspend function
+          sendEvent("exec", mapOf("commandId" to commandId, "data" to output))
           promise.resolve("Success")
         } catch (e: Exception) {
           promise.reject(CodedException(e))
         }
       }
     }
+
 
     AsyncFunction("cancel") { id: String, promise: Promise ->
       CoroutineScope(Dispatchers.IO).launch {
