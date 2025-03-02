@@ -1,46 +1,112 @@
 package expo.modules.sshmodule
 
+import expo.modules.kotlin.Promise
+import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import expo.modules.kotlin.records.Field
+import expo.modules.kotlin.records.Record
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+class TransferProgress(
+  @Field
+  val transferred: String,
+  @Field
+  val total: String
+) : Record
+
+class ConnectionDetails(
+    val user: String,
+    val password: String,
+    val address: String
+)
 
 class SshModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
+  private var session: Session? = null
+  private var connectionDetails: ConnectionDetails? = null
+
+  private suspend fun reconnect(): Session {
+      val details = connectionDetails ?: throw CodedException("Session is null")
+      val currentSession = session
+      return try {
+          currentSession?.testConnection()
+          currentSession ?: connect(details.user, details.password, details.address)
+      } catch (e: Exception) {
+          connect(details.user, details.password, details.address)
+      }
+  }
+
+  private suspend fun connect(user: String, password: String, address: String) {
+      session = connect(user, password, address)
+      connectionDetails = ConnectionDetails(user, password, address)
+  }
+
   override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('SshModule')` in JavaScript.
     Name("SshModule")
 
-    // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
     Constants(
-      "PI" to Math.PI
+      mapOf("PI" to Math.PI)
     )
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+    Events("exec")
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
     Function("hello") {
       "Hello world! 👋"
     }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf(
-        "value" to value
-      ))
+    AsyncFunction("connect") { user: String, password: String, address: String ->
+      connect(user, password, address)
     }
 
-    // Enables the module to be used as a native view. Definition components that are accepted as part of
-    // the view definition: Prop, Events.
-    View(SshModuleView::class) {
-      // Defines a setter for the `name` prop.
-      Prop("name") { view: SshModuleView, prop: String ->
-        println(prop)
+    AsyncFunction("exec") { commandId: String, command: String, promise: Promise ->
+      CoroutineScope(Dispatchers.IO).launch {
+        try {
+          val session = reconnect()
+          session.exec(commandId, command) { output ->
+            sendEvent("exec", mapOf("commandId" to commandId, "data" to output))
+          }
+          promise.resolve("Success")
+        } catch (e: Exception) {
+          promise.reject(CodedException(e))
+        }
+      }
+    }
+
+    AsyncFunction("cancel") { id: String, promise: Promise ->
+      CoroutineScope(Dispatchers.IO).launch {
+        try {
+          val session = reconnect()
+          session.cancel(id)
+          promise.resolve("0")
+        } catch (e: Exception) {
+          promise.reject(CodedException(e))
+        }
+      }
+    }
+
+    AsyncFunction("transfer") { transferId: String, sourcePath: String, destinationPath: String, direction: String, promise: Promise ->
+      CoroutineScope(Dispatchers.IO).launch {
+        try {
+          val session = reconnect()
+          session.transfer(transferId, sourcePath, destinationPath, direction)
+          promise.resolve("0")
+        } catch (e: Exception) {
+          promise.reject(CodedException(e))
+        }
+      }
+    }
+
+    AsyncFunction("transferProgress") { transferId: String, promise: Promise ->
+      CoroutineScope(Dispatchers.IO).launch {
+        try {
+          val session = reconnect()
+          val progress = session.transferProgress(transferId)
+          promise.resolve(TransferProgress(progress.transferred.toString(), progress.total.toString()))
+        } catch (e: Exception) {
+          promise.reject(CodedException(e))
+        }
       }
     }
   }
