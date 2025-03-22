@@ -3,6 +3,7 @@ import { Button, Sheet, XStack, Text, View, YStack, Spacer } from 'tamagui';
 import LabeledInput from '../../components/general/labeled-input';
 import { Server } from '../../typing/server';
 import { DarkBlueTheme } from '../../style/theme';
+import { useSsh } from '../../contexts/ssh';
 
 type ServerModalProps = {
   open: boolean;
@@ -26,6 +27,7 @@ export default function ServerModal({
     server ?? defaultServer,
   );
   const [testResult, setTestResult] = useState('');
+  const { sshServer, connectToServer, sshClient } = useSsh();
 
   useEffect(() => {
     setServerDetails(server ?? defaultServer);
@@ -49,20 +51,14 @@ export default function ServerModal({
 
     const connectionPromise = new Promise(async (resolve, reject) => {
       if (serverDetails.password) {
-        // co
-        // await SSHClient.connectWithPassword(
-        //   serverDetails.host,
-        //   serverDetails.port,
-        //   serverDetails.user,
-        //   serverDetails.password,
-        //   (err, _) => {
-        //     if (err) {
-        //       reject('Fail: ' + err);
-        //     } else {
-        //       setTestResult('Success');
-        //     }
-        //   },
-        // );
+        await connectToServer({
+          host: serverDetails.host,
+          port: serverDetails.port,
+          user: serverDetails.user,
+          password: serverDetails.password,
+        })
+          .then(() => resolve('Great Success!'))
+          .catch((reason) => reject(reason));
       }
       if (serverDetails.key) {
         // await SSHClient.connectWithKey(
@@ -85,6 +81,7 @@ export default function ServerModal({
 
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
+      setTestResult('Success');
     } catch (error) {
       setTestResult(error);
     }

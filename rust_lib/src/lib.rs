@@ -236,13 +236,14 @@ impl Session {
             .spawn(async move {
                 let mut return_code = String::new();
 
-                channel.exec(true, command_clone).await?;
+                channel.exec(true, command_clone.clone()).await?;
+                println!("msg: Running command {}", command_clone);
 
                 loop {
                     if !cancel_receiver.is_empty() {
                         channel.close().await?;
                         drop(cancel_receiver);
-                        println!("Cancelled command {}", command_id_clone);
+                        println!("msg: Cancelled command {}", command_id_clone);
                         break;
                     }
                     // returns None if the channel is closed
@@ -250,10 +251,10 @@ impl Session {
                         drop(tx);
                         break;
                     };
-                    println!("msg: {:?}", msg);
                     match msg {
                         ChannelMsg::Data { ref data } => {
                             let data_str = String::from_utf8(data.to_vec()).unwrap();
+                            println!("msg: {:?}", data_str);
                             tx.send(data_str)?;
                         }
 

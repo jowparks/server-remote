@@ -7,7 +7,7 @@ export type VirshVmDumpXML = {
     };
     name: string[];
     uuid: string[];
-    metadata: Array<{
+    metadata?: Array<{
       vmtemplate: Array<{
         $: {
           xmlns: string;

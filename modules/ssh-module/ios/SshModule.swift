@@ -82,6 +82,7 @@ public class SshModule: Module {
         @Sendable func getData() async throws {
             do {
                 while let data = try await session.readOutput(commandId: commandId) {
+                    print("exec data: "+String(describing: data))
                     self.sendEvent("exec", ["commandId": commandId, "data": data])
                 }
             } catch {

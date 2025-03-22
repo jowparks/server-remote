@@ -2,7 +2,7 @@ import { ScrollView, Separator, Spacer, Spinner, View, YGroup } from 'tamagui';
 import React, { useEffect, useState } from 'react';
 import { useSsh } from '../../../contexts/ssh';
 import ContainerCard from '../../../components/containers/container-card';
-import { useVms } from '../../../contexts/vm';
+import { useVms, virshPrefix } from '../../../contexts/vm';
 import { VirshVm } from '../../../typing/virsh';
 import { usePathname, useRouter } from 'expo-router';
 import images from '../../../icons';
@@ -42,7 +42,7 @@ function VmListScreen() {
   const stopVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.exec(`virsh shutdown "${vm.domain.name[0]}"`)
+      ?.exec(`${virshPrefix} shutdown "${vm.domain.name[0]}"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -53,7 +53,7 @@ function VmListScreen() {
   const forceStopVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.exec(`virsh destroy "${vm.domain.name[0]}"`)
+      ?.exec(`${virshPrefix} destroy "${vm.domain.name[0]}"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -64,7 +64,7 @@ function VmListScreen() {
   const startVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.exec(`virsh start "${vm.domain.name[0]}"`)
+      ?.exec(`${virshPrefix} start "${vm.domain.name[0]}"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -75,7 +75,7 @@ function VmListScreen() {
   const restartVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.exec(`virsh reboot "${vm.domain.name[0]}"`)
+      ?.exec(`${virshPrefix} reboot "${vm.domain.name[0]}"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -86,7 +86,9 @@ function VmListScreen() {
   const saveVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.exec(`virsh save "${vm.domain.name[0]}" "${vm.domain.name[0]}.state"`)
+      ?.exec(
+        `${virshPrefix} save "${vm.domain.name[0]}" "${vm.domain.name[0]}.state"`,
+      )
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -97,7 +99,7 @@ function VmListScreen() {
   const restoreVm = (vm: VirshVm) => {
     setTrigger((prev) => !prev);
     sshClient
-      ?.exec(`virsh restore "${vm.domain.name[0]}.state"`)
+      ?.exec(`${virshPrefix} restore "${vm.domain.name[0]}.state"`)
       .then((response) => {
         console.log(response);
         setTrigger((prev) => !prev);
@@ -143,8 +145,10 @@ function VmListScreen() {
                   vm.state === 'dying'
                 }
                 iconUrl={
-                  images[vm.domain.metadata[0].vmtemplate[0].$.icon] ??
-                  images['default.png']
+                  vm.domain.metadata
+                    ? images[vm.domain.metadata[0].vmtemplate[0].$.icon] ??
+                      images['default.png']
+                    : images['default.png']
                 }
                 onCardPress={() => {
                   setCurrentVmName(vm.domain.name[0]);

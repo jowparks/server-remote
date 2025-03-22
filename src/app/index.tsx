@@ -11,7 +11,7 @@ import { useFiles } from '../contexts/files';
 import Alert from '../components/general/alert';
 
 export default function ServerSelectScreen() {
-  const { sshServer, setSshServer } = useSsh();
+  const { sshServer, connectToServer } = useSsh();
   const { setHostName } = useFiles();
   const [servers, setServers] = useState<Server[]>([]);
   const [serverModalOpen, setServerModalOpen] = useState(false);
@@ -44,18 +44,17 @@ export default function ServerSelectScreen() {
   };
 
   const handleServerPress = (server: Server) => {
-    setSshServer(server);
+    connectToServer(server);
     setHostName(hostname(server));
     router.push('/(tabs)/docker');
   };
 
   const handleServerEdit = (server: Server) => {
-    setSshServer(server);
+    connectToServer(server);
     setServerModalOpen(true);
   };
 
   const handleAddPress = () => {
-    setSshServer(null);
     setServerModalOpen(true);
   };
 

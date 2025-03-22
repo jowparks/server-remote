@@ -38,12 +38,12 @@ export type SSHClient = {
 // Create the context
 interface SshContextValue {
   sshServer: Server | null;
-  setSshServer: React.Dispatch<React.SetStateAction<Server | null>>;
+  connectToServer: (server: Server) => Promise<void>;
   sshClient: SSHClient | null;
 }
 const SshContext = createContext<SshContextValue>({
   sshServer: null,
-  setSshServer: () => {},
+  connectToServer: () => Promise.resolve(),
   sshClient: null,
 });
 
@@ -52,36 +52,25 @@ export function SshProvider({ children }: { children: ReactNode }) {
   const [sshClient, setSshClient] = useState<SSHClient | null>(null);
   const [server, setSshServer] = useState<Server | null>(null);
 
-  useEffect(() => {
-    if (!server || (!server.password && !server.key)) {
-      return;
+  const connectToServer = async (server: Server) => {
+    setSshClient(null);
+    if (server && !!server.password) {
+      await connect(
+        server.user,
+        server.password ?? '',
+        `${server.host}:${server.port}`,
+      );
+      const sshClient: SSHClient = {
+        exec: execInner,
+        execAsync: execInnerAsync,
+        cancel,
+        transfer,
+        transferProgress,
+      };
+      setSshClient(sshClient);
+      setSshServer(server);
     }
-    const connectToServer = async () => {
-      setSshClient(null);
-      if (server && !!server.password) {
-        (async () => {
-          await connect(
-            server.user,
-            server.password ?? '',
-            `${server.host}:${server.port}`,
-          );
-          const sshClient: SSHClient = {
-            exec: execInner,
-            execAsync: execInnerAsync,
-            cancel,
-            transfer,
-            transferProgress,
-          };
-          setSshClient(sshClient);
-        })();
-      }
-      if (server && server.key) {
-        //
-      }
-    };
-
-    connectToServer();
-  }, [server]);
+  };
 
   // TODO make this cancellable too, cleanup this interface relative to SshModule
   const execInner = async (command: string) => {
@@ -116,7 +105,7 @@ export function SshProvider({ children }: { children: ReactNode }) {
     <SshContext.Provider
       value={{
         sshServer: server,
-        setSshServer,
+        connectToServer,
         sshClient,
       }}
     >
