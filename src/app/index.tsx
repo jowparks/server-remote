@@ -44,13 +44,11 @@ export default function ServerSelectScreen() {
   };
 
   const handleServerPress = (server: Server) => {
-    connectToServer(server);
     setHostName(hostname(server));
-    router.push('/(tabs)/docker');
+    connectToServer(server).then(() => router.push('/(tabs)/docker'));
   };
 
   const handleServerEdit = (server: Server) => {
-    connectToServer(server);
     setServerModalOpen(true);
   };
 

@@ -1,35 +1,33 @@
 import { Link } from 'expo-router';
 import React from 'react';
-import { ListItem, Separator, Spacer, View, YGroup } from 'tamagui';
+import { ListItem, Spacer, View, YGroup } from 'tamagui';
+import { StyleSheet } from 'react-native';
 
 export default function MenuScreen() {
   return (
-    <View flex={1} width="90%" alignItems="center" alignSelf="center">
-      <Spacer size="4%" />
-      <YGroup flexGrow={1} alignSelf="center" size="$5">
+    <View flex={1} padding="5%" paddingTop="4%">
+      <YGroup size="$5" style={styles.container}>
         <YGroup.Item>
-          <Link href="/(tabs)/vm/details">
+          <Link href="/(tabs)/vm/details" asChild>
             <ListItem
               elevate
               size="$4"
               bordered
-              style={{
-                borderTopLeftRadius: 10,
-                borderTopRightRadius: 10,
-              }}
+              style={styles.listItem}
+              borderTopLeftRadius={10}
+              borderTopRightRadius={10}
             >
               Details
             </ListItem>
           </Link>
-          <Link href="/(tabs)/vm/logs">
+          <Link href="/(tabs)/vm/logs" asChild>
             <ListItem
               elevate
               size="$4"
               bordered
-              style={{
-                borderBottomLeftRadius: 10,
-                borderBottomRightRadius: 10,
-              }}
+              style={styles.listItem}
+              borderBottomLeftRadius={10}
+              borderBottomRightRadius={10}
             >
               Logs
             </ListItem>
@@ -39,3 +37,12 @@ export default function MenuScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+  },
+  listItem: {
+    width: '100%',
+  },
+});

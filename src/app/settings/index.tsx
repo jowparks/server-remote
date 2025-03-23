@@ -1,38 +1,39 @@
 import { Link } from 'expo-router';
 import React from 'react';
 import { ListItem, Separator, View, YGroup, Spacer, ScrollView } from 'tamagui';
+import { StyleSheet } from 'react-native';
 
 export default function SettingsScreen() {
   return (
-    <View flex={1} width={'90%'} alignItems="center" alignSelf="center">
+    <View flex={1} padding="5%" paddingTop="4%">
       <ScrollView width="100%">
-        <Spacer size="4%" />
-        <YGroup size="$5" width="100%" separator={<Separator />}>
+        <YGroup size="$5" style={styles.container} separator={<Separator />}>
           <YGroup.Item>
-            <Link href="/settings/info">
+            <Link href="/settings/info" asChild>
               <ListItem
                 elevate
                 size="$4"
                 bordered
-                style={{ borderTopLeftRadius: 10, borderTopRightRadius: 10 }}
+                style={styles.listItem}
+                borderTopLeftRadius={10}
+                borderTopRightRadius={10}
               >
                 App Info
               </ListItem>
             </Link>
-            <Link href="/settings/app">
-              <ListItem elevate size="$4" bordered>
+            <Link href="/settings/app" asChild>
+              <ListItem elevate size="$4" bordered style={styles.listItem}>
                 App Settings
               </ListItem>
             </Link>
-            <Link href="/settings/tabs">
+            <Link href="/settings/tabs" asChild>
               <ListItem
                 elevate
                 size="$4"
                 bordered
-                style={{
-                  borderBottomLeftRadius: 10,
-                  borderBottomRightRadius: 10,
-                }}
+                style={styles.listItem}
+                borderBottomLeftRadius={10}
+                borderBottomRightRadius={10}
               >
                 Tabs
               </ListItem>
@@ -43,3 +44,12 @@ export default function SettingsScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+  },
+  listItem: {
+    width: '100%',
+  },
+});

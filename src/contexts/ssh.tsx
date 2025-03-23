@@ -54,27 +54,32 @@ export function SshProvider({ children }: { children: ReactNode }) {
 
   const connectToServer = async (server: Server) => {
     setSshClient(null);
-    if (server && !!server.password) {
+    if (!!server.password) {
       await connect(
         server.user,
         server.password ?? '',
         `${server.host}:${server.port}`,
       );
+
+      // Create the SSH client with a closure over the server parameter
+      // instead of relying on the state variable
       const sshClient: SSHClient = {
-        exec: execInner,
-        execAsync: execInnerAsync,
+        exec: (command) => execInner(command, server),
+        execAsync: (params) => execInnerAsync(params, server),
         cancel,
         transfer,
         transferProgress,
       };
+
       setSshClient(sshClient);
       setSshServer(server);
     }
   };
 
   // TODO make this cancellable too, cleanup this interface relative to SshModule
-  const execInner = async (command: string) => {
-    if (!server) {
+  const execInner = async (command: string, serverParam: Server) => {
+    console.log('execInnerserver', JSON.stringify(serverParam));
+    if (!serverParam) {
       throw new Error('Not connected to a server');
     }
     let response = '';
@@ -94,8 +99,9 @@ export function SshProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const execInnerAsync = async (params: ExecParams) => {
-    if (!server) {
+  // Update execInnerAsync to accept server as a parameter
+  const execInnerAsync = async (params: ExecParams, serverParam: Server) => {
+    if (!serverParam) {
       throw new Error('Not connected to a server');
     }
     return exec(params);
