@@ -38,11 +38,13 @@ export type SSHClient = {
 // Create the context
 interface SshContextValue {
   sshServer: Server | null;
+  setSshServer: (server: Server | null) => void;
   connectToServer: (server: Server) => Promise<void>;
   sshClient: SSHClient | null;
 }
 const SshContext = createContext<SshContextValue>({
   sshServer: null,
+  setSshServer: () => {},
   connectToServer: () => Promise.resolve(),
   sshClient: null,
 });
@@ -111,6 +113,7 @@ export function SshProvider({ children }: { children: ReactNode }) {
     <SshContext.Provider
       value={{
         sshServer: server,
+        setSshServer,
         connectToServer,
         sshClient,
       }}

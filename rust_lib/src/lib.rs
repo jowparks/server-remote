@@ -293,11 +293,10 @@ impl Session {
 
         TOKIO_RUNTIME
             .spawn(async move {
+                println!("RUST: Transfer spawn id {}", transfer_id);
                 let channel = self.session.lock().await.channel_open_session().await?;
                 channel.request_subsystem(true, "sftp").await?;
                 let sftp = SftpSession::new(channel.into_stream()).await?;
-
-                // TODO: fix error here, seems like it is using //home instead of /home, then test recursive directory with /home folder
                 println!(
                     "RUST: Transferring between {} {}",
                     source_path.clone(),
@@ -438,6 +437,8 @@ impl Session {
             .spawn(async move {
                 let transfer = self.transfer_progress.lock().await;
                 let progress = transfer.get(&transfer_id);
+                // TODO progress is not found, map is empty when debugging
+                println!("RUST: Transfer map {:?}", transfer);
                 if let Some(progress) = progress {
                     let p = progress.lock().await.borrow().clone();
                     println!("RUST: Progress {} {:?}", transfer_id, p);

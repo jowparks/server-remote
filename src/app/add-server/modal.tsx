@@ -34,6 +34,7 @@ export default function ServerModal({
   }, [server]);
 
   const handleAddServer = () => {
+    console.log('handle Add server', serverDetails);
     setTestResult('');
     onSaveServer(serverDetails);
     onOpenChange(false);

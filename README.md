@@ -30,6 +30,19 @@ Currently supports:
 - Click Distribute App button in popup
 - App Store Connect -> Distribute
 
+## Play Store Submission
+
+### To add testing account for release submission review
+
+Sign in to your Play Console
+On the left menu, select "Monitor and Improve"
+Select "Policy and Programs"
+Select "App Content"
+Select the "Actioned" tab
+Select "App access" > "Manage"
+Select "All or some functionality is restricted" > "Manage"
+Enter your login credentials and save
+
 ### TODO
 
 - Command run history
