@@ -1,9 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Sheet, XStack, Text, View, YStack, Spacer } from 'tamagui';
+import {
+  Button,
+  Sheet,
+  XStack,
+  Text,
+  View,
+  YStack,
+  Spacer,
+  RadioGroup,
+  TextArea,
+} from 'tamagui';
 import LabeledInput from '../../components/general/labeled-input';
 import { Server } from '../../typing/server';
 import { DarkBlueTheme } from '../../style/theme';
 import { useSsh } from '../../contexts/ssh';
+import DocumentPicker from 'react-native-document-picker';
+import * as FileSystem from 'expo-file-system';
+
+type AuthMethod = 'password' | 'keyFile' | 'pasteKey';
 
 type ServerModalProps = {
   open: boolean;
@@ -12,6 +26,7 @@ type ServerModalProps = {
   onSaveServer: (server: Server) => void;
 };
 
+// TODO: seems like when "Test" is clicked before "submit"
 export default function ServerModal({
   onSaveServer,
   server,
@@ -22,11 +37,15 @@ export default function ServerModal({
     host: '',
     port: 22,
     user: '',
+    password: '',
+    key: '',
   };
   const [serverDetails, setServerDetails] = useState<Server>(
     server ?? defaultServer,
   );
   const [testResult, setTestResult] = useState('');
+  const [authMethod, setAuthMethod] = useState<AuthMethod>('password');
+  const [selectedKeyPath, setSelectedKeyPath] = useState<string>('');
   const { sshServer, connectToServer, sshClient } = useSsh();
 
   useEffect(() => {
@@ -79,6 +98,23 @@ export default function ServerModal({
       onOpenChange(isOpen);
     }
   };
+
+  const handleSelectKeyFile = async () => {
+    try {
+      const result = await DocumentPicker.pickSingle({
+        presentationStyle: 'pageSheet',
+      });
+
+      if (result && result.name && result.uri) {
+        setSelectedKeyPath(result.name);
+        const fileContent = await FileSystem.readAsStringAsync(result.uri);
+        setServerDetails({ ...serverDetails, key: fileContent });
+      }
+    } catch (error) {
+      console.error('Error selecting file:', error);
+    }
+  };
+
   return (
     <>
       <Sheet
@@ -148,46 +184,114 @@ export default function ServerModal({
                 setServerDetails({ ...serverDetails, user: e.nativeEvent.text })
               }
             />
-            <LabeledInput
-              label="Password"
-              autoCapitalize="none"
-              placeholder="password"
-              size="$4"
-              style={{ width: '90%' }}
-              value={serverDetails.password}
-              secureTextEntry={true}
-              onChange={(e) =>
-                setServerDetails({
-                  ...serverDetails,
-                  password: e.nativeEvent.text,
-                })
-              }
-            />
-            {/* disabled for now, since we private key is not working */}
-            {/* <TextArea
-              autoCapitalize="none"
-              placeholder="Key (-----BEGIN RSA...) "
-              size="$4"
-              style={{ width: '90%' }}
-              value={serverDetails.key}
-              onChange={(e) =>
-                setServerDetails({ ...serverDetails, key: e.nativeEvent.text })
-              }
-            />
-            <LabeledInput
-              label="Key Passphrase"
-              autoCapitalize="none"
-              placeholder="password"
-              size="$4"
-              style={{ width: '90%' }}
-              value={serverDetails.keyPassphrase}
-              onChange={(e) =>
-                setServerDetails({
-                  ...serverDetails,
-                  keyPassphrase: e.nativeEvent.text,
-                })
-              }
-            /> */}
+            <View width="90%">
+              <RadioGroup
+                value={authMethod}
+                onValueChange={(val) => setAuthMethod(val as AuthMethod)}
+                name="auth-method"
+              >
+                <YStack space="$2">
+                  <XStack space="$2" alignItems="center">
+                    <RadioGroup.Item value="password" id="password">
+                      <RadioGroup.Indicator />
+                    </RadioGroup.Item>
+                    <Text>Password</Text>
+                  </XStack>
+
+                  <XStack space="$2" alignItems="center">
+                    <RadioGroup.Item value="keyFile" id="keyFile">
+                      <RadioGroup.Indicator />
+                    </RadioGroup.Item>
+                    <Text>Key File</Text>
+                  </XStack>
+
+                  <XStack space="$2" alignItems="center">
+                    <RadioGroup.Item value="pasteKey" id="pasteKey">
+                      <RadioGroup.Indicator />
+                    </RadioGroup.Item>
+                    <Text>Paste Key</Text>
+                  </XStack>
+                </YStack>
+              </RadioGroup>
+            </View>
+
+            {authMethod === 'password' && (
+              <LabeledInput
+                label="Password"
+                autoCapitalize="none"
+                placeholder="password"
+                size="$4"
+                style={{ width: '90%' }}
+                value={serverDetails.password}
+                secureTextEntry={true}
+                onChange={(e) =>
+                  setServerDetails({
+                    ...serverDetails,
+                    password: e.nativeEvent.text,
+                    key: '',
+                  })
+                }
+              />
+            )}
+
+            {authMethod === 'keyFile' && (
+              <YStack width="90%" space="$2">
+                <XStack alignItems="center" space="$2">
+                  <Button onPress={handleSelectKeyFile} flex={1}>
+                    Select Key File
+                  </Button>
+                  <Text flex={2} numberOfLines={1} ellipsizeMode="middle">
+                    {selectedKeyPath || 'No file selected'}
+                  </Text>
+                </XStack>
+
+                <LabeledInput
+                  label="Key Passphrase (optional)"
+                  autoCapitalize="none"
+                  size="$4"
+                  secureTextEntry={true}
+                  value={serverDetails.password}
+                  onChange={(e) =>
+                    setServerDetails({
+                      ...serverDetails,
+                      password: e.nativeEvent.text,
+                    })
+                  }
+                />
+              </YStack>
+            )}
+
+            {authMethod === 'pasteKey' && (
+              <YStack width="90%" space="$2">
+                <TextArea
+                  placeholder="Paste private key (-----BEGIN RSA...)"
+                  size="$4"
+                  height={100}
+                  value={serverDetails.key}
+                  onChange={(e) =>
+                    setServerDetails({
+                      ...serverDetails,
+                      key: e.nativeEvent.text,
+                      password: '',
+                    })
+                  }
+                />
+
+                <LabeledInput
+                  label="Key Passphrase (optional)"
+                  autoCapitalize="none"
+                  size="$4"
+                  secureTextEntry={true}
+                  value={serverDetails.password}
+                  onChange={(e) =>
+                    setServerDetails({
+                      ...serverDetails,
+                      password: e.nativeEvent.text,
+                    })
+                  }
+                />
+              </YStack>
+            )}
           </View>
           <YStack>
             <XStack

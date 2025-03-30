@@ -6,6 +6,8 @@ pub enum EnumError {
     Oops { msg: String, backtrace: String },
 }
 
+use russh::keys::{decode_secret_key, ssh_key, PrivateKeyWithHashAlg};
+use russh::{client, ChannelMsg, Disconnect};
 use russh_sftp::protocol::FileType as RusshFileType;
 use std::backtrace::Backtrace;
 use std::collections::HashMap;
@@ -20,10 +22,7 @@ use tokio::sync::watch::Receiver as ReceiverWatch;
 use tokio::sync::{mpsc, Mutex};
 
 use anyhow::Result;
-use async_trait::async_trait;
 use once_cell::sync::Lazy;
-use russh::*;
-use russh_keys::*;
 use russh_sftp::client::fs::File as RusshFile;
 use russh_sftp::client::SftpSession;
 use tokio::fs::File as TokioFile;
@@ -86,18 +85,14 @@ impl FileType {
 
 struct Client {}
 
-// More SSH event handlers
-// can be defined in this trait
-// In this example, we're only using Channel, so these aren't needed.
-#[async_trait]
 impl client::Handler for Client {
     type Error = russh::Error;
 
-    async fn check_server_key(
+    fn check_server_key(
         &mut self,
-        _server_public_key: &key::PublicKey,
-    ) -> Result<bool, Self::Error> {
-        Ok(true)
+        _server_public_key: &ssh_key::PublicKey,
+    ) -> impl Future<Output = Result<bool, Self::Error>> + Send {
+        async { Ok(true) }
     }
 }
 
@@ -128,9 +123,9 @@ fn connect_key(
     std::env::set_var("RUST_BACKTRACE", "1");
 
     println!("1 Connecting with keypair to {}", addrs);
+    println!("Connect key: {}", key);
     TOKIO_RUNTIME.block_on(async {
-        let key_bytes = key.as_bytes();
-        let key = decode_openssh(&key_bytes, password.as_deref()).map_err(|e| EnumError::Oops {
+        let key = decode_secret_key(&key, password.as_deref()).map_err(|e| EnumError::Oops {
             msg: format!("Failed to decode key: {}", e),
             backtrace: Backtrace::capture().to_string(),
         })?;
@@ -148,7 +143,13 @@ fn connect_key(
                 })?;
         println!("3 Connecting");
         let auth_res = session
-            .authenticate_publickey(user, key.into())
+            .authenticate_publickey(
+                user,
+                PrivateKeyWithHashAlg::new(
+                    Arc::new(key),
+                    session.best_supported_rsa_hash().await?.flatten(),
+                ),
+            )
             .await
             .map_err(|e| EnumError::Oops {
                 msg: format!("Failed to authenticate: {}", e),
@@ -156,7 +157,7 @@ fn connect_key(
             })?;
 
         println!("4 Connecting");
-        if !auth_res {
+        if !auth_res.success() {
             return Err(EnumError::Oops {
                 msg: String::from("Authentication with password failed"),
                 backtrace: Backtrace::capture().to_string(),
@@ -202,7 +203,7 @@ fn connect(user: String, password: String, addrs: String) -> Result<Arc<Session>
             })?;
 
         println!("4 Connecting");
-        if !auth_res {
+        if !auth_res.success() {
             return Err(EnumError::Oops {
                 msg: String::from("Authentication with password failed"),
                 backtrace: Backtrace::capture().to_string(),

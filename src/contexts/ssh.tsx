@@ -79,7 +79,6 @@ export function SshProvider({ children }: { children: ReactNode }) {
 
   // TODO make this cancellable too, cleanup this interface relative to SshModule
   const execInner = async (command: string, serverParam: Server) => {
-    console.log('execInnerserver', JSON.stringify(serverParam));
     if (!serverParam) {
       throw new Error('Not connected to a server');
     }
