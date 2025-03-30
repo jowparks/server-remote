@@ -9,7 +9,8 @@ struct TransferProgressSwift: Record {
 
 struct ConnectionDetails {
     var user: String
-    var password: String
+    var password: String?
+    var key: String?
     var address: String
 }
 
@@ -26,21 +27,43 @@ public class SshModule: Module {
             throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Session is null"])
         }
         guard let session = self.session else {
-            try await connection(user: connectionDetails.user, password: connectionDetails.password, addrs: connectionDetails.address)
+            try await connection(user: connectionDetails.user, password: connectionDetails.password, key: connectionDetails.key, addrs: connectionDetails.address)
             throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "unreachable"])
         }
         do {
             _ = try await session.testConnection()
         } catch {
             print("test_connection error: "+String(describing: error))
-            try await connection(user: connectionDetails.user, password: connectionDetails.password, addrs: connectionDetails.address)
+            try await connection(user: connectionDetails.user, password: connectionDetails.password, key: connectionDetails.key, addrs: connectionDetails.address)
         }
         return self.session!
     }
     
-    func connection(user: String, password: String, addrs: String) async throws -> Void {
+    func connection(user: String, password: String?, key: String?, addrs: String) async throws -> Void {
+        guard password?.isEmpty == false || key?.isEmpty == false else {
+            throw NSError(domain: "app.reflect.serverremote", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please input password or key"])
+        }
+        if password?.isEmpty == false {
+            try await connectionPassword(user: user, password: password!, addrs: addrs)
+        } else {
+            try await connectionKey(user: user, password: password, key: key!, addrs: addrs)
+        }
+
+    }
+    
+    func connectionPassword(user: String, password: String, addrs: String) async throws -> Void {
         do {
             self.session = try connect(user: user, password: password, addrs: addrs)
+            self.connectionDetails = ConnectionDetails(user: user, password: password, address: addrs)
+        } catch {
+            print("connect error: "+String(describing: error))
+            throw error
+        }
+    }
+
+    func connectionKey(user: String, password: String?, key: String, addrs: String) async throws -> Void {
+        do {
+            self.session = try connectKey(user: user, key: key, password: password, addrs: addrs)
             self.connectionDetails = ConnectionDetails(user: user, password: password, address: addrs)
         } catch {
             print("connect error: "+String(describing: error))
@@ -69,8 +92,8 @@ public class SshModule: Module {
       return "Hello world! 👋"
     }
 
-    AsyncFunction("connect") { (user: String, password: String, addrs: String) async throws -> Void in
-        try await connection(user: user, password: password, addrs: addrs)
+    AsyncFunction("connect") { (user: String, password: String, key: String?, addrs: String) async throws -> Void in
+        try await connection(user: user, password: password, key: key, addrs: addrs)
     }
 
     AsyncFunction("exec") { (commandId: String, command: String) async throws -> String in

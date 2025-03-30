@@ -71,6 +71,8 @@ void* _Nonnull uniffi_rust_lib_fn_method_session_transfer_progress(void*_Nonnull
 );
 void*_Nonnull uniffi_rust_lib_fn_func_connect(RustBuffer user, RustBuffer password, RustBuffer addrs, RustCallStatus *_Nonnull out_status
 );
+void*_Nonnull uniffi_rust_lib_fn_func_connect_key(RustBuffer user, RustBuffer key, RustBuffer password, RustBuffer addrs, RustCallStatus *_Nonnull out_status
+);
 RustBuffer ffi_rust_lib_rustbuffer_alloc(int32_t size, RustCallStatus *_Nonnull out_status
 );
 RustBuffer ffi_rust_lib_rustbuffer_from_bytes(ForeignBytes bytes, RustCallStatus *_Nonnull out_status
@@ -184,6 +186,9 @@ void ffi_rust_lib_rust_future_free_void(void* _Nonnull handle
 void ffi_rust_lib_rust_future_complete_void(void* _Nonnull handle, RustCallStatus *_Nonnull out_status
 );
 uint16_t uniffi_rust_lib_checksum_func_connect(void
+    
+);
+uint16_t uniffi_rust_lib_checksum_func_connect_key(void
     
 );
 uint16_t uniffi_rust_lib_checksum_method_session_cancel(void

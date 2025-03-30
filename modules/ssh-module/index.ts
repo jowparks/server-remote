@@ -47,10 +47,11 @@ export function addExecListener(
 
 export async function connect(
   user: string,
-  password: string,
+  password: string | null,
+  key: string | null,
   addrs: string,
 ): Promise<void> {
-  await SshModule.connect(user, password, addrs).then(() =>
+  await SshModule.connect(user, password, key, addrs).then(() =>
     console.log('Connected successfully'),
   );
 }

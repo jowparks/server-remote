@@ -759,6 +759,17 @@ public func connect(user: String, password: String, addrs: String) throws  -> Se
 }
     )
 }
+public func connectKey(user: String, key: String, password: String?, addrs: String) throws  -> Session {
+    return try  FfiConverterTypeSession.lift(
+        try rustCallWithError(FfiConverterTypeEnumError.lift) {
+    uniffi_rust_lib_fn_func_connect_key(
+        FfiConverterString.lower(user),
+        FfiConverterString.lower(key),
+        FfiConverterOptionString.lower(password),
+        FfiConverterString.lower(addrs),$0)
+}
+    )
+}
 
 private enum InitializationResult {
     case ok
@@ -776,6 +787,9 @@ private var initializationResult: InitializationResult {
         return InitializationResult.contractVersionMismatch
     }
     if (uniffi_rust_lib_checksum_func_connect() != 57044) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rust_lib_checksum_func_connect_key() != 53252) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rust_lib_checksum_method_session_cancel() != 16516) {

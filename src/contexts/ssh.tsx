@@ -56,26 +56,25 @@ export function SshProvider({ children }: { children: ReactNode }) {
 
   const connectToServer = async (server: Server) => {
     setSshClient(null);
-    if (!!server.password) {
-      await connect(
-        server.user,
-        server.password ?? '',
-        `${server.host}:${server.port}`,
-      );
+    await connect(
+      server.user,
+      server.password ?? null,
+      server.key ?? null,
+      `${server.host}:${server.port}`,
+    );
 
-      // Create the SSH client with a closure over the server parameter
-      // instead of relying on the state variable
-      const sshClient: SSHClient = {
-        exec: (command) => execInner(command, server),
-        execAsync: (params) => execInnerAsync(params, server),
-        cancel,
-        transfer,
-        transferProgress,
-      };
+    // Create the SSH client with a closure over the server parameter
+    // instead of relying on the state variable
+    const sshClient: SSHClient = {
+      exec: (command) => execInner(command, server),
+      execAsync: (params) => execInnerAsync(params, server),
+      cancel,
+      transfer,
+      transferProgress,
+    };
 
-      setSshClient(sshClient);
-      setSshServer(server);
-    }
+    setSshClient(sshClient);
+    setSshServer(server);
   };
 
   // TODO make this cancellable too, cleanup this interface relative to SshModule

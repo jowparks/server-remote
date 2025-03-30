@@ -119,6 +119,60 @@ pub struct Session {
 }
 
 #[uniffi::export]
+fn connect_key(
+    user: String,
+    key: String,
+    password: Option<String>,
+    addrs: String,
+) -> Result<Arc<Session>, EnumError> {
+    std::env::set_var("RUST_BACKTRACE", "1");
+
+    println!("1 Connecting with keypair to {}", addrs);
+    TOKIO_RUNTIME.block_on(async {
+        let key_bytes = key.as_bytes();
+        let key = decode_openssh(&key_bytes, password.as_deref()).map_err(|e| EnumError::Oops {
+            msg: format!("Failed to decode key: {}", e),
+            backtrace: Backtrace::capture().to_string(),
+        })?;
+        let config = client::Config { ..<_>::default() };
+        let config = Arc::new(config);
+        let sh = Client {};
+
+        println!("2 Connecting to {}", addrs);
+        let mut session =
+            client::connect(config, addrs, sh)
+                .await
+                .map_err(|e| EnumError::Oops {
+                    msg: format!("Failed to connect: {}", e),
+                    backtrace: Backtrace::capture().to_string(),
+                })?;
+        println!("3 Connecting");
+        let auth_res = session
+            .authenticate_publickey(user, key.into())
+            .await
+            .map_err(|e| EnumError::Oops {
+                msg: format!("Failed to authenticate: {}", e),
+                backtrace: Backtrace::capture().to_string(),
+            })?;
+
+        println!("4 Connecting");
+        if !auth_res {
+            return Err(EnumError::Oops {
+                msg: String::from("Authentication with password failed"),
+                backtrace: Backtrace::capture().to_string(),
+            });
+        }
+        println!("5 Connecting");
+        Ok(Arc::new(Session {
+            session: Arc::new(Mutex::new(session)),
+            output: Arc::new(Mutex::new(HashMap::new())),
+            cancellation: Arc::new(Mutex::new(HashMap::new())),
+            transfer_progress: Arc::new(Mutex::new(HashMap::new())),
+        }))
+    })
+}
+
+#[uniffi::export]
 fn connect(user: String, password: String, addrs: String) -> Result<Arc<Session>, EnumError> {
     std::env::set_var("RUST_BACKTRACE", "1");
 

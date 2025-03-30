@@ -51,33 +51,15 @@ export default function ServerModal({
     );
 
     const connectionPromise = new Promise(async (resolve, reject) => {
-      if (serverDetails.password) {
-        await connectToServer({
-          host: serverDetails.host,
-          port: serverDetails.port,
-          user: serverDetails.user,
-          password: serverDetails.password,
-        })
-          .then(() => resolve('Great Success!'))
-          .catch((reason) => reject(reason));
-      }
-      if (serverDetails.key) {
-        // await SSHClient.connectWithKey(
-        //   serverDetails.host,
-        //   serverDetails.port,
-        //   serverDetails.user,
-        //   serverDetails.key,
-        //   serverDetails.publicKey,
-        //   serverDetails.keyPassphrase,
-        //   (err, _) => {
-        //     if (err) {
-        //       reject('Fail: ' + err);
-        //     } else {
-        //       setTestResult('Success');
-        //     }
-        //   },
-        // );
-      }
+      await connectToServer({
+        host: serverDetails.host,
+        port: serverDetails.port,
+        user: serverDetails.user,
+        key: serverDetails.key,
+        password: serverDetails.password,
+      })
+        .then(() => resolve('Great Success!'))
+        .catch((reason) => reject(reason));
     });
 
     try {
