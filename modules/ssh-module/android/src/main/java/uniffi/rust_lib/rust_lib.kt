@@ -411,6 +411,8 @@ internal interface UniffiLib : Library {
     ): Pointer
     fun uniffi_rust_lib_fn_func_connect(`user`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`addrs`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
+    fun uniffi_rust_lib_fn_func_connect_key(`user`: RustBuffer.ByValue,`key`: RustBuffer.ByValue,`password`: RustBuffer.ByValue,`addrs`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Pointer
     fun ffi_rust_lib_rustbuffer_alloc(`size`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun ffi_rust_lib_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -525,6 +527,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_rust_lib_checksum_func_connect(
     ): Short
+    fun uniffi_rust_lib_checksum_func_connect_key(
+    ): Short
     fun uniffi_rust_lib_checksum_method_session_cancel(
     ): Short
     fun uniffi_rust_lib_checksum_method_session_close(
@@ -557,6 +561,9 @@ private fun uniffiCheckContractApiVersion(lib: UniffiLib) {
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_rust_lib_checksum_func_connect() != 57044.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_rust_lib_checksum_func_connect_key() != 53252.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_rust_lib_checksum_method_session_cancel() != 16516.toShort()) {
@@ -1320,6 +1327,15 @@ fun `connect`(`user`: String, `password`: String, `addrs`: String): Session {
     return FfiConverterTypeSession.lift(
     uniffiRustCallWithError(EnumException) { _status ->
     UniffiLib.INSTANCE.uniffi_rust_lib_fn_func_connect(FfiConverterString.lower(`user`),FfiConverterString.lower(`password`),FfiConverterString.lower(`addrs`),_status)
+})
+}
+
+@Throws(EnumException::class)
+
+fun `connectKey`(`user`: String, `key`: String, `password`: String?, `addrs`: String): Session {
+    return FfiConverterTypeSession.lift(
+    uniffiRustCallWithError(EnumException) { _status ->
+    UniffiLib.INSTANCE.uniffi_rust_lib_fn_func_connect_key(FfiConverterString.lower(`user`),FfiConverterString.lower(`key`),FfiConverterOptionalString.lower(`password`),FfiConverterString.lower(`addrs`),_status)
 })
 }
 

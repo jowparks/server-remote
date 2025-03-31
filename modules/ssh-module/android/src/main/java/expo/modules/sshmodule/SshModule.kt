@@ -13,6 +13,7 @@ import uniffi.rust_lib.Session
 import uniffi.rust_lib.connect
 import android.util.Log
 import kotlinx.coroutines.*
+import uniffi.rust_lib.connectKey
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -37,43 +38,45 @@ class SshModule : Module() {
 
   private suspend fun reconnect(): Session {
       val details = connectionDetails ?: throw CodedException("Session is null")
-      val currentSession = session ?: return connect(details.user, details.password, details.key, details.address)
-      return try {
-            currentSession.testConnection()
-            currentSession ?: connect(details.user, details.password, details.key, details.address)
-        } catch (e: Exception) {
-            connect(details.user, details.password, details.key, details.address)
-        }
+      val currentSession = session ?: return connection(details.user, details.password, details.key, details.address)
+      try {
+          currentSession.testConnection()
+          return currentSession
+      } catch (e: Exception) {
+          return connection(details.user, details.password, details.key, details.address)
+      }
   }
 
-  private suspend fun connection(user: String, password: String?, key: String?, address: String) {
+  private suspend fun connection(user: String, password: String?, key: String?, address: String): Session {
       if (password.isNullOrEmpty() && key.isNullOrEmpty()) {
           throw CodedException("Please input password or key")
       }
-      
+
       if (!password.isNullOrEmpty()) {
-          connectionPassword(user, password, address)
+          return connectionPassword(user, password, address)
       } else {
-          connectionKey(user, password, key!!, address)
+          return connectionKey(user, password, key!!, address)
       }
   }
 
-  private suspend fun connectionPassword(user: String, password: String, address: String) {
+  private suspend fun connectionPassword(user: String, password: String, address: String): Session {
       try {
           session = connect(user, password, address)
           connectionDetails = ConnectionDetails(user, password, null, address)
           Log.d("kotlin", "finished connecting with password")
+          return session!!
       } catch (e: Exception) {
           Log.d("kotlin", "connect error: $e")
           throw e
       }
   }
 
-  private suspend fun connectionKey(user: String, password: String?, key: String, address: String) {
+  private suspend fun connectionKey(user: String, password: String?, key: String, address: String): Session {
       try {
           session = connectKey(user, key, password, address)
           connectionDetails = ConnectionDetails(user, password, key, address)
           Log.d("kotlin", "finished connecting with key")
+          return session!!
       } catch (e: Exception) {
           Log.d("kotlin", "connect error: $e")
           throw e
@@ -94,9 +97,16 @@ class SshModule : Module() {
       "Hello world! 👋"
     }
 
-    AsyncFunction("connect") { user: String, password: String, key: String?, address: String ->
+    AsyncFunction("connect") { user: String, password: String, key: String?, address: String, promise: Promise ->
       Log.d("kotlin", "starting connect")
-      connection(user, password, key, address)
+      CoroutineScope(Dispatchers.IO).launch {
+          try {
+              connection(user, password, key, address)
+              promise.resolve("0")
+          } catch (e: Exception) {
+              promise.reject(CodedException(e))
+          }
+      }
     }
 
     AsyncFunction("exec") { commandId: String, command: String, promise: Promise ->
