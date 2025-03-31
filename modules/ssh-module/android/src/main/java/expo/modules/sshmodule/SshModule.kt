@@ -26,7 +26,8 @@ class TransferProgress(
 
 class ConnectionDetails(
     val user: String,
-    val password: String,
+    val password: String?,
+    val key: String?,
     val address: String
 )
 
@@ -36,13 +37,47 @@ class SshModule : Module() {
 
   private suspend fun reconnect(): Session {
       val details = connectionDetails ?: throw CodedException("Session is null")
-      val currentSession = session ?: return connect(details.user, details.password, details.address)
+      val currentSession = session ?: return connect(details.user, details.password, details.key, details.address)
       return try {
             currentSession.testConnection()
-            currentSession ?: connect(details.user, details.password, details.address)
+            currentSession ?: connect(details.user, details.password, details.key, details.address)
         } catch (e: Exception) {
-            connect(details.user, details.password, details.address)
+            connect(details.user, details.password, details.key, details.address)
         }
+  }
+
+  private suspend fun connection(user: String, password: String?, key: String?, address: String) {
+      if (password.isNullOrEmpty() && key.isNullOrEmpty()) {
+          throw CodedException("Please input password or key")
+      }
+      
+      if (!password.isNullOrEmpty()) {
+          connectionPassword(user, password, address)
+      } else {
+          connectionKey(user, password, key!!, address)
+      }
+  }
+
+  private suspend fun connectionPassword(user: String, password: String, address: String) {
+      try {
+          session = connect(user, password, address)
+          connectionDetails = ConnectionDetails(user, password, null, address)
+          Log.d("kotlin", "finished connecting with password")
+      } catch (e: Exception) {
+          Log.d("kotlin", "connect error: $e")
+          throw e
+      }
+  }
+
+  private suspend fun connectionKey(user: String, password: String?, key: String, address: String) {
+      try {
+          session = connectKey(user, key, password, address)
+          connectionDetails = ConnectionDetails(user, password, key, address)
+          Log.d("kotlin", "finished connecting with key")
+      } catch (e: Exception) {
+          Log.d("kotlin", "connect error: $e")
+          throw e
+      }
   }
 
   override fun definition() = ModuleDefinition {
@@ -59,11 +94,9 @@ class SshModule : Module() {
       "Hello world! 👋"
     }
 
-    AsyncFunction("connect") { user: String, password: String, address: String ->
+    AsyncFunction("connect") { user: String, password: String, key: String?, address: String ->
       Log.d("kotlin", "starting connect")
-      session = connect(user, password, address)
-      connectionDetails = ConnectionDetails(user, password, address)
-      Log.d("kotlin", "finished connecting")
+      connection(user, password, key, address)
     }
 
     AsyncFunction("exec") { commandId: String, command: String, promise: Promise ->
