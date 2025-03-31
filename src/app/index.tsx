@@ -25,20 +25,22 @@ export default function ServerSelectScreen() {
     });
   }, []);
 
-  const addServer = (server: Server) => {
-    const newServers = [...servers, server];
-    setItem(StorageKeys.servers, newServers);
-    setServers(newServers);
-  };
+  const upsertServer = (server: Server) => {
+    // First check if this server already exists by finding a matching server
+    const existingServerIndex = servers.findIndex(
+      (s) => s.name === server.name,
+    );
 
-  const removeServer = (server: Server) => {
-    const newServers = servers.filter((s) => s !== server);
-    setItem(StorageKeys.servers, newServers);
-    setServers(newServers);
-  };
+    let newServers;
+    if (existingServerIndex >= 0) {
+      // Update existing server
+      newServers = [...servers];
+      newServers[existingServerIndex] = server;
+    } else {
+      // Add new server
+      newServers = [...servers, server];
+    }
 
-  const updateServer = (server: Server) => {
-    const newServers = servers.map((s) => (s === sshServer ? server : s));
     setItem(StorageKeys.servers, newServers);
     setServers(newServers);
   };
@@ -85,9 +87,7 @@ export default function ServerSelectScreen() {
             open={serverModalOpen}
             server={sshServer}
             onOpenChange={setServerModalOpen}
-            onSaveServer={(server) =>
-              sshServer ? updateServer(server) : addServer(server)
-            }
+            onSaveServer={upsertServer}
           />
         )}
         {!!deleteServer && (
@@ -96,7 +96,7 @@ export default function ServerSelectScreen() {
             description={`Are you sure you want to delete ${deleteServer.name}?`}
             open={!!deleteServer}
             onOk={() => {
-              removeServer(deleteServer);
+              setServers(servers.filter((s) => s !== deleteServer));
               setDeleteServer(null);
             }}
             onCancel={() => setDeleteServer(null)}

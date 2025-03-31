@@ -46,7 +46,7 @@ export default function ServerModal({
   const [testResult, setTestResult] = useState('');
   const [authMethod, setAuthMethod] = useState<AuthMethod>('password');
   const [selectedKeyPath, setSelectedKeyPath] = useState<string>('');
-  const { sshServer, connectToServer, sshClient } = useSsh();
+  const { connectToServer } = useSsh();
 
   useEffect(() => {
     setServerDetails(server ?? defaultServer);
@@ -70,13 +70,7 @@ export default function ServerModal({
     );
 
     const connectionPromise = new Promise(async (resolve, reject) => {
-      await connectToServer({
-        host: serverDetails.host,
-        port: serverDetails.port,
-        user: serverDetails.user,
-        key: serverDetails.key,
-        password: serverDetails.password,
-      })
+      await connectToServer(serverDetails)
         .then(() => resolve('Great Success!'))
         .catch((reason) => reject(reason));
     });
@@ -293,33 +287,29 @@ export default function ServerModal({
               </YStack>
             )}
           </View>
-          <YStack>
-            <XStack
-              alignItems="center"
-              justifyContent="flex-end"
-              gap="$2"
-              paddingRight="10%"
-            >
-              <Button onPress={async () => handleTestConnection()} size="$4">
-                Test
-              </Button>
-              <Button onPress={() => handleAddServer()} size="$4">
-                Submit
-              </Button>
-            </XStack>
-            <Spacer size="4%" />
+          <XStack
+            alignItems="center"
+            justifyContent="flex-end"
+            gap="$2"
+            paddingRight="10%"
+          >
             {!!testResult && (
-              <View alignItems="center" alignContent="center" width="100%">
+              <View>
                 <Text
                   style={{ color: testResult == 'Success' ? 'green' : 'red' }}
-                  width="90%"
                   textAlign="center"
                 >
                   {testResult}
                 </Text>
               </View>
             )}
-          </YStack>
+            <Button onPress={async () => handleTestConnection()} size="$4">
+              Test
+            </Button>
+            <Button onPress={() => handleAddServer()} size="$4">
+              Submit
+            </Button>
+          </XStack>
         </Sheet.Frame>
       </Sheet>
     </>
